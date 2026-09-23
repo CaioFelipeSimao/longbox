@@ -1,0 +1,6 @@
+node_modules/
+
+# Copies of dist/ used by the browser harness; they go stale, dist/ is the record.
+harness/app.js
+harness/styles.css
+.impeccable/hook.cache.json

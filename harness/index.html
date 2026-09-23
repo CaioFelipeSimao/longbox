@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Longbox harness</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+<script>
+(function () {
+  function buildLib() {
+    var series = [
+      { id: "s1", nome: "Demolidor (Volume 2)", personagens: [{ nome: "Demolidor", de: null, ate: null }], editora: "Marvel", anoInicio: "1998", anoFim: "2011", totalEdicoes: 100, ordem: null },
+      { id: "s2", nome: "Nightwing (Volume 2)", personagens: [{ nome: "Nightwing", de: null, ate: null }], editora: "DC Comics", anoInicio: "1996", anoFim: "2009", totalEdicoes: 50, ordem: null },
+      { id: "s3", nome: "Constantine (Hellblazer)", personagens: [{ nome: "Constantine", de: null, ate: null }], editora: "DC Comics", anoInicio: "1988", anoFim: "2013", totalEdicoes: 100, ordem: null }
+    ];
+    var edicoes = [];
+    for (var i = 1; i <= 100; i++) edicoes.push({ id: "e1-" + i, serieId: "s1", numero: String(i), mes: "", ano: "", posicao: null });
+    for (var j = 1; j <= 50; j++) edicoes.push({ id: "e2-" + j, serieId: "s2", numero: String(j), mes: "", ano: "", posicao: null });
+    for (var k = 1; k <= 100; k++) edicoes.push({ id: "e3-" + k, serieId: "s3", numero: String(k), mes: "", ano: "", posicao: null });
+
+    var owned1 = []; for (var a = 1; a <= 72; a++) owned1.push("e1-" + a); // 72%, medio (cyan)
+    var owned2 = []; for (var b = 1; b <= 45; b++) owned2.push("e2-" + b); // 90%, alto (green)
+    var owned3 = []; for (var c = 1; c <= 55; c++) owned3.push("e3-" + c); // 55%, baixo (amber)
+
+    var volumes = [
+      { id: "vd1", titulo: "Demolidor por Bendis", personagem: "Demolidor", tipo: "Omnibus", editora: "Marvel", ano: "2022", status: "lida", notas: "", edicoesColetadasIds: owned1 },
+      { id: "vn1", titulo: "Nightwing: Ano Um", personagem: "Nightwing", tipo: "Encadernado (TPB)", editora: "DC Comics", ano: "2019", status: "lida", notas: "", edicoesColetadasIds: owned2 },
+      { id: "vc1", titulo: "Hellblazer: Original Sins", personagem: "Constantine", tipo: "Encadernado (TPB)", editora: "DC Comics", ano: "2011", status: "lida", notas: "", edicoesColetadasIds: owned3 }
+    ];
+    // Batman group with five volumes, to drag-reorder.
+    var batmanTitles = ["Ano Um", "O Longo Dia das Bruxas", "Coracao de Gelo", "Cidade dos Corujas", "Terra de Ninguem"];
+    batmanTitles.forEach(function (t, idx) {
+      volumes.push({
+        id: "vb" + idx, titulo: "Batman: " + t, personagem: "Batman", tipo: "Encadernado (TPB)",
+        editora: "DC Comics", ano: "2020", status: "nao_lida", notas: "", edicoesColetadasIds: []
+      });
+    });
+
+    var editoras = [
+      { id: "ed-marvel", nome: "Marvel", logoAssetId: "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm", cor: { h: 358, s: 74, l: 54 }, customOculta: false },
+      { id: "ed-dc", nome: "DC Comics", cor: { h: 358, s: 74, l: 54 }, customOculta: false }
+    ];
+
+    for (var q = 0; q < 14; q++) volumes.push({ id: "vw" + q, titulo: "Nightwing vol. " + (q + 1), personagem: "Nightwing", tipo: "Encadernado (TPB)", editora: "DC Comics", ano: "2016", status: "nao_lida", notas: "", edicoesColetadasIds: [] });
+    var colecoes = [
+      { id: "c1", nome: "Asa Noturna: a saga", membros: ["vw0","vw1","vw2","vw3","vw4","vw5","vw6","vw7","vw8","vw9","vw10","vw11","vw12","vw13"] },
+      { id: "c2", nome: "Curta", membros: ["vb0","vb1","vb2"] }
+    ];
+    return { volumes: volumes, colecoes: colecoes, series: series, edicoes: edicoes, editoras: editoras };
+  }
+
+  var lib = buildLib();
+  var docs = new Map();
+  docs.set("library/volumes", { items: lib.volumes });
+  docs.set("library/colecoes", { items: lib.colecoes });
+  docs.set("library/series", { items: lib.series });
+  docs.set("library/cores", { mapa: {} });
+  docs.set("library/editoras", { itens: lib.editoras, selecionada: null });
+  var edShards = new Map();
+  lib.edicoes.forEach(function (e) {
+    if (!edShards.has(e.serieId)) edShards.set(e.serieId, []);
+    edShards.get(e.serieId).push(e);
+  });
+
+  function makeDoc(path) {
+    return {
+      path: path,
+      get: function () {
+        return Promise.resolve({
+          id: path.split("/").pop(),
+          exists: docs.has(path),
+          data: function () { return docs.get(path); },
+          metadata: { fromCache: false, hasPendingWrites: false }
+        });
+      },
+      set: function (body) { docs.set(path, body); return Promise.resolve(); },
+      delete: function () { docs.delete(path); return Promise.resolve(); }
+    };
+  }
+
+  window.claude = {
+    use: function (name) {
+      if (name === "db") {
+        if (/lento/.test(location.search)) return new Promise(function () {});
+        return Promise.resolve({
+          doc: makeDoc,
+          collection: function (cpath) {
+            return {
+              path: cpath,
+              doc: function (id) { return makeDoc(cpath + "/" + id); },
+              get: function () {
+                var out = [];
+                if (cpath === "edicoes") {
+                  edShards.forEach(function (items, sid) {
+                    out.push({ id: sid, exists: true, data: function () { return { items: items }; }, metadata: {} });
+                  });
+                }
+                return Promise.resolve({ docs: out, size: out.length, empty: !out.length, docChanges: function () { return []; }, metadata: {} });
+              }
+            };
+          }
+        });
+      }
+      if (name === "assets") {
+        return Promise.resolve({ upload: function () { return Promise.resolve({ id: "x".repeat(32), url: "/_blob/" + "x".repeat(32) }); } });
+      }
+      return Promise.resolve(null);
+    }
+  };
+})();
+</script>
+</head>
+<body>
+<div id="root"></div>
+<script src="app.js"></script>
+</body>
+</html>

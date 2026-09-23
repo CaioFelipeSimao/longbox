@@ -1,0 +1,2158 @@
+/* Longbox v3 - design tokens and components. Dark is the designed default. */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #0E0F11;
+  --surface: #17191C;
+  --surface-2: #1F2226;
+  --border: #24282D;
+  --border-strong: #333941;
+  --text: #E8EAED;
+  --text-muted: #9AA1AA;
+  --accent: #00B8D4;
+  --accent-text: #22C8E0;
+  --accent-ink: #04191E;
+  --danger: #F04438;
+  --danger-text: #FF7A70;
+  --read: #5B9E6F;
+  --warm: #E2A83B; /* the hunt bar's lowest tier: still needs attention, not a warning */
+
+  --scrim: rgba(0, 0, 0, 0.62);
+  --topbar-bg: rgba(14, 15, 17, 0.5);
+  --topbar-bg-solid: rgba(10, 11, 13, 0.86);
+  --topbar-shadow: rgba(0, 0, 0, 0.4);
+  --shadow-sheet: 0 -12px 48px rgba(0, 0, 0, 0.5);
+  --shadow-panel: -12px 0 48px rgba(0, 0, 0, 0.5);
+  --shadow-cover: 0 2px 10px rgba(0, 0, 0, 0.45);
+  --shadow-cover-hover: 0 8px 24px rgba(0, 0, 0, 0.55);
+
+  --r-sm: 6px;
+  --r: 8px;
+  --r-lg: 16px;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  /* Symmetric, because a breath in and a breath out should take the same time.
+     The other two curves decelerate, which would make the pulse limp. */
+  --ease-pulse: cubic-bezier(0.4, 0, 0.6, 1);
+
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-ui: "Geist", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", "Cascadia Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --topbar-h: 62px;
+  --tabbar-h: 60px;
+  /* The room .app keeps under the content for the mobile tab bar. A token because
+     the tab lattice has to reach the same floor, or it stops short and leaves a
+     bare strip that only shows once you scroll to the very bottom. */
+  --app-pad-b: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px));
+  /* The real height of the publisher band, not a floor it never reaches: the controls
+     inside are sized so this is exactly what it measures, which is also what the
+     sticky group headers offset themselves by. */
+  --edbar-h: 72px;
+
+  /* The hub's rhythm lives here rather than in each block, so a section and a
+     rule-separated block are spaced by the same two numbers everywhere. */
+  --hub-gap: 38px;
+  --hub-rule-pad: 20px;
+
+  /* One column width for the top bar, the publisher strip and the content. They
+     have to move together or the strip stops sharing a margin with the shelf. */
+  --col: 1560px;
+
+  /* Inlined because the artifact CSP blocks every external image host. Stroke is
+     --text-muted, hardcoded: a data URI cannot read currentColor. */
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239AA1AA' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    --bg: #FBFBFC;
+    --surface: #FFFFFF;
+    --surface-2: #F4F5F7;
+    --border: #E4E6EA;
+    --border-strong: #D0D4DA;
+    --text: #14161A;
+    --text-muted: #5B6370;
+    --accent: #0090A8;
+    --accent-text: #00707F;
+    --accent-ink: #FFFFFF;
+    --danger: #D92D20;
+    --danger-text: #B42318;
+    --read: #3F7D52;
+    --warm: #B4791A;
+
+    --scrim: rgba(20, 22, 26, 0.38);
+    --topbar-bg: rgba(251, 251, 252, 0.6);
+    --topbar-bg-solid: rgba(255, 255, 255, 0.9);
+    --topbar-shadow: rgba(20, 22, 26, 0.1);
+    --shadow-sheet: 0 -12px 48px rgba(20, 22, 26, 0.16);
+    --shadow-panel: -12px 0 48px rgba(20, 22, 26, 0.16);
+    --shadow-cover: 0 1px 6px rgba(20, 22, 26, 0.14);
+    --shadow-cover-hover: 0 8px 22px rgba(20, 22, 26, 0.2);
+
+    --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235B6370' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  }
+}
+
+@media (min-width: 768px) {
+  :root { --topbar-h: 76px; --app-pad-b: 48px; }
+}
+
+/* The header and the strip take the hue of the publisher being read. Only the
+   hue: --ed-hue feeds the accent's own saturation and lightness, which are
+   different per theme, so a publisher can shift the colour but never the
+   contrast. The hub never carries the attribute and so never shifts. */
+[data-ed-hue] {
+  --accent: hsl(var(--ed-hue) 100% 42%);
+  --accent-text: hsl(var(--ed-hue) 75% 51%);
+  /* The ink is measured against this fill rather than named by the theme: at one
+     HSL lightness a yellow and a blue are nowhere near the same brightness. */
+  --accent-ink: var(--ed-ink-escuro, #04191E);
+}
+@media (prefers-color-scheme: light) {
+  [data-ed-hue] {
+    --accent: hsl(var(--ed-hue) 100% 33%);
+    --accent-text: hsl(var(--ed-hue) 100% 25%);
+    --accent-ink: var(--ed-ink-claro, #FFFFFF);
+  }
+}
+
+/* What follows the publisher inside the page (v64): the Coleções spine window,
+   the inner scrollbars and the outline of the sheets and dropdown lists. The
+   header's rule above redefines --accent itself on the chrome; this is kept to
+   separate tokens instead, so the rest of the page (buttons, status, tiles)
+   keeps the interface accent. .app carries the hue only outside the hub and only
+   for a publisher with a colour, so everywhere else these fall back to what the
+   page had before: the accent, and neutral borders. */
+:root {
+  --ed-accent: var(--accent);
+  --ed-accent-text: var(--accent-text);
+  --ed-borda: var(--border-strong);
+  --ed-rolagem: var(--border-strong);
+}
+.app[data-ed-tint="true"] {
+  --ed-accent: hsl(var(--ed-hue) 100% 42%);
+  --ed-accent-text: hsl(var(--ed-hue) 75% 51%);
+  /* Mixed down, so a red publisher reads as its colour without every outline
+     turning into a warning. */
+  --ed-borda: color-mix(in srgb, var(--ed-accent) 45%, var(--border-strong));
+  --ed-rolagem: color-mix(in srgb, var(--ed-accent) 55%, transparent);
+}
+@media (prefers-color-scheme: light) {
+  .app[data-ed-tint="true"] {
+    --ed-accent: hsl(var(--ed-hue) 100% 33%);
+    --ed-accent-text: hsl(var(--ed-hue) 100% 25%);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  /* The unlock gesture owns the end of the hub; native overscroll bounce would fight it. */
+  overscroll-behavior-y: none;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: break-word;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: none; padding: 0; cursor: pointer; }
+
+:focus-visible {
+  outline: 2px solid var(--ed-accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+:focus:not(:focus-visible) { outline: none; }
+
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ---------- type scale ---------- */
+
+.t-display-lg {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.t-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.375rem;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+.t-title { font-size: 1rem; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
+.t-body { font-size: 0.875rem; line-height: 1.5; }
+.t-small { font-size: 0.8125rem; line-height: 1.45; }
+.t-micro {
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.muted { color: var(--text-muted); }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---------- shell ---------- */
+
+/* overflow-x: clip (v79): a hover label waiting at opacity 0 near the right edge
+   still counts as overflow, and on a tablet-width Coleções tab it let the page
+   slide 18px sideways. clip, unlike hidden, makes no scroll container, so the
+   sticky header and band keep working. */
+.app { min-height: 100dvh; padding-bottom: var(--app-pad-b); overflow-x: clip; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid transparent;
+  transition: border-color 200ms var(--ease-out), box-shadow 200ms var(--ease-out),
+              background-color 200ms var(--ease-out);
+}
+/* Scroll edge: the header earns its hairline only once content runs under it. */
+.topbar[data-scrolled="true"] {
+  background: var(--topbar-bg-solid);
+  border-bottom-color: var(--border);
+  box-shadow: 0 6px 24px var(--topbar-shadow);
+}
+.topbar-inner {
+  max-width: var(--col);
+  margin: 0 auto;
+  min-height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+}
+@media (min-width: 768px) { .topbar-inner { padding: 8px 24px; } }
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  padding: 4px 2px;
+  margin-left: -2px;
+  border-radius: var(--r);
+  transition: transform 120ms var(--ease-out), opacity 120ms var(--ease-out);
+}
+.brand:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) {
+  button.brand:hover .mark i { background: var(--accent); }
+}
+
+.brand-chev {
+  color: var(--text-muted);
+  margin-right: -3px;
+  flex-shrink: 0;
+}
+
+/* Geometric mark: comic spines standing in a longbox. */
+.mark {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.mark i {
+  width: 3px;
+  border-radius: 1px;
+  background: var(--text);
+  transition: background 160ms var(--ease-out);
+}
+.mark i:nth-child(1) { height: 62%; }
+.mark i:nth-child(2) { height: 100%; }
+.mark i:nth-child(3) { height: 78%; background: var(--accent); }
+.mark i:nth-child(4) { height: 90%; }
+@media (min-width: 768px) { .mark { height: 24px; } .mark i { width: 3.5px; } }
+
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  flex-shrink: 0;
+}
+.wordmark b { font-weight: 800; color: var(--accent-text); }
+@media (min-width: 768px) { .wordmark { font-size: 1.75rem; } }
+
+/* Publisher strip: only in the collection view, never on the hub. It carries the
+   publisher tint so the accent keeps meaning what it means everywhere else. */
+/* The band paints edge to edge like .topbar does; the row inside it is capped to
+   the same --col column as .content, so the strip and the content share a margin. */
+.ed-band {
+  position: sticky;
+  top: var(--topbar-h);
+  z-index: 15;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.ed-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: var(--col);
+  margin: 0 auto;
+  padding: 12px 16px;
+  min-height: var(--edbar-h);
+}
+@media (min-width: 768px) { .ed-bar { padding: 12px 24px; } }
+.ed-band[data-tinted="true"] {
+  border-bottom-color: var(--ed-cor);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--ed-fundo) 55%, var(--bg)), var(--bg));
+}
+/* One gradient from the very top of the page (v68). It used to start at the
+   band's own top edge, under a flat header, which read as a hard seam. Now the
+   header and the band each paint their slice of a single gradient sized to both:
+   the band shifts its copy up by the header's height, so the two meet with no
+   step. Both are sticky together, so the slices stay aligned while scrolling. */
+/* v71: the gradient stays inside header + band (v69 let a tail run on into
+   the grid, which the user did not want). The "longer" feel comes from the stops
+   instead: the colour holds further down and still reads at the band line,
+   rather than being spent halfway. The band line separates it from the grid. */
+.app[data-ed-fundo="true"] {
+  --ed-grad-h: calc(var(--topbar-h) + var(--edbar-h) + 2px);
+  --ed-grad: linear-gradient(to bottom,
+    color-mix(in srgb, var(--ed-fundo) 55%, var(--bg)) 0%,
+    color-mix(in srgb, var(--ed-fundo) 30%, var(--bg)) 50%,
+    color-mix(in srgb, var(--ed-fundo) 7%, var(--bg)) 85%,
+    color-mix(in srgb, var(--ed-fundo) 2%, var(--bg)) 100%);
+}
+@media (prefers-color-scheme: light) {
+  /* v79: on a light page the deep shade read as grey smoke; the vivid edge at a
+     low share reads as the publisher colour. Same shape, fading to nil. */
+  .app[data-ed-fundo="true"] {
+    --ed-grad: linear-gradient(to bottom,
+      color-mix(in srgb, var(--ed-vivo) 16%, var(--bg)) 0%,
+      color-mix(in srgb, var(--ed-vivo) 9%, var(--bg)) 50%,
+      color-mix(in srgb, var(--ed-vivo) 2%, var(--bg)) 85%,
+      var(--bg) 100%);
+  }
+}
+.app[data-ed-fundo="true"] .topbar,
+.app[data-ed-fundo="true"] .ed-band[data-tinted="true"] {
+  background-image: var(--ed-grad);
+  background-size: 100% var(--ed-grad-h);
+  background-repeat: no-repeat;
+}
+.app[data-ed-fundo="true"] .topbar { background-color: var(--bg); }
+.app[data-ed-fundo="true"] .ed-band[data-tinted="true"] {
+  background-color: var(--bg);
+  background-position: 0 calc(-1 * (var(--topbar-h) + 1px));
+}
+
+.ed-logo {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: var(--r-sm);
+  padding: 3px 6px;
+}
+/* Height is set inline, per instance, directly on the img rather than on the
+   span: the span's own padding would otherwise eat into a percentage height and
+   render the logo a few pixels short of the size it was asked for. The cap
+   rises with the logo height. Left at 130px a wide wordmark logo would hit the
+   width ceiling first and stop growing, so the increase would show on square
+   logos and not on wide ones. */
+.ed-logo img { width: auto; max-width: 185px; object-fit: contain; display: block; }
+.ed-logo[data-plate="escuro"] { background: #101215; }
+.ed-logo[data-plate="claro"] { background: #F2F3F5; }
+
+.ed-segmented { display: none; }
+@media (min-width: 768px) { .ed-segmented { display: flex; } }
+
+.ed-right { display: flex; align-items: center; gap: 10px; margin-left: auto; min-width: 0; }
+.ed-note { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+@media (max-width: 520px) { .ed-note { display: none; } }
+.ed-select { width: auto; min-width: 0; max-width: 190px; padding: 7px 9px; font-size: 0.8125rem; }
+
+.ed-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.ed-card-top { display: flex; gap: 8px; align-items: center; }
+.ed-card-logo { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.content { max-width: var(--col); margin: 0 auto; padding: 20px 16px 40px; }
+
+/* The tab content stands on a lattice that answers to the pointer. The layer is
+   inert and the content area is what listens, so every click still reaches the
+   card on top of it. It bleeds to the window rather than stopping at the column,
+   the way the hub backdrop does, so there is no hard vertical seam beside the
+   cards. Gated on the attribute so the stacking below only applies where the
+   lattice is actually mounted. */
+.content[data-lattice="true"] {
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100vh - var(--topbar-h) - var(--edbar-h));
+  min-height: calc(100dvh - var(--topbar-h) - var(--edbar-h));
+}
+.content[data-lattice="true"] > *:not(.cursor-grid) { position: relative; z-index: 1; }
+/* Each tab's wrapper (v80). A tab not in use is skipped, not removed:
+   content-visibility keeps its layout as it was, so showing it again is a paint,
+   not a rebuild of every card. display: none would throw that layout away. The
+   wrapper is inert while hidden, so nothing in it takes focus or is announced. */
+.aba { display: block; position: relative; z-index: 0; }
+.aba[data-ativa="false"] { content-visibility: hidden; }
+/* Fixed to the window, not stretched over the content. The canvas sizes itself
+   to this box and is cleared and redrawn whole on every frame the cursor moves,
+   so the box's height IS the per-frame cost. Stretched over the content it
+   followed the page: on the séries tab, 6799px of it, which put the canvas at
+   25.9 megapixels and one frame at 122ms — about 8fps, and since it is the same
+   main thread, every other animation on the page stalled with it. The same
+   drawing over a window-high box is 3 megapixels and 4ms.
+   Nothing below the fold was ever visible anyway.
+
+   No JS changed with this: the pointer maths already works off the canvas's own
+   getBoundingClientRect() against viewport coordinates, which a fixed box gives
+   correctly. Top starts where .content does, so the lattice still begins under
+   the bars rather than behind them. */
+.cursor-grid {
+  position: fixed;
+  top: calc(var(--topbar-h) + var(--edbar-h));
+  bottom: 0;
+  left: 50%;
+  width: calc(100vw - var(--sbw, 0px));
+  transform: translateX(-50%);
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.cursor-grid__canvas { display: block; width: 100%; height: 100%; }
+@media (hover: none), (pointer: coarse) {
+  .cursor-grid { display: none; }
+}
+@media (min-width: 768px) { .content { padding: 24px 24px 64px; } }
+
+/* ---------- tabs ---------- */
+
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.tabbar button {
+  flex: 1;
+  height: var(--tabbar-h);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  transition: color 120ms var(--ease-out);
+}
+.tabbar button[data-active="true"] { color: var(--accent-text); }
+@media (min-width: 768px) { .tabbar { display: none; } }
+
+.segmented {
+  position: relative;
+  display: none;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 3px;
+  gap: 2px;
+}
+@media (min-width: 768px) { .segmented { display: flex; } }
+.segmented button {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--r-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: none;
+  transition: color 120ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.segmented button[data-active="true"] { color: var(--text); }
+/* No focus ring here, on purpose — the button already carries its own
+   selected-state indicator (.seg-thumb, the sliding pill in app.jsx), and a
+   second ring on top of it read as visual noise even once its geometry was
+   made to match exactly (two rounds of fixes, 2026-09-20: outline-offset,
+   then the button's own box inflated to fill the pill's height — see
+   .ed-segmented button below). Dropped instead of kept once flush. The
+   trade-off is real: a keyboard-only user tabbing here loses the ring as
+   their landing cue and has only the pill (which already tells them which
+   tab is OPEN, not which one currently holds focus — those are the same
+   button only when focus lands on the active tab). Accepted for this
+   control specifically; the global :focus-visible ring at the top of this
+   file is untouched everywhere else. */
+.segmented button:focus-visible { outline: none; }
+
+/* One shared pill, slid under the active button by SegmentedTabs (app.jsx)
+   instead of each button toggling its own background — the elastic gsap tween
+   on tab switches needs a single element to carry it. Sits behind the buttons
+   in paint order only because they're both `position: relative`; z-index on
+   the buttons is what actually keeps their labels above it, not source order.
+
+   v82: moved by transform only. v83: as two layers that only slide, a
+   window rounded on its right clipping a body rounded on its left, so what
+   shows is their overlap (see pintarClip). v82's 1px middle scaled up came out
+   smeared on a real GPU. It used to be one full-track element
+   revealed by a clip-path written from JS each frame, which is NOT
+   compositor-only: every frame was a repaint, and on a touch tablet each
+   repaint walked the whole tab, worst on Séries. Before that it animated
+   width and left, a reflow per frame. Top and height are set by JS, and only
+   change on a resize. The colour is --pilula, so the tint rules below need
+   no knowledge of the pieces. */
+.seg-thumb {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 0;
+  z-index: 0;
+  pointer-events: none;
+  --pilula: var(--surface);
+}
+.pil-janela, .pil-corpo {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  will-change: transform;
+}
+.pil-janela { overflow: hidden; border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+.pil-corpo { background: var(--pilula); border-radius: var(--r-sm) 0 0 var(--r-sm); }
+.ed-band[data-tinted="true"] .seg-thumb { --pilula: var(--ed-cor); }
+.ed-band[data-tinted="true"] .segmented button[data-active="true"] { color: #fff; }
+/* With no publisher colour to borrow (Todas as editoras, Sem editora, or a
+   publisher saved without one) the pill takes the interface accent, the same
+   colour the rest of the app uses when no publisher is in play (v65). Dark ink,
+   since white does not read on the light cyan. */
+.ed-band[data-tinted="false"] .seg-thumb { --pilula: var(--accent); }
+.ed-band[data-tinted="false"] .segmented button[data-active="true"] { color: var(--accent-ink); }
+
+/* The pre-selection: the same full-track element and the same clip-path trick
+   as .seg-thumb, on its own pair of edges, sliding between buttons as the
+   pointer moves rather than switching on and off per button. It paints under
+   the real pill on purpose — hovering the open tab then hides it beneath the
+   opaque one instead of stacking two highlights, which means the travel never
+   has to be special-cased at the active button. That ordering comes from the
+   markup, both pills sharing a z-index: a negative one would not do it, since
+   .segmented is positioned but opens no stacking context, so the pill would
+   drop behind the band's own background and never be seen at all.
+
+   Only opacity transitions here; the sliding is gsap's, driven the same way
+   the active pill's is. Faint by design: this says "you are about to pick
+   this", and if it reads as strongly as the pill it competes with what is
+   actually selected. */
+.seg-ghost {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  will-change: clip-path, opacity;
+  transition: opacity 160ms var(--ease-out);
+}
+.ed-band[data-tinted="true"] .seg-ghost {
+  background: color-mix(in srgb, var(--ed-cor) 32%, transparent);
+}
+.ed-band[data-tinted="false"] .seg-ghost {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+/* Nothing hovers on a touchscreen; without this the pill would be left lit
+   wherever the last tap happened to land. */
+@media (hover: none) { .seg-ghost { display: none; } }
+
+/* .seg-ghost is the hover wash now, so all that belongs here is the label
+   warming up to meet it. Each of these rules used to also paint a background
+   on the button itself; once the pill started travelling that became a second
+   highlight under the same pointer, in a different shape, arriving at a
+   different moment — two answers to one gesture.
+
+   The label still has to brighten, and from here rather than from the pill:
+   the pill is one element that slides between buttons and has no way to reach
+   inside whichever one it is currently over. The 120ms colour transition on
+   .segmented button keeps it from snapping ahead of the pill sliding in.
+
+   Hovering the open tab changes nothing, both colours already being where
+   hover would take them — which is right, since the pill is hidden under the
+   active one there too. */
+@media (hover: hover) and (pointer: fine) {
+  .segmented button:hover { color: var(--text); }
+  .ed-band[data-tinted="true"] .segmented button:hover { color: #fff; }
+}
+
+/* The publisher band's own controls sit taller than the ones in the sheets: heights
+   are explicit and vertical only, so the band gains breathing room without any of
+   these getting wider. Declared after .segmented so they win on order.
+
+   No vertical padding: the button itself now carries the height that used
+   to be shared between the track's padding and the button's own fixed
+   height (border 1+1, padding 4+4, height 38 — 48 total before; height 46
+   plus the unchanged 1+1 border reproduces that same 48 now, all of it on
+   the button). Tried leaving height unset first, expecting flex's own
+   align-items: stretch to fill the track automatically — it does, but
+   stretch only matches whatever height the track ends up with, and with no
+   explicit button height driving that height any more, the track collapsed
+   to the button's intrinsic content size instead, ~14px shorter overall.
+   The explicit height is still required; only where it applies moved.
+
+   The point of moving it: .seg-thumb fills exactly the button's
+   own box top-to-bottom (see app.jsx's pintarClip), so the button's box, the
+   pill, and its native :focus-visible outline now all describe the
+   identical rectangle without three separate numbers to keep in sync.
+   Reported live 2026-09-20 as a visible gap between the focus ring and the
+   pill — first fixed the other way (shrinking the pill to the button's
+   then-smaller box), but the button was the one that read as undersized:
+   this inflates it to match instead. Horizontal padding stays, so the first
+   and last button don't sit flush against the track's own border. */
+.ed-segmented { padding: 0 4px; }
+.ed-segmented button { height: 46px; }
+.ed-select { height: 43px; }
+
+/* ---------- controls ---------- */
+
+.press { transition: transform 120ms var(--ease-out); }
+.press:active { transform: scale(0.97); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--r);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  transition: transform 120ms var(--ease-out), background 120ms var(--ease-out),
+              border-color 120ms var(--ease-out);
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-quiet { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+.btn-ghost { color: var(--text-muted); }
+.btn-ghost:hover { color: var(--text); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  flex-shrink: 0;
+  border-radius: var(--r);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  transition: transform 120ms var(--ease-out), background 120ms var(--ease-out),
+              color 120ms var(--ease-out);
+}
+.btn-icon:active { transform: scale(0.97); }
+.btn-icon[data-active="true"] { background: var(--accent); color: var(--accent-ink); }
+@media (hover: hover) and (pointer: fine) {
+  .btn-icon:hover { background: var(--surface-2); color: var(--text); }
+  .btn-icon[data-active="true"]:hover { background: var(--accent); color: var(--accent-ink); }
+}
+.btn-icon svg[data-rot="true"] { transform: rotate(-90deg); }
+/* Always in the accent, open or closed, with or without filters (the user's
+   call). What changes is the count on its corner, which says filters are on. */
+.btn-filtros { position: relative; }
+.btn-filtros,
+.btn-filtros[data-active="true"] { background: var(--accent); color: var(--accent-ink); }
+@media (hover: hover) and (pointer: fine) {
+  .btn-filtros:hover, .btn-filtros[data-active="true"]:hover { background: var(--accent); color: var(--accent-ink); filter: brightness(1.08); }
+}
+.btn-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: 0 0 0 2px var(--bg);
+  font-size: 0.625rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.btn-icon svg { transition: transform 120ms var(--ease-out); }
+
+.search {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.search-field { position: relative; display: flex; align-items: center; gap: 8px; }
+/* The magnifier only (v73 put icons in the suggestion list too). The sheet's
+   issue search has no .search-field, hence the second selector (v79 fix). */
+.search-field > svg, .search > svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.search input {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px 0 32px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text);
+  transition: border-color 120ms var(--ease-out);
+}
+.search input::placeholder { color: var(--text-muted); }
+.search input:focus { border-color: var(--ed-accent); }
+
+/* Only the full-screen phone mode needs a way out that is not the keyboard. */
+.search-cancel { display: none; font-size: 0.8125rem; font-weight: 500; color: var(--text-muted); }
+
+.sug {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--ed-borda);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: 0 14px 40px var(--topbar-shadow);
+}
+.sug-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: var(--r);
+  transition: background 120ms var(--ease-out);
+}
+.sug-row[data-on="true"] { background: var(--surface-2); }
+/* The cover is what makes a volume recognisable faster than its title reads. */
+.sug-cover { width: 30px; flex-shrink: 0; box-shadow: none; }
+/* v74: the shelf's 3px character stripe is a tenth of a 30px thumbnail and
+   hid the art; the colour still reads at half that. */
+.sug-cover.cover::after { width: 1.5px; }
+.sug-text { min-width: 0; flex: 1; }
+.sug-title { display: block; font-size: 0.8125rem; font-weight: 500; }
+.sug-meta { display: block; margin-top: 1px; font-size: 0.75rem; color: var(--text-muted); }
+/* v73: a tab's results and the HQs under them, each under its own label. */
+.sug-secao {
+  margin: 0;
+  padding: 8px 8px 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.sug-secao:not(:first-child) { margin-top: 4px; border-top: 1px solid var(--border); padding-top: 10px; }
+/* Collections and séries have no cover of their own: the tab's own icon, on a
+   tile the size of a cover so titles line up with the HQ rows. */
+.sug-icone {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+.sug-empty { margin: 0; padding: 12px 10px; font-size: 0.8125rem; color: var(--text-muted); }
+
+/* A dropdown under the field would sit in the few rows the on-screen keyboard
+   leaves, so on a phone the search takes the screen instead. */
+@media (max-width: 767px) {
+  .search[data-full="true"] {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 12px 0;
+    background: var(--bg);
+  }
+  .search[data-full="true"] .search-cancel { display: block; }
+  .search[data-full="true"] .sug {
+    position: static;
+    flex: 1;
+    max-height: none;
+    padding: 0 0 16px;
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  .search[data-full="true"] .sug-row { padding: 8px; }
+  .search[data-full="true"] .sug-cover { width: 38px; }
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > label { font-size: 0.8125rem; font-weight: 600; }
+.input, .select, .textarea {
+  width: 100%;
+  padding: 9px 11px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text);
+  transition: border-color 120ms var(--ease-out);
+}
+/* The border shift is the soft feedback; the ring from :focus-visible is left in
+   place on purpose, because that is the one a keyboard user actually needs. */
+.input:focus, .select:focus, .textarea:focus { border-color: var(--ed-accent); }
+.input::placeholder, .textarea::placeholder { color: var(--text-muted); }
+
+/* Drawn rather than left to the OS, so the field matches the segmented controls
+   and the tab pills it sits next to. The path is Lucide's chevron-down. */
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: var(--select-arrow);
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px 14px;
+  padding-right: 32px;
+}
+.select::-ms-expand { display: none; }
+.input[data-invalid="true"], .textarea[data-invalid="true"] { border-color: var(--danger); }
+.textarea { resize: vertical; min-height: 66px; }
+.field-error { font-size: 0.8125rem; color: var(--danger-text); }
+.field-hint { font-size: 0.8125rem; color: var(--text-muted); }
+
+.row { display: flex; gap: 8px; }
+/* Keeps a third-tier action at its own width instead of letting it stretch wider
+   than the primary it sits under. */
+.row-center { justify-content: center; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+/* The character filter: a text field dressed as the two selects beside it, so the
+   row still reads as three filters, with the search's own dropdown under it. */
+/* The row has to sit above what follows it, or the character list opens under
+   the shelf. With the cursor lattice on, every child of .content is its own
+   layer at z-index 1 and later siblings paint over earlier ones; with it off, the
+   sticky group headers sit at 10. 12 clears both and stays under the top bar. */
+.content > .filtros-hqs,
+.content[data-lattice="true"] > .filtros-hqs { position: relative; z-index: 12; }
+.pfiltro { position: relative; min-width: 0; }
+.pfiltro-input { cursor: pointer; text-overflow: ellipsis; }
+.pfiltro-input:focus { cursor: text; }
+.pfiltro-input::placeholder { color: var(--text); }
+.pfiltro-input:focus::placeholder { color: var(--text-muted); }
+.pfiltro-botao { display: flex; align-items: center; text-align: left; font: inherit; color: var(--text); }
+.pfiltro-botao[aria-expanded="true"] { border-color: var(--ed-accent); }
+.ed-lista { left: auto; min-width: 100%; width: max-content; max-width: 280px; }
+.pfiltro-sep { height: 1px; margin: 6px 8px; background: var(--border); }
+.pfiltro-acao .sug-title { color: var(--text-muted); font-weight: 400; }
+/* Three filters and the clear button on one row: the filters share the width,
+   the button takes what its label needs, and under 560px only its X. */
+.filtros-linha { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 10px; }
+.filtros-limpar { gap: 6px; height: 100%; white-space: nowrap; }
+.filtros-limpar:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+/* As wide as the field it drops from. Only on a phone, where a third of the row
+   is too narrow for a name and its count, does it grow past it, leftwards. */
+.pfiltro-lista { max-height: 320px; }
+@media (max-width: 639px) { .pfiltro-lista { left: auto; min-width: 240px; } }
+.pfiltro-row { gap: 10px; padding: 8px 10px; }
+.pfiltro-row .sug-title { flex: 1; min-width: 0; }
+.pfiltro-todos {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-strong);
+}
+.pfiltro-n { font-size: 0.75rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.pfiltro-check { color: var(--ed-accent-text); flex-shrink: 0; }
+
+/* ---------- status ---------- */
+
+.seg3 { display: flex; gap: 6px; }
+.seg3 button {
+  flex: 1;
+  padding: 8px 6px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: transform 120ms var(--ease-out), background 120ms var(--ease-out),
+              border-color 120ms var(--ease-out), color 120ms var(--ease-out);
+}
+.seg3 button:active { transform: scale(0.97); }
+.seg3 button[data-on="true"] { color: var(--text); border-color: var(--border-strong); background: var(--surface); }
+.seg3 button[data-on="true"][data-kind="lendo"] { border-color: var(--accent); color: var(--accent-text); }
+.seg3 button[data-on="true"][data-kind="lida"] { border-color: var(--read); color: var(--read); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  max-width: 100%;
+}
+.chip strong { color: var(--text); font-weight: 500; }
+
+/* ---------- covers ---------- */
+
+.shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 14px;
+}
+@media (min-width: 640px) { .shelf { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 18px; } }
+
+.vol { text-align: left; display: block; width: 100%; }
+.cover {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-cover);
+  transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+}
+.cover img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; }
+/* Character colour rides on every cover, uploaded art included, so the shelf
+   stays readable as a map however many real covers exist. */
+.cover::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--edge, transparent);
+  z-index: 1;
+}
+.vol:active .cover { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) {
+  .vol:hover .cover { transform: translateY(-2px); box-shadow: var(--shadow-cover-hover); }
+}
+.vol[data-open="true"] .cover { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Reordering a HQ: a press-and-hold fill shows the 450ms arming window being
+   timed out, then the card that's been picked up keeps that same fill while
+   it moves live through the grid (driveHold, in app.jsx, keeps running for
+   the whole drag, not just the arming window) on top of its own lifted look
+   (data-dragging); the FLIP effect in app.jsx is what actually slides the
+   other cards out of its way. The fill only lets go in finalizarDrag(), on
+   release.
+
+   --hold-p (0 to 1) is written straight to this card's .cover node every
+   frame by driveHold, the same way HoldButton's own --hb-p is — not a CSS
+   transition, because the wave crest below needs the exact progress number
+   the fill is using *that frame*, both to place itself at the rising edge
+   and to have scrolled fully out of view by the time --hold-p reaches 1.
+   A transition on one element and a transition on the other would drift
+   against each other by a frame or two; one shared number can't.
+
+   The fill rises bottom to top, like a level filling, and takes the volume's
+   own editora colour (--hold-color, set inline per card), falling back to
+   the interface's own accent for a volume with no editora colour set.
+
+   This edge has to land on exactly the same pixel as the bottom of the
+   crest's mask tile below, which sits at (1 - p) * (height + 20px) — the
+   crest is painted from its wave line all the way down to that tile bottom,
+   so any millimetre the fill reaches ABOVE it is a millimetre where both
+   layers paint the same 32% colour on the same pixel and it composites to
+   about 54%: a band visibly darker than either. HoldButton's own formula
+   splits the amplitude 0.75/0.25, which puts the fill 5px past the tile
+   bottom; at its small default amplitude that overlap is invisible, at the
+   20px this card uses it reads as an opaque stripe under the wave. Hence
+   the plain (1 - p) * (100% + 20px): same expression as the tile bottom,
+   so the two boundaries are the same line and neither double-paints. */
+.vol-hold {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--hold-color, var(--accent)) 32%, transparent);
+  clip-path: inset(calc((1 - var(--hold-p, 0)) * (100% + 20px)) 0 0 0);
+}
+
+/* The rising edge of .vol-hold is a flat line; this layer draws a wavy
+   meniscus over that same line instead, and only there: outside the one
+   --hold-wave-tall band the mask positions each frame, the crest is fully
+   transparent (mask-repeat is repeat-x, not repeat — the y axis never
+   tiles), so at --hold-p:0 the band sits below the visible box and at
+   --hold-p:1 it has scrolled past the top edge, off-frame either way. That
+   is the whole mechanism for "wavy while filling, flat once full": nothing
+   turns the wave off, it simply isn't inside the box to see any more.
+
+   The background matches .vol-hold's exactly, on purpose, the way
+   HoldButton's own fill and crest are both literally --hb-fill with no
+   opacity difference between them: two different opacities of the same hue
+   painted the wave as a translucent stripe sitting ON the fill, which is
+   what read as "a more opaque bar" rather than a wave. One colour means the
+   only thing visible is the wavy SHAPE of where that colour's boundary
+   falls — this crest doesn't add a band, it's what makes the fill's own
+   edge wavy instead of the flat line clip-path alone would draw.
+
+   One gentle hump per tile (not the two tighter, sharper-cornered humps
+   this used to have) tiled wide relative to the card: fewer, broader
+   crests read as a liquid meniscus, where the old tighter spacing and
+   sharper turn at each peak read as a printed sine/cosine texture instead
+   of something actually rippling. The path itself has zero-slope control
+   points at the peak (both bezier handles level with the apex) so the
+   crest rounds over instead of coming to a point.
+
+   mask-position-x scrolling with --hold-p (not with elapsed time) is what
+   makes the ripple read as the fill's own motion rather than a decoration
+   playing alongside it — pause the gesture at 40% and the ripple pauses too.
+   --hold-w/--hold-h are this card's own .cover box in px, set once per
+   press in comecarPreenchimento(): mask-position needs real pixels to add
+   to a pixel wave amplitude, which %-of-element sizing cannot give it. */
+.vol-hold__crest {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  /* One crest's width. Defined once here because two properties need it and
+     they have to agree: mask-size IS the tile, and the sideways scroll below
+     is counted in whole tiles of it. --hold-cycles was drifting out of step
+     with the tile for exactly that reason — it was a ratio of the card's
+     width, so halving the crests per tile silently halved how far the wave
+     appeared to travel, and it stopped reading as moving at all. */
+  --hold-tile: calc(var(--hold-w, 140px) * 0.55);
+  background: color-mix(in srgb, var(--hold-color, var(--accent)) 32%, transparent);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='20' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M0 20V10C40 10 60 2 100 2C140 2 160 10 200 10V20Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='20' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M0 20V10C40 10 60 2 100 2C140 2 160 10 200 10V20Z'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  -webkit-mask-size: var(--hold-tile) 20px;
+  mask-size: var(--hold-tile) 20px;
+  -webkit-mask-position-x: calc(-1 * var(--hold-p, 0) * var(--hold-cycles, 2.2) * var(--hold-tile));
+  mask-position-x: calc(-1 * var(--hold-p, 0) * var(--hold-cycles, 2.2) * var(--hold-tile));
+  -webkit-mask-position-y: calc(var(--hold-h, 210px) - var(--hold-p, 0) * (var(--hold-h, 210px) + 20px));
+  mask-position-y: calc(var(--hold-h, 210px) - var(--hold-p, 0) * (var(--hold-h, 210px) + 20px));
+}
+@media (prefers-reduced-motion: reduce) {
+  /* driveHold still runs (it is cheap and app.jsx does not special-case
+     this), but nothing here reads --hold-p as a position any more: the
+     fill is a plain cross-fade and the wave — motion with no state of its
+     own to convey — is simply not drawn. */
+  .vol-hold { clip-path: none; opacity: var(--hold-p, 0); }
+  .vol-hold__crest { display: none; }
+}
+.vol[data-dragging="true"] { z-index: 5; }
+.vol[data-dragging="true"] .cover { transform: scale(1.05); box-shadow: var(--shadow-cover-hover); opacity: 0.9; }
+/* A gentle wiggle, not the position wiggle: it says "this one is picked up",
+   the same job the FLIP slide already does for everything moving around it, so
+   the angle stays small (1.5deg) and unhurried (320ms) rather than reading as
+   an alarm. Gated inside no-preference, not merely shortened under reduce, the
+   same way every other movement-only animation in this file is. */
+@media (prefers-reduced-motion: no-preference) {
+  .vol[data-dragging="true"] .cover { animation: volWiggle 320ms ease-in-out infinite; }
+  @keyframes volWiggle {
+    0%, 100% { transform: scale(1.05) rotate(-1.5deg); }
+    50% { transform: scale(1.05) rotate(1.5deg); }
+  }
+}
+
+/* composed fallback cover */
+.cover-fb {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 9px;
+  background: linear-gradient(160deg, var(--fb-a), var(--fb-b));
+}
+.cover-fb-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.8125rem;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  color: var(--fb-ink, rgba(255, 255, 255, 0.96));
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cover-fb-foot {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fb-ink-soft, rgba(255, 255, 255, 0.62));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cover-rule {
+  height: 2px;
+  width: 22px;
+  background: var(--fb-rule, rgba(255, 255, 255, 0.5));
+  margin-bottom: 7px;
+}
+
+
+.vol-title { margin-top: 7px; font-size: 0.8125rem; font-weight: 500; line-height: 1.3; }
+.vol-meta { margin-top: 2px; font-size: 0.75rem; color: var(--text-muted); }
+.vol-meta-linha { display: flex; gap: 0.3em; min-width: 0; white-space: nowrap; }
+.vol-meta-linha > .truncate { min-width: 0; }
+.vol-status-wrap { flex-shrink: 0; }
+.vol-status { font-weight: 500; }
+.vol-status[data-s="lida"] { color: var(--read); }
+.vol-status[data-s="lendo"] { color: var(--accent-text); }
+
+/* ---------- group headers ---------- */
+
+.group { margin-bottom: 30px; }
+.group-head {
+  position: sticky;
+  /* Clears the publisher strip, which is itself stuck under the header. */
+  top: calc(var(--topbar-h) + var(--edbar-h));
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 12px 7px;
+  margin-inline: -12px;
+  margin-bottom: 12px;
+  --grp-bg: color-mix(in srgb, var(--grp-cor, var(--bg)) 8%, var(--bg));
+  background: var(--grp-bg);
+  border-radius: var(--r);
+  border-bottom: 1px solid var(--border);
+}
+.group-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 2px 6px 2px 2px;
+  margin-left: -2px;
+  border-radius: var(--r-sm);
+  transition: transform 120ms var(--ease-out), background 120ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .group-name:hover { background: var(--surface-2); }
+}
+.group-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px var(--grp-bg, var(--bg)) inset;
+}
+.group-swatch[data-custom="false"] { opacity: 0.55; }
+
+.group-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.0625rem;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+@media (min-width: 420px) { .swatches { grid-template-columns: repeat(8, 1fr); } }
+/* A swatch is a miniature of the cover it produces, edge stripe included, so you
+   pick by seeing the result rather than by seeing an abstract chip. */
+.swatch {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  transition: transform 120ms var(--ease-out), border-color 120ms var(--ease-out);
+}
+.swatch::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--edge);
+}
+.swatch[data-on="true"] { border-color: var(--text); }
+.dica-swatch { display: block; }
+.dica-swatch > .swatch { width: 100%; }
+
+/* The app's own hover label (v67), for swatches and icon buttons: text from
+   data-dica, drawn below the element so the first row of a sheet never clips it.
+   A native title cannot be styled, which is why this exists. It waits 250ms
+   before appearing, so sweeping the pointer across a palette does not flicker a
+   label per swatch, and leaves at once. Keyboard focus shows it too. */
+[data-dica] { position: relative; }
+[data-dica]::after {
+  content: attr(data-dica);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  z-index: 60;
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--ed-borda);
+  box-shadow: var(--shadow-cover);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -3px);
+  transition: opacity 120ms var(--ease-out), transform 120ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  [data-dica]:hover::after {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    transition-delay: 250ms;
+  }
+}
+[data-dica]:focus-visible::after,
+[data-dica]:has(> :focus-visible)::after { opacity: 1; transform: translate(-50%, 0); }
+/* Swatches at either end of a row keep their label inside the sheet. The grid is
+   6 across on a phone and 8 from 420px. */
+.swatches > .dica-swatch:nth-child(6n + 1)::after { left: 0; transform: translate(0, -3px); }
+.swatches > .dica-swatch:nth-child(6n)::after { left: auto; right: 0; transform: translate(0, -3px); }
+@media (hover: hover) and (pointer: fine) {
+  .swatches > .dica-swatch:nth-child(6n + 1):hover::after,
+  .swatches > .dica-swatch:nth-child(6n):hover::after { transform: translate(0, 0); }
+}
+@media (min-width: 420px) {
+  .swatches > .dica-swatch:nth-child(6n + 1)::after,
+  .swatches > .dica-swatch:nth-child(6n)::after { left: 50%; right: auto; transform: translate(-50%, -3px); }
+  .swatches > .dica-swatch:nth-child(8n + 1)::after { left: 0; right: auto; transform: translate(0, -3px); }
+  .swatches > .dica-swatch:nth-child(8n)::after { left: auto; right: 0; transform: translate(0, -3px); }
+}
+@media (min-width: 420px) and (hover: hover) and (pointer: fine) {
+  .swatches > .dica-swatch:nth-child(6n + 1):hover::after,
+  .swatches > .dica-swatch:nth-child(6n):hover::after { transform: translate(-50%, 0); }
+  .swatches > .dica-swatch:nth-child(8n + 1):hover::after,
+  .swatches > .dica-swatch:nth-child(8n):hover::after { transform: translate(0, 0); }
+}
+/* A collection's fold button is the last thing on its row, so its label hangs
+   left from the button's right edge instead of centring past the page (v79). */
+.coll-acoes [data-dica]::after { left: auto; right: 0; transform: translate(0, -3px); }
+@media (hover: hover) and (pointer: fine) {
+  .coll-acoes [data-dica]:hover::after { transform: translate(0, 0); }
+}
+.coll-acoes [data-dica]:focus-visible::after { transform: translate(0, 0); }
+@media (prefers-reduced-motion: reduce) {
+  [data-dica]::after { transition: opacity 120ms linear; }
+}
+.btn[data-on="true"] { border-color: var(--border-strong); color: var(--text-muted); }
+.group-count { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); }
+
+/* Pushed to the far edge so every character's fold control lands on one vertical
+   line, with the "Mostrar todas" button sitting at the head of that same line.
+   align-self because .group-head aligns on the baseline, which a button holding
+   only an icon has no useful one of. */
+.group-fold { margin-left: auto; align-self: center; }
+
+/* The row above the list. Right-aligned rather than sitting opposite the
+   publisher logo in the band: the band is shared by all three tabs, and a
+   control that appears only on this one would change its width on every tab
+   switch, re-measuring the very element whose animation depends on that width
+   holding still. Here it also reads as governing the controls it is lined up
+   with, which the band could not say at all. */
+.fold-all {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+.fold-all .btn { gap: 7px; }
+
+/* ---------- hub ---------- */
+
+.hub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hub-gap);
+  position: relative;
+  isolation: isolate;
+}
+/* Every hub section rides above the backdrop, which is the one out-of-flow child. */
+.hub > * { position: relative; z-index: 1; }
+
+/* ---- the hub backdrop: GridMotion, from React Bits ----
+   A drifting grid of your own covers behind the top of the hub. It is bled to
+   the full window width, not the column, and masked away before the hunt so the
+   page settles into flat background wherever there is text to read. */
+.gm {
+  position: absolute;
+  z-index: 0;
+  top: calc(var(--topbar-h) * -1);
+  left: 50%;
+  width: calc(100vw - var(--sbw, 0px));
+  height: min(100%, 1400px);
+  transform: translateX(-50%);
+  overflow: hidden;
+  pointer-events: none;
+  /* The tile grows with the window instead of holding a fixed size, which keeps
+     the covers large and the count down: a wider screen gets bigger books, not
+     more of them. */
+  --gm-tile-w: clamp(105px, 10.4vw, 304px);
+  --gm-tile-h: calc(var(--gm-tile-w) * 1.5);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 46%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 46%, transparent 100%);
+}
+.gm-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.gm-grid {
+  flex: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transform: rotate(-15deg);
+  transform-origin: center center;
+  opacity: 0.6;
+}
+/* One height per row, and each tile as wide as its own cover needs. Covers are
+   not all the same shape, so columns do not line up, which is what a shelf of
+   real books looks like and is the price of never cropping one. */
+.gm-row {
+  display: flex;
+  gap: 1rem;
+  height: var(--gm-tile-h);
+  will-change: transform;
+}
+.gm-item { height: 100%; flex: none; }
+.gm-item-inner {
+  height: 100%;
+  width: auto;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+}
+/* A tile with no cover yet keeps a comic's proportions so the gap it leaves is
+   book-shaped rather than an odd square. */
+.gm-item[data-empty="true"] .gm-item-inner { aspect-ratio: 2 / 3; }
+.gm-item-img {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: none;
+}
+.gm-item-content {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* The tiles are other people's cover art, so the type above them gets a floor
+   to stand on rather than trusting whatever colour happens to drift past. */
+.gm::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(14, 15, 17, 0.74), rgba(14, 15, 17, 0.9));
+}
+
+/* The unlock in reverse: returning drops the hub back in from the top. */
+@media (prefers-reduced-motion: no-preference) {
+  .hub[data-returning="true"] { animation: hubReturn 280ms var(--ease-drawer); }
+  @keyframes hubReturn {
+    from { transform: translateY(-100%); opacity: 0; }
+  }
+}
+
+.suggest {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+/* On anything wider than a phone the text block centres against the cover instead
+   of hanging from its top edge, which is what left the card bottom-empty. */
+@media (min-width: 560px) {
+  .suggest { align-items: center; gap: 20px; padding: 20px; }
+}
+.suggest-cover { width: 96px; flex-shrink: 0; }
+@media (min-width: 560px) { .suggest-cover { width: 124px; } }
+@media (min-width: 900px) { .suggest-cover { width: 160px; } }
+.suggest-body { flex: 1; min-width: 0; }
+.suggest-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.25rem, 5vw, 1.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  margin: 8px 0 0;
+  text-wrap: balance;
+  /* Held to a readable measure so a long title wraps beside the cover rather than
+     running out into the empty half of the card as one long line. */
+  max-width: 24ch;
+}
+.suggest-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+/* The shelf: the collection as texture, blocked by character colour. */
+.wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 6px;
+}
+@media (min-width: 560px) { .wall { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; } }
+.wall .cover { box-shadow: none; }
+.wall .cover-fb { padding: 6px 5px; }
+.wall .cover-fb-title { font-size: 0.5rem; -webkit-line-clamp: 3; }
+.wall .cover-fb-foot, .wall .cover-rule { display: none; }
+
+.hub-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.hub-section-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: -0.015em;
+}
+
+/* A hub section with nothing to show yet keeps its heading and a box of its own,
+   so the rhythm never collapses into a sentence floating between two sections. */
+.hub-note {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.prog { display: flex; flex-direction: column; gap: 14px; }
+.prog-row { display: block; width: 100%; text-align: left; }
+.prog-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.prog-bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.prog-bar i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--read);
+  transform-origin: left;
+  transition: transform 200ms var(--ease-out);
+}
+/* Three tiers: warm while it still needs attention, the interface's own accent
+   while it's simply moving along, read's green once it's genuinely close. */
+.prog-bar i[data-tier="baixo"] { background: var(--warm); }
+.prog-bar i[data-tier="medio"] { background: var(--accent); }
+
+/* Both the hint that the scroll gesture exists and a button doing the same thing. */
+.hub-enter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: transform 120ms var(--ease-out), border-color 120ms var(--ease-out),
+              color 120ms var(--ease-out);
+}
+.hub-enter:active { transform: scale(0.99); }
+@media (hover: hover) and (pointer: fine) {
+  .hub-enter:hover { border-color: var(--accent); color: var(--accent-text); }
+}
+.hub-enter svg { transition: transform 160ms var(--ease-out); }
+@media (hover: hover) and (pointer: fine) {
+  .hub-enter:hover svg { transform: translateY(2px); }
+}
+
+.label-wide { display: none; }
+@media (min-width: 560px) { .label-wide { display: inline; } }
+
+.hub-foot {
+  border-top: 1px solid var(--border);
+  padding-top: var(--hub-rule-pad);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.hub-figures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.hub-figure span {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.hub-figure small { display: block; margin-top: 2px; color: var(--text-muted); font-size: 0.75rem; }
+
+/* Capped, because a readout this quiet should not be the widest thing on the hub. */
+.hub-storage { max-width: 420px; }
+.hub-storage-top { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.hub-storage p { margin: 6px 0 0; }
+.hub-storage-warn { color: var(--danger-text); }
+
+/* ---------- collections (horizontal shelves) ---------- */
+
+.coll { margin-bottom: 34px; }
+/* Folded to its title (v68): only the head, so the list tightens up. */
+.coll[data-aberta="false"] { margin-bottom: 14px; }
+.coll-acoes { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.coll-acoes .btn-icon svg[data-rot="true"] { transform: rotate(-90deg); }
+.coll-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.coll-strip {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: 6px;
+  /* The native bar is hidden and .shelf-bar stands in for it. The old styled bar
+     never showed in Chrome: from 121 on, setting scrollbar-width makes it ignore
+     every ::-webkit-scrollbar rule, and this rule used to set both. */
+  scrollbar-width: none;
+}
+.coll-strip::-webkit-scrollbar { display: none; }
+/* Snapping would fight the drag, pulling the strip back to a cover edge under
+   the pointer. It comes back on release. */
+.coll-strip[data-dragging] { scroll-snap-type: none; }
+.coll-strip > * { scroll-snap-align: start; flex: 0 0 108px; }
+@media (min-width: 640px) { .coll-strip > * { flex-basis: 124px; } }
+
+/* A row of short spines across the whole width, with a lit window over the
+   stretch that is on screen. The window moves by transform only: it clips a
+   second copy of the spines, shifted back by the same amount, so the lit
+   spines stay put while the window slides over them. */
+.shelf-bar { display: flex; align-items: center; gap: 16px; margin-top: 12px; }
+/* Unset on purpose when a collection has no colour of its own, so the lit
+   spines fall through to the publisher's. */
+.shelf-wrap { min-width: 0; }
+
+/* The manage sheet's reading-order heading doubles as its fold (v66). */
+.ordem-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0 0 8px;
+  text-align: left;
+  color: var(--text-muted);
+}
+.ordem-head .t-micro { margin: 0; }
+.ordem-head svg { margin-left: auto; transition: transform 120ms var(--ease-out); }
+.ordem-head svg[data-rot="true"] { transform: rotate(-90deg); }
+@media (hover: hover) and (pointer: fine) { .ordem-head:hover { color: var(--text); } }
+/* A strip that fits on screen has nothing to scroll, so no bar. Spelled out
+   because display: flex above would otherwise win over the hidden attribute. */
+.shelf-bar[hidden] { display: none; }
+.shelf-track {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  cursor: pointer;
+  touch-action: none;
+}
+.shelf-track:focus-visible { outline: 2px solid var(--ed-accent); outline-offset: 4px; border-radius: var(--r-sm); }
+.shelf-spines {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.shelf-spines i { flex: 0 0 5px; border-radius: 1.5px; background: var(--border-strong); }
+.shelf-window { position: absolute; top: 0; bottom: 0; left: 0; overflow: hidden; }
+.shelf-window .shelf-spines { right: auto; }
+.shelf-window .shelf-spines i { background: var(--shelf-cor, var(--ed-accent)); }
+.shelf-count {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.shelf-count b { color: var(--text); font-weight: 500; }
+
+.slot-order {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+/* ---------- series ---------- */
+
+.serie-row {
+  width: 100%;
+  text-align: left;
+  display: block;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  margin-bottom: 8px;
+  transition: transform 120ms var(--ease-out), border-color 120ms var(--ease-out);
+}
+.serie-row:active { transform: scale(0.99); }
+.serie-row[data-open="true"] { border-color: var(--accent); }
+@media (hover: hover) and (pointer: fine) {
+  .serie-row:hover { border-color: var(--border-strong); }
+  .serie-row[data-open="true"]:hover { border-color: var(--accent); }
+}
+.serie-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.serie-meta { margin-top: 3px; font-size: 0.75rem; color: var(--text-muted); }
+
+/* the run bar: owned vs missing across the numbering */
+/* The capsule ends come from the container, not from rounding the first and
+   last segment: a segment of a 60-issue run is about 5px wide, and a radius
+   wider than the box it sits on gets scaled down to fit, so asking the
+   segments for it would give a full cap on a one-issue series and a nub on a
+   long one. Clipping the whole strip instead cuts the same semicircle at
+   either end whatever the run length. 999px rather than 7px so it stays a
+   true semicircle if the bar's height is ever changed. */
+.run {
+  display: flex;
+  gap: 1px;
+  margin-top: 10px;
+  height: 14px;
+  align-items: stretch;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.run i { flex: 1; min-width: 1px; background: var(--border-strong); border-radius: 1px; }
+.run i[data-owned="true"] { background: var(--read); }
+
+.tiles { display: flex; flex-wrap: wrap; gap: 6px; }
+.tile {
+  min-width: 34px;
+  padding: 5px 7px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  transition: transform 100ms var(--ease-out), background 120ms var(--ease-out),
+              color 120ms var(--ease-out), border-color 120ms var(--ease-out);
+}
+.tile:active { transform: scale(0.94); }
+.tile[data-owned="true"] { background: var(--read); border-color: var(--read); color: #fff; }
+.tile[data-sel="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.bucket { border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 8px; overflow: hidden; }
+.bucket > summary {
+  padding: 9px 12px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  background: var(--surface);
+  list-style: none;
+}
+.bucket > summary::-webkit-details-marker { display: none; }
+.bucket > div { padding: 10px 12px 12px; }
+
+/* ---------- panels, sheets, modals ---------- */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--scrim);
+  opacity: 0;
+  transition: opacity 200ms var(--ease-out);
+}
+.scrim[data-in="true"] { opacity: 1; }
+
+.sheet {
+  position: fixed;
+  z-index: 41;
+  background: var(--surface);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+/* mobile: bottom sheet */
+.sheet {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 88dvh;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-top: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-sheet);
+  transform: translateY(100%);
+  transition: transform 320ms var(--ease-drawer);
+}
+.sheet[data-in="true"] { transform: translateY(0); }
+.sheet[data-out="true"] { transition-duration: 200ms; transition-timing-function: var(--ease-out); }
+
+/* A sheet with another one stacked on top of it: recedes instead of closing,
+   so closing the front sheet reveals it exactly as it was. Its own scrim,
+   escape-to-close and pointer events are all suppressed by the component
+   (see Sheet's `recede` prop); this only draws the depth. */
+.sheet[data-behind="true"] {
+  filter: brightness(0.72) saturate(0.9);
+  pointer-events: none;
+  transition: transform 260ms var(--ease-out), filter 260ms var(--ease-out);
+}
+.sheet[data-in="true"][data-behind="true"] { transform: scale(0.96) translateY(-14px); }
+
+/* desktop: right side panel */
+@media (min-width: 768px) {
+  .sheet {
+    top: 0;
+    left: auto;
+    bottom: 0;
+    width: min(440px, 92vw);
+    max-height: none;
+    border-radius: 0;
+    border-top: none;
+    border-left: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-panel);
+    transform: translateX(100%);
+  }
+  .sheet[data-in="true"] { transform: translateX(0); }
+  .sheet[data-in="true"][data-behind="true"] { transform: scale(0.96) translateX(-14px); }
+}
+
+.sheet-grab { padding: 8px 0 2px; display: flex; justify-content: center; }
+.sheet-grab i { width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong); }
+@media (min-width: 768px) { .sheet-grab { display: none; } }
+
+.sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.sheet-body { padding: 16px; overflow-y: auto; overflow-x: hidden; flex: 1; display: flex; flex-direction: column; gap: 18px; }
+
+/* Inner scrollbars, drawn as a 4px line with no arrows and no track: 10px to grab,
+   the border colour at rest, the accent while the pointer is over the area. Only
+   the ::-webkit rules, because Chrome 121+ skips all of them once scrollbar-width
+   or scrollbar-color is set (the v60 lesson). Firefox, which has no ::-webkit
+   scrollbars, gets the standard thin bar instead. The page's own bar is untouched. */
+.sug::-webkit-scrollbar, .sheet-body::-webkit-scrollbar, .modal-body::-webkit-scrollbar { width: 10px; }
+.sug::-webkit-scrollbar-track, .sheet-body::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track { background: transparent; }
+.sug::-webkit-scrollbar-button, .sheet-body::-webkit-scrollbar-button, .modal-body::-webkit-scrollbar-button { display: none; }
+.sug::-webkit-scrollbar-thumb, .sheet-body::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb {
+  background: var(--ed-rolagem);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+.sug:hover::-webkit-scrollbar-thumb, .sheet-body:hover::-webkit-scrollbar-thumb, .modal-body:hover::-webkit-scrollbar-thumb { background-color: var(--ed-accent); }
+@supports not selector(::-webkit-scrollbar) {
+  .sug, .sheet-body, .modal-body { scrollbar-width: thin; scrollbar-color: var(--ed-rolagem) transparent; }
+}
+.sheet-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.modal-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 41;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  pointer-events: none;
+}
+@media (min-width: 640px) { .modal-wrap { align-items: center; padding: 24px; } }
+.modal {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 460px;
+  max-height: 88dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  box-shadow: var(--shadow-sheet);
+  transform: translateY(100%);
+  transition: transform 320ms var(--ease-drawer), opacity 200ms var(--ease-out);
+}
+.modal[data-in="true"] { transform: translateY(0); }
+.modal[data-out="true"] { transition-duration: 200ms; transition-timing-function: var(--ease-out); }
+@media (min-width: 640px) {
+  .modal {
+    border-radius: var(--r-lg);
+    transform: translateY(12px) scale(0.97);
+    opacity: 0;
+  }
+  .modal[data-in="true"] { transform: translateY(0) scale(1); opacity: 1; }
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-body { padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+.modal-foot {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface);
+}
+
+/* ---------- detail bits ---------- */
+
+.detail-cover { width: 118px; flex-shrink: 0; }
+.deflist { display: grid; grid-template-columns: auto 1fr; gap: 7px 14px; align-items: baseline; }
+.deflist dt { font-size: 0.75rem; color: var(--text-muted); }
+.deflist dd { margin: 0; font-size: 0.8125rem; }
+
+.linked-serie { border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px; margin-bottom: 8px; }
+
+/* Pinned to the foot of the sheet so inspecting issue 700 of a long run never
+   scrolls the grid out from under you. */
+.edicao-pinned {
+  position: sticky;
+  bottom: -16px;
+  z-index: 2;
+  margin: 14px -16px -16px;
+  padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  border: none;
+  border-top: 1px solid var(--border-strong);
+  border-radius: 0;
+  background: var(--surface-2);
+  box-shadow: 0 -8px 24px var(--topbar-shadow);
+}
+
+.checkline {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.checkline input { accent-color: var(--accent); width: 15px; height: 15px; }
+
+/* ---------- feedback ---------- */
+
+.banner {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 11px 13px;
+  border-radius: var(--r);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  font-size: 0.8125rem;
+  margin-bottom: 18px;
+}
+.banner[data-tone="warn"] { border-color: var(--danger); }
+.banner svg { flex-shrink: 0; margin-top: 1px; color: var(--danger-text); }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  padding: 10px 16px;
+  border-radius: var(--r);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-sheet);
+  font-size: 0.8125rem;
+  max-width: calc(100vw - 32px);
+  transform: translate(-50%, 12px);
+  opacity: 0;
+  transition: transform 300ms ease, opacity 300ms ease;
+}
+.toast[data-in="true"] { transform: translate(-50%, 0); opacity: 1; }
+.toast[data-out="true"] { transition-duration: 200ms; }
+@media (min-width: 768px) { .toast { bottom: 24px; } }
+
+.empty {
+  text-align: center;
+  padding: 56px 24px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+}
+.empty h3 {
+  margin: 12px 0 4px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.015em;
+}
+.empty p { margin: 0; color: var(--text-muted); font-size: 0.8125rem; }
+.empty svg { color: var(--text-muted); }
+
+/* Read aloud, never drawn. Clipped rather than hidden, because display:none and
+   visibility:hidden both take it out of the accessibility tree too. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* skeleton loading, shaped like the tab it replaces */
+.skel {
+  border-radius: var(--r);
+  background: var(--surface-2);
+  aspect-ratio: 2 / 3;
+}
+.skel-line { height: 9px; border-radius: 3px; background: var(--surface-2); margin-top: 8px; }
+.skel-line[data-w="short"] { width: 58%; }
+.skel-line[data-w="micro"] { width: 22%; height: 7px; }
+.skel-line[data-w="title"] { width: 74%; height: 22px; margin-top: 12px; }
+.skel-line[data-w="head"] { width: 22%; height: 16px; margin-top: 0; }
+.skel-line[data-w="row"] { width: 46%; margin-top: 0; }
+.skel-line[data-w="name"] { width: 18%; height: 13px; margin-top: 0; }
+.skel-line[data-w="figure"] { width: 34%; height: 16px; margin-top: 0; }
+/* The fold-all button and a collection head's controls, at their real sizes. */
+.skel-line[data-w="fold"] { width: 140px; height: 37px; margin-top: 0; border-radius: var(--r); }
+.skel-line[data-w="acao"] { width: 128px; height: 34px; margin-top: 0; flex-shrink: 0; border-radius: var(--r); }
+/* The Coleções spine bar: short spines at the real bar's 5px + 6px rhythm, one
+   height, with room at the right where the count sits. */
+.skel-spines {
+  height: 30px;
+  margin-top: 22px; /* 11px real gap + 11px the placeholder captions are shorter */
+  margin-right: 110px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(to right, var(--surface-2) 0 5px, transparent 5px 11px);
+}
+/* Spacing measured off the loaded tabs at 1707px, so nothing jumps on arrival:
+   HQs 28px from band to cover; Séries closed bands 30px apart; Coleções a 49px
+   head, 13px to the strip, and the 19px order number over each cover. */
+.skel-hqs .skel-head { margin-bottom: 28px; }
+.skel-series .skel-head { margin-bottom: 0; }
+.skel-series .group { margin-bottom: 30px; }
+.skel-colecoes .coll-head { min-height: 49px; margin-bottom: 13px; }
+.skel-colecoes .coll-strip > div { padding-top: 19px; }
+
+/* Stands in for the run bar, which is the same height but made of segments the
+   loading state has no numbers for yet. */
+.skel-run { height: 14px; border-radius: 3px; background: var(--surface-2); margin-top: 10px; }
+
+/* The character band the Séries tab groups under, without the sticky behaviour
+   or the character tint: there is no character to take a colour from yet. */
+.skel-head {
+  /* The real head is 52px since its fold chevron (v57); matching it keeps the
+     covers from jumping when the library arrives (v68). */
+  box-sizing: border-box;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px 7px;
+  margin-inline: -12px;
+  margin-bottom: 20px;
+  border-radius: var(--r);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Maintenance info, so it stays neutral: the accent is reserved for the actions
+   you actually take. It only earns a colour once it is close to the cap. */
+.meter { height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--text-muted); }
+.meter i[data-over="true"] { background: var(--danger); }
+
+.stats { border: 1px solid var(--border); border-radius: var(--r); padding: 14px; background: var(--surface); margin-bottom: 18px; }
+
+.divider { height: 1px; background: var(--border); border: none; margin: 0; }
+
+.footer-actions {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: var(--hub-gap);
+  padding-top: var(--hub-rule-pad);
+  border-top: 1px solid var(--border);
+}
+
+.cover-paste-hint {
+  margin: 6px 0 0;
+  text-align: center;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+/* A touch tablet has no Ctrl+V to press (v79). Pasting still works where a
+   keyboard is attached; only the hint goes. */
+@media (hover: none) { .cover-paste-hint { display: none; } }
+
+/* cover upload affordance */
+.cover-upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px;
+  border-radius: var(--r);
+  border: 1px dashed var(--border-strong);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  transition: transform 120ms var(--ease-out), border-color 120ms var(--ease-out),
+              color 120ms var(--ease-out);
+}
+.cover-upload:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) {
+  .cover-upload:hover { border-color: var(--accent); color: var(--accent-text); }
+}
+
+/* ---------- entry stagger ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .stagger > * {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: rise 300ms var(--ease-out) forwards;
+    animation-delay: calc(var(--i, 0) * 30ms);
+  }
+  @keyframes rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* ---------- the skeleton's pulse ---------- */
+
+/* The one endless animation in this app, and it earns the exception: a wait has
+   no known length, so the thing standing in for it cannot have one either. It
+   ends when the library lands, which is the only honest end available to it.
+   Opacity only, and on the grey blocks rather than on their container: the card
+   borders and the character band are the frame the content will arrive into, and
+   a frame that breathes reads as the page itself being unstable. They all share
+   one duration and one curve, so they move as one thing rather than sixteen.
+   Living inside no-preference means the reduce block below never gets to clamp
+   it to a 150ms strobe: under reduced motion the skeleton simply sits still. */
+@media (prefers-reduced-motion: no-preference) {
+  .skel-wrap .skel,
+  .skel-wrap .skel-line,
+  .skel-wrap .skel-run,
+  .skel-wrap .skel-spines {
+    animation: skelPulse 1800ms var(--ease-pulse) infinite;
+  }
+  @keyframes skelPulse {
+    50% { opacity: 0.5; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 150ms !important;
+    transition-duration: 150ms !important;
+  }
+  .sheet, .modal { transition-property: opacity !important; transform: none !important; }
+  .sheet[data-in="true"], .modal[data-in="true"] { transform: none !important; }
+  .press:active, .btn:active, .btn-icon:active, .tile:active, .vol:active .cover,
+  .serie-row:active, .seg3 button:active, .cover-upload:active,
+  .vol[data-dragging="true"] .cover { transform: none !important; }
+  .toast { transform: translate(-50%, 0) !important; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .topbar, .tabbar { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); }
+}

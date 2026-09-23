@@ -1,0 +1,26 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Longbox tablet frames</title>
+<style>
+  body { margin: 0; padding: 12px; background: #888; font: 12px system-ui; }
+  .f { display: inline-block; vertical-align: top; margin: 0 12px 12px 0; }
+  iframe { border: 0; background: #fff; display: block; }
+</style>
+<!-- Real tablet viewports, so the app's media queries answer as on the device.
+     ?w=&h= picks one size; default is iPad portrait. -->
+<div class="f"><div id="rot"></div><iframe id="app"></iframe></div>
+<div id="mais"></div>
+<script>
+  const p = new URLSearchParams(location.search);
+  const w = +p.get("w") || 820, h = +p.get("h") || 1180;
+  const f = document.getElementById("app");
+  f.width = w; f.height = h; f.src = "index.html" + (p.has("lento") ? "?lento" : "");
+  document.getElementById("rot").textContent = w + " x " + h;
+  // ?varios=768x1024,1024x768 adds more frames beside the first.
+  (p.get("varios") || "").split(",").filter(Boolean).forEach((s, i) => {
+    const [ww, hh] = s.split("x").map(Number);
+    const d = document.createElement("div"); d.className = "f";
+    d.innerHTML = "<div>" + ww + " x " + hh + "</div><iframe id=\"app" + (i + 2) + "\" width=\"" + ww + "\" height=\"" + hh + "\" src=\"index.html\"></iframe>";
+    document.getElementById("mais").appendChild(d);
+  });
+</script>

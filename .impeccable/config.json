@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/styles.css"
+        ],
+        "createdAt": "2026-09-13T11:23:13.284Z",
+        "reason": "user confirmed: the left stripe is the character-colour edge the user asked for and refined across v8-v12; it identifies who a volume belongs to in the shelf-as-map, and .swatch is a literal miniature of that cover, so the stripe is the thing being previewed, not decoration"
+      }
+    ]
+  }
+}
