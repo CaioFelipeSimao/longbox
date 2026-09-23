@@ -100,7 +100,7 @@ export function SerieSheet({
       subtitle={s ? anoRange(s) + (s.editora ? " · " + s.editora : "") : null}
       actions={s && (
         <>
-          <button className="btn-icon" onClick={onEdit} aria-label="Editar"><Pencil size={16} /></button>
+          <button className="btn-icon" onClick={onEdit} aria-label="Editar" data-dica="Editar · E"><Pencil size={16} /></button>
           <button className="btn-icon" onClick={onDelete} aria-label="Remover">
             <Trash2 size={16} color="var(--danger-text)" />
           </button>

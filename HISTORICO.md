@@ -1896,3 +1896,23 @@ queries and nothing had caught v70 for twenty versions. Re-running the whole rev
 the fixed build left one reported failure, the pill label itself, which the scanner
 measures against the grey track because the pill is a separate element behind the text;
 the screenshots confirm the dark ink on the cyan.
+
+**v91: Q4, keyboard shortcuts.** Agreed in chat before building: `/` search, `1 2 3`
+the tabs, `N` new (whatever the tab's "Novo" does), `E` edit what the open sheet shows
+(the série sheet first when it sits on the volume sheet), `Ctrl+Z` undo the last removal,
+`?` a panel listing every key including the ones that already existed (Esc, ← →,
+Ctrl+V). The user first picked "panel only", then changed to panel plus hints, so the
+keys also ride the existing `[data-dica]` hover labels ("Novo · N", "Coleções · 2",
+"Buscar · /", "Editar · E", "Desfazer · Ctrl+Z"). One window listener in
+`telas/useAtalhos.js`; the rules: nothing while typing in a field or under a modal;
+letters and digits never with Ctrl, Alt or Cmd (Ctrl+1 and Ctrl+N are the browser's);
+Ctrl+Z only while a removal can be undone, and never inside a field, where it is the
+field's own undo; with a sheet open only `E` and `?`, so a stray digit cannot switch
+the tab under it. From the hub `/` enters the HQs tab first, since the search box only
+exists off the hub. Two hint placements needed care: the search field's label hides
+while the field has focus (it would cover the suggestions), and the toast's label opens
+above the button, the toast being at the foot of the screen. The claude.ai frame only
+passes keys to the app after a click inside it; the panel says so, since the app cannot
+work around it. `tests/test-atalhos.mjs`, 28 checks; checked again with a real keyboard
+and mouse in headless Chrome (the "/" is not typed into the field, the hints sit where
+intended, the panel reads in both themes).

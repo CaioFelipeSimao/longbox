@@ -2089,6 +2089,39 @@ button.retrato-linha { cursor: pointer; }
   transition: transform 300ms ease, opacity 300ms ease;
 }
 .toast[data-in="true"] { transform: translate(-50%, 0); opacity: 1; }
+/* Q4 (v91): shortcut hints ride the existing [data-dica] label. Two places need
+   it moved or held back: the search field shows its label only while idle (focused
+   it would sit over the suggestions as you type), and the toast sits at the foot
+   of the screen, so its label opens above the button instead of below. */
+.search-field[data-dica]:focus-within::after,
+.search[data-full="true"] .search-field[data-dica]::after { opacity: 0; transition-delay: 0ms; }
+.toast [data-dica]::after { top: auto; bottom: calc(100% + 8px); transform: translate(-50%, 3px); }
+
+/* The list opened with "?". Keys drawn as small key caps, the micro-tile radius. */
+.atalhos { display: flex; flex-direction: column; gap: 18px; }
+.atalhos .t-micro { margin: 0 0 8px; }
+.atalhos dl { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.atalho { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); align-items: center; gap: 12px; }
+.atalho dt { display: flex; flex-wrap: wrap; gap: 4px; }
+.atalho dd { margin: 0; font-size: 0.8125rem; }
+.atalhos kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.atalhos-nota { margin: 0; }
+
 /* v88: a removal's toast carries "Desfazer". The button keeps a 32px touch
    target inside the toast's own padding instead of growing the toast. */
 .toast[data-acao="true"] {

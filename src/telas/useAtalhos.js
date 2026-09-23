@@ -1,0 +1,51 @@
+import { useEffect, useRef } from "react";
+
+// Q4 (v91): the keyboard shortcuts, one window listener for all of them.
+//   /        search                    1 2 3   HQs, Coleções, Séries
+//   N        new, as the tab's "Novo"  E       edit what the open sheet shows
+//   Ctrl+Z   undo the last removal     ?       the list of shortcuts
+// Esc and ← → live with the sheets that own them (useEscape, VolumeSheet).
+// Rules: nothing fires while typing in a field or under a modal; letters and digits
+// never with Ctrl, Alt or Cmd, since Ctrl+1 and Ctrl+N are the browser's; Ctrl+Z is
+// taken only while a removal can be undone, otherwise it stays the browser's (and in
+// a field it is always the field's own undo). With a sheet open only E works, so a
+// stray digit cannot switch the tab out from under it.
+export function useAtalhos(acoes) {
+  const atual = useRef(acoes);
+  atual.current = acoes;
+  useEffect(() => {
+    const h = (e) => {
+      if (e.defaultPrevented) return;
+      const a = atual.current;
+      const k = e.key;
+      const alvo = e.target;
+      const digitando = !!(alvo && alvo.closest && alvo.closest("input, textarea, select, [contenteditable]"));
+      const modal = !!document.querySelector(".modal");
+
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (k === "z" || k === "Z")) {
+        if (digitando || modal || !a.podeDesfazer) return;
+        e.preventDefault();
+        a.desfazer();
+        return;
+      }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (digitando || modal) return;
+
+      if (k === "?") { e.preventDefault(); a.mostrarAtalhos(); return; }
+      if (k === "e" || k === "E") {
+        if (a.editarAberto()) e.preventDefault();
+        return;
+      }
+      if (a.fichaAberta) return;
+      if (k === "/") { e.preventDefault(); a.focarBusca(); return; }
+      if (k === "1" || k === "2" || k === "3") {
+        e.preventDefault();
+        a.abrirAba(["volumes", "colecoes", "series"][Number(k) - 1]);
+        return;
+      }
+      if (k === "n" || k === "N") { e.preventDefault(); a.novo(); }
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, []);
+}

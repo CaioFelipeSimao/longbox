@@ -37,8 +37,10 @@ import { AbaSeries } from "./AbaSeries";
 import { ColecaoSheet } from "./ColecaoSheet";
 import { FormColecao, FormEdicao, FormSerie, FormVolume, ImportarEdicoes } from "./Formularios";
 import { Hub } from "./Hub";
+import { PainelAtalhos } from "./PainelAtalhos";
 import { SerieSheet } from "./SerieSheet";
 import { useArrastarVolumes } from "./useArrastarVolumes";
+import { useAtalhos } from "./useAtalhos";
 import { VolumeSheet } from "./VolumeSheet";
 
 export function App() {
@@ -1283,6 +1285,39 @@ export function App() {
     else openNovoVolume();
   }
 
+  /* ---------- keyboard shortcuts (Q4, v91) ---------- */
+  const [showAtalhos, setShowAtalhos] = useState(false);
+  // The série sheet sits on top of the volume sheet when both are open, so E edits
+  // the one in front.
+  function editarAberto() {
+    if (openSerie) { openEditarSerie(openSerie); return true; }
+    if (openVolume) { openEditarVolume(openVolume); return true; }
+    if (openColecao) { openEditarColecao(openColecao); return true; }
+    return false;
+  }
+  // The search box only exists off the hub, so from the hub "/" enters the HQs
+  // tab first and focuses the box once it has rendered.
+  function focarBusca() {
+    if (isHub) switchTab("volumes");
+    let tentativas = 0;
+    const tentar = () => {
+      const campo = document.querySelector(".search input");
+      if (campo) { campo.focus(); return; }
+      if (++tentativas < 20) setTimeout(tentar, 30);
+    };
+    tentar();
+  }
+  useAtalhos({
+    podeDesfazer: !!desfazerAtual,
+    desfazer,
+    mostrarAtalhos: () => setShowAtalhos(true),
+    fichaAberta: !!(openVolumeId || openSerieId || openColecaoId || corPersonagem || showEditoras),
+    editarAberto,
+    focarBusca,
+    abrirAba: switchTab,
+    novo: novoNaAba,
+  });
+
   /* ============================ render ============================ */
 
   return (
@@ -1367,7 +1402,7 @@ export function App() {
               {filtrosAtivos > 0 && <span className="btn-badge" aria-hidden="true">{filtrosAtivos}</span>}
             </button>
           )}
-          <button className={isHub ? "btn btn-quiet" : "btn btn-primary"} onClick={novoNaAba}>
+          <button className={isHub ? "btn btn-quiet" : "btn btn-primary"} onClick={novoNaAba} data-dica="Novo · N">
             <Plus size={15} /> Novo
           </button>
           {isHub && (
@@ -1784,6 +1819,8 @@ export function App() {
         enviando={enviandoLogo}
       />
 
+      <PainelAtalhos open={showAtalhos} onClose={() => setShowAtalhos(false)} />
+
       <CorSheet
         personagem={corPersonagem}
         cores={lib.cores || {}}
@@ -1791,7 +1828,7 @@ export function App() {
         onClose={() => setCorPersonagem(null)}
       />
 
-      {toast && <Toast key={toast.id} message={toast.msg} acao={desfazerAtual ? { rotulo: "Desfazer", onClick: desfazer } : null} />}
+      {toast && <Toast key={toast.id} message={toast.msg} acao={desfazerAtual ? { rotulo: "Desfazer", onClick: desfazer, dica: "Desfazer · Ctrl+Z" } : null} />}
     </div>
     </CoresContext.Provider>
   );

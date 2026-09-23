@@ -124,7 +124,7 @@ export function Toast({ message, acao }) {
   return (
     <div className="toast" data-in={shown ? "true" : "false"} data-acao={acao ? "true" : "false"} role="status">
       <span>{message}</span>
-      {acao && <button type="button" className="toast-acao press" onClick={acao.onClick}>{acao.rotulo}</button>}
+      {acao && <button type="button" className="toast-acao press" onClick={acao.onClick} data-dica={acao.dica}>{acao.rotulo}</button>}
     </div>
   );
 }

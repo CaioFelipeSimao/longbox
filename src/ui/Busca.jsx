@@ -97,7 +97,7 @@ export function SearchBox({ query, setQuery, sugestoes, onPick }) {
 
   return (
     <div className="search" data-full={full ? "true" : "false"} ref={raiz}>
-      <div className="search-field">
+      <div className="search-field" data-dica="Buscar · /">
         <Search size={15} />
         <input
           ref={campo}

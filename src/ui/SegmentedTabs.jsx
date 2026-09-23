@@ -302,7 +302,7 @@ export function SegmentedTabs({ tabs, tab, onTab }) {
     >
       <span ref={ghostRef} className="seg-ghost" aria-hidden="true" />
       <span ref={thumbRef} className="seg-thumb" aria-hidden="true"><i className="pil-janela"><i className="pil-corpo" /></i></span>
-      {tabs.map((t) => {
+      {tabs.map((t, i) => {
         const Icon = t.icon;
         return (
           <button
@@ -310,6 +310,7 @@ export function SegmentedTabs({ tabs, tab, onTab }) {
             ref={(el) => registrarBtn(t.key, el)}
             className="press"
             data-active={tab === t.key ? "true" : "false"}
+            data-dica={t.label + " · " + (i + 1)}
             onClick={() => onTab(t.key)}
             // pointerenter, not mouseenter: a stylus hovering the tablet
             // reports as a pointer and should light the same preview.

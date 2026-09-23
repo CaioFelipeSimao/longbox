@@ -93,7 +93,7 @@ export function VolumeSheet({
       )}
       actions={v && (
         <>
-          <button className="btn-icon" onClick={onEdit} aria-label="Editar"><Pencil size={16} /></button>
+          <button className="btn-icon" onClick={onEdit} aria-label="Editar" data-dica="Editar · E"><Pencil size={16} /></button>
           <button className="btn-icon" onClick={onDuplicate} aria-label="Duplicar este volume"><Copy size={16} /></button>
           <button className="btn-icon" onClick={onDelete} aria-label="Remover">
             <Trash2 size={16} color="var(--danger-text)" />
