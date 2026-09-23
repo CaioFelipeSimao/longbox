@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, BookOpen, ChevronDown, Shuffle } from "lucide-react";
+import { Plus, Download, BookOpen, ChevronDown, Shuffle } from "lucide-react";
 import GridMotion from "../components/GridMotion/GridMotion";
 
 import {
@@ -82,7 +82,7 @@ export function buildBackdrop(volumes, count, seed) {
 
 export function Hub({
   lib, stats, docUsage, edicoesPorSerie, ownedIds,
-  onOpenVolume, onOpenSerie, onNovo, onEnter, sentinelRef, rootRef, returning,
+  onOpenVolume, onOpenSerie, onNovo, onEnter, sentinelRef, rootRef, returning, backup, onBackup,
 }) {
   const vazia = lib.volumes.length === 0 && lib.series.length === 0;
   const cores = useCores();
@@ -226,6 +226,7 @@ export function Hub({
               Chegando no limite. Me avise para reestruturar o armazenamento.
             </p>
           )}
+          {backup && <BackupLinha ultimo={backup.ultimo} onBackup={onBackup} />}
         </div>
       </div>
 
@@ -235,6 +236,37 @@ export function Hub({
       </button>
 
       <div ref={sentinelRef} style={{ height: 1, marginTop: -1 }} aria-hidden="true" />
+    </div>
+  );
+}
+
+// v88: how long ago the library was last backed up. Counted in calendar days, so
+// last night reads "ontem" even when it was less than 24 hours ago. Past a month,
+// or with no backup ever, the line stands out and offers to make one right there.
+const BACKUP_VELHO_DIAS = 30;
+
+function diasDesde(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  const dia = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  return Math.round((dia(new Date()) - dia(d)) / 86400000);
+}
+
+function BackupLinha({ ultimo, onBackup }) {
+  const dias = ultimo ? diasDesde(ultimo) : null;
+  const texto = dias === null ? "Nenhum backup feito ainda."
+    : dias <= 0 ? "Último backup hoje."
+    : dias === 1 ? "Último backup ontem."
+    : "Último backup há " + dias + " dias.";
+  const atencao = dias === null || dias >= BACKUP_VELHO_DIAS;
+  return (
+    <div className="hub-backup" data-atencao={atencao ? "true" : "false"}>
+      <p className="t-small">{texto}</p>
+      {atencao && (
+        <button className="btn btn-quiet" onClick={onBackup}>
+          <Download size={13} /> Fazer backup agora
+        </button>
+      )}
     </div>
   );
 }

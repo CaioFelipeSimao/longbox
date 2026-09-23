@@ -134,6 +134,30 @@ export async function flushLibrary(lib) {
   }
 }
 
+// v88: when the library was last backed up, in its own document rather than in
+// the library: it is shared by both devices like everything else in db, but it
+// never rides inside a backup file (importing an old one would otherwise rewrite
+// it) and undo, which restores the library, cannot touch it. library/meta holds
+// only this field, so set() replacing the whole document is fine; a future field
+// here would need to be written alongside it.
+export async function lerUltimoBackup(db) {
+  try {
+    const snap = await db.doc("library/meta").get();
+    return snap.exists ? snap.data().ultimoBackup || null : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function gravarUltimoBackup(quando) {
+  if (!store.db) return;
+  try {
+    await store.db.doc("library/meta").set({ ultimoBackup: quando });
+  } catch (e) {
+    if (store.onError) store.onError(dbErrorMessage(e));
+  }
+}
+
 export function scheduleSave(lib) {
   if (!store.db) return;
   if (store.timer) clearTimeout(store.timer);

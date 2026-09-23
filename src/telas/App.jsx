@@ -12,7 +12,9 @@ import {
   anoRange, bytesOf, deleteColecao, deleteEdicao, deleteSerie, deleteVolume, ensureAvulsa,
   ensureRange, normalizeLib, parseImportText, personagensDaSerie, semearEditoras,
 } from "../lib/biblioteca";
-import { loadLibrary, scheduleSave, shardEdicoes, store } from "../lib/armazenamento";
+import {
+  gravarUltimoBackup, lerUltimoBackup, loadLibrary, scheduleSave, shardEdicoes, store,
+} from "../lib/armazenamento";
 import {
   assetErrorMessage, esperarMiniaturas, prepararMiniaturas, uploadCover,
 } from "../lib/capas";
@@ -49,6 +51,7 @@ export function App() {
   const [toast, setToast] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [exportText, setExportText] = useState(null);
+  const [ultimoBackup, setUltimoBackup] = useState(null);
   const [corPersonagem, setCorPersonagem] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const sentinelRef = useRef(null);
@@ -92,6 +95,9 @@ export function App() {
         setLoading(false);
       } else {
         setStorageMode("db");
+        // Read alongside the library, never before the page shows: the hub
+        // footer can fill this in a moment later (v88).
+        lerUltimoBackup(db).then((quando) => { if (!cancelled) setUltimoBackup(quando); });
         try {
           const loaded = await loadLibrary(db);
           const semeado = semearEditoras(loaded);
@@ -917,11 +923,20 @@ export function App() {
   // A page-initiated download is inert inside the artifact sandbox, so the
   // export goes through the downloads capability, with copy-to-clipboard as
   // the fallback for views where that capability is not available.
+  // v88: only an export that actually landed counts (a saved file, or the JSON
+  // copied), never one that was declined; the hub footer reads this date.
+  function registrarBackup() {
+    const agora = new Date().toISOString();
+    setUltimoBackup(agora);
+    gravarUltimoBackup(agora);
+  }
+
   async function exportJson() {
     const data = JSON.stringify(libRef.current, null, 2);
     if (store.downloads) {
       try {
         await store.downloads.save({ filename: "longbox.json", data });
+        registrarBackup();
         showToast("Backup salvo.");
         return;
       } catch (e) {
@@ -937,6 +952,7 @@ export function App() {
   async function copyExport() {
     try {
       await navigator.clipboard.writeText(exportText);
+      registrarBackup();
       showToast("Backup copiado. Cole num arquivo .json e guarde.");
     } catch (e) {
       showToast("Não consegui copiar. Selecione o texto e copie na mão.");
@@ -1358,6 +1374,8 @@ export function App() {
             onOpenSerie={(id) => { switchTab("series"); setOpenSerieId(id); setOpenSerieContexto(null); }}
             onNovo={openNovoVolume}
             onEnter={entrarNaColecao}
+            backup={storageMode === "db" ? { ultimo: ultimoBackup } : null}
+            onBackup={exportJson}
             sentinelRef={hubSentinelRef}
             rootRef={hubElRef}
             returning={hubReturning}

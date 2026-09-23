@@ -1583,6 +1583,21 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .hub-storage-top { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
 .hub-storage p { margin: 6px 0 0; }
 .hub-storage-warn { color: var(--danger-text); }
+/* v88: the last backup, under the storage meter. Overdue reads in full text colour
+   with a button beside it; it never borrows --danger, which is kept for the
+   storage limit and destructive actions. */
+.hub-backup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.hub-storage .hub-backup p { margin: 0; color: var(--text-muted); }
+.hub-storage .hub-backup[data-atencao="true"] p { color: var(--text); font-weight: 500; }
 
 /* ---------- collections (horizontal shelves) ---------- */
 

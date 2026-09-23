@@ -172,7 +172,13 @@ library/series     {items: [...]}    series metadata only, small
 library/cores      {mapa: {...}}     character name -> colour spec
 library/editoras   {itens, selecionada}  publishers, and the last one browsed
 edicoes/<serieId>  {items: [...]}    one document per series
+library/meta       {ultimoBackup}    when an export last succeeded (v88)
 ```
+
+`library/meta` sits outside the library on purpose: it is not part of `lib`, so it never
+rides inside a backup file, an import cannot rewrite it and undo cannot touch it. It is read
+in parallel with the library and never holds the page (reading it first cost a round trip on
+every boot, caught by `test-boot.mjs`).
 
 Edições are sharded per series because that is the only collection that grows without bound.
 A single long run (Detective Comics, 1000+ issues) is roughly 100 KiB on its own, so one
