@@ -1221,6 +1221,21 @@ export function App() {
     persist({ ...lib, editoraSel: id });
   }
 
+  // D1 (v89): a bar in the hub's "Seu acervo" opens the HQs tab on exactly that
+  // slice. Everything else is let go (search, the other filters, the publisher
+  // band, unless the bar is a publisher), so the shelf shows the same count the
+  // hub did; the panel opens so the filter doing it is in plain sight.
+  function abrirRecorte({ status = "", tipo = "", personagem = "", editora = null }) {
+    setQuery("");
+    setFiltroStatus(status);
+    setFiltroTipo(tipo);
+    setFiltroPersonagem(personagem);
+    const faixa = editora || ED_TODAS;
+    if ((lib.editoraSel || ED_TODAS) !== faixa) selecionarEditora(faixa);
+    setShowFiltros(!editora);
+    switchTab("volumes");
+  }
+
   // One handler for the three shapes: null id adds, null patch removes, otherwise merge.
   function alterarEditora(id, patch) {
     if (id === null) {
@@ -1430,6 +1445,7 @@ export function App() {
             onEnter={entrarNaColecao}
             backup={storageMode === "db" ? { ultimo: ultimoBackup } : null}
             onBackup={exportJson}
+            onRecorte={abrirRecorte}
             sentinelRef={hubSentinelRef}
             rootRef={hubElRef}
             returning={hubReturning}

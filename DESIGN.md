@@ -61,9 +61,14 @@ DARK                          LIGHT
 --accent-ink    #04191E       #FFFFFF   (text ON accent fill)
 --danger        #F04438       #D92D20
 --read          #5B9E6F       #3F7D52
+--retrato-lendo #22C8E0       #00A5BF   ("lendo" in the hub's reading meter only, v89)
 ```
 
 One accent, locked. `--danger` is semantic only (destructive actions), never decorative.
+`--retrato-lendo` exists because the accent beside `--read` failed the dataviz validator's
+normal-vision floor (OKLab dE 14.1 dark, 12.4 light, floor 15); this step gives 16.8 and 16.9.
+`--read` itself fails the validator's chroma floor in both themes (a muted green); left
+as is, since it is the app-wide status colour, and noted for D2's theme pass.
 Status uses (since v76, words in the shelf caption, not a cover bar): unread = nothing (absence is the default), reading = `--accent-text`, read = `--read`.
 
 No pure `#000` or `#fff` anywhere.

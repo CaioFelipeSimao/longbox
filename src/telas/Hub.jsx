@@ -11,6 +11,7 @@ import { coverUrl, miniUrl, useMiniVersao } from "../lib/capas";
 import { EmptyState } from "../ui/base";
 import { HuntProgress } from "../ui/Series";
 import { CoverArt, VolumeCard } from "../ui/VolumeCard";
+import { RetratoAcervo } from "./RetratoAcervo";
 
 // A representative sample, not the first N: capping a character-sorted list
 // alphabetically would erase whoever sorts last, and the shelf is meant to read
@@ -82,7 +83,7 @@ export function buildBackdrop(volumes, count, seed) {
 
 export function Hub({
   lib, stats, docUsage, edicoesPorSerie, ownedIds,
-  onOpenVolume, onOpenSerie, onNovo, onEnter, sentinelRef, rootRef, returning, backup, onBackup,
+  onOpenVolume, onOpenSerie, onNovo, onEnter, sentinelRef, rootRef, returning, backup, onBackup, onRecorte,
 }) {
   const vazia = lib.volumes.length === 0 && lib.series.length === 0;
   const cores = useCores();
@@ -195,6 +196,8 @@ export function Hub({
           ))}
         </div>
       </section>
+
+      <RetratoAcervo lib={lib} onRecorte={onRecorte} />
 
       <div className="hub-foot">
         <div className="hub-figures">

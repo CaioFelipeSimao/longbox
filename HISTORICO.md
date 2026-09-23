@@ -1851,3 +1851,20 @@ option.
 
 Verified in the harness in Chrome (dark theme): the backup line, the sheet header, the
 toast and the série sheet. The light theme is D2's pass, next.
+
+**v89: D1, "Seu acervo" on the hub.** After the shelf, before the footer figures, three
+plain columns: Leitura (the number read, a meter of lidas / lendo / the rest with a 2px
+gap between parts, and the three counts written out), Formatos and Personagens (bars of
+each slice's share of the whole collection on a full-width track, so the columns share
+one scale; characters in their own shelf colour, top four plus "Outros"). A publisher
+column appears only with two or more publishers: the real library was read-only
+inspected first and is 102 volumes, 100% DC, so a publisher chart would have been one
+bar. Every bar but "Outros" is a shortcut: the HQs tab opens filtered to that slice with
+the filter panel open, search cleared and the band on every publisher, so the shelf
+shows the count the hub did. The dataviz validator failed the status pair in the meter
+(accent vs --read too close for normal vision), so the meter's "lendo" got its own
+validated step, `--retrato-lendo`. `tests/test-retrato.mjs`, 23 checks. One
+test-render assertion counted the word "Outro" in the hub to prove the hunt has no
+reroll button; "Outros" broke it, so it now counts buttons labelled exactly "Outro"
+(same intent, rewritten, not deleted). Seen in the harness with the real volumes
+(a temporary page, deleted afterwards), dark, light and 800px wide.

@@ -195,7 +195,10 @@ if (scenario === "seeded") {
     "hunt excludes series below the threshold":
       !huntText.includes("Detective Comics") && !huntText.includes("Nightwing (Volume 2)"),
     "hunt counts issues remaining": html.includes("faltam ") || html.includes("falta 1"),
-    "hunt has no reroll button of its own": (html.match(/Outro/g) || []).length === 1,
+    // Counted as buttons labelled exactly "Outro" since v89: "Seu acervo" folds small
+    // characters into an "Outros" row, which a plain text count mistook for a reroll.
+    "hunt has no reroll button of its own":
+      [...visiveis("button")].filter((b) => b.textContent.trim() === "Outro").length === 1,
     "degenerate most-complete stat gone": !html.includes("Mais completas") && !html.includes("mais completas"),
     "shelf wall rendered": html.includes('class="wall"'),
     "covers carry a character edge": html.includes("--edge"),

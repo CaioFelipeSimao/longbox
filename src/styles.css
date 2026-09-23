@@ -16,6 +16,10 @@
   --danger: #F04438;
   --danger-text: #FF7A70;
   --read: #5B9E6F;
+  /* D1: "lendo" beside "lida" in the hub's reading meter. The accent itself sat
+     too close to --read for full colour vision (validator: OKLab dE 14.1 dark,
+     12.4 light, floor 15), so the meter takes its own step: 16.8 and 16.9. */
+  --retrato-lendo: #22C8E0;
   --warm: #E2A83B; /* the hunt bar's lowest tier: still needs attention, not a warning */
 
   --scrim: rgba(0, 0, 0, 0.62);
@@ -83,6 +87,7 @@
     --danger: #D92D20;
     --danger-text: #B42318;
     --read: #3F7D52;
+    --retrato-lendo: #00A5BF;
     --warm: #B4791A;
 
     --scrim: rgba(20, 22, 26, 0.38);
@@ -1577,6 +1582,80 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   letter-spacing: -0.02em;
 }
 .hub-figure small { display: block; margin-top: 2px; color: var(--text-muted); font-size: 0.75rem; }
+
+/* D1 (v89): "Seu acervo". Three plain columns (four with publishers), no cards:
+   the numbers carry it. Bars are 6px on a full-width track of --border, each the
+   slice's share of the whole collection; labels and values stay in text ink. */
+.retrato { display: grid; grid-template-columns: 1fr; gap: 26px; }
+@media (min-width: 720px) { .retrato { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 36px; } }
+@media (min-width: 1024px) {
+  .retrato[data-colunas="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .retrato[data-colunas="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.retrato-col { min-width: 0; }
+.retrato-col h3 { margin: 0 0 10px; }
+.retrato-lista, .retrato-legenda { list-style: none; margin: 0; padding: 0; }
+.retrato-lista { display: flex; flex-direction: column; gap: 2px; }
+.retrato-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 9.5em) minmax(0, 1fr) 2.75em;
+  align-items: center;
+  gap: 10px;
+  width: calc(100% + 16px);
+  min-height: 32px;
+  margin-inline: -8px;
+  padding: 0 8px;
+  border-radius: var(--r-sm);
+  text-align: left;
+  color: var(--text);
+}
+button.retrato-linha { cursor: pointer; }
+@media (hover: hover) and (pointer: fine) {
+  button.retrato-linha:hover { background: var(--surface-2); }
+}
+.retrato-trilho { display: block; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.retrato-trilho i { display: block; height: 100%; min-width: 3px; border-radius: 3px; }
+.retrato-valor {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.retrato-destaque { margin: 0 0 12px; color: var(--text-muted); font-size: 0.8125rem; }
+.retrato-destaque span {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-right: 2px;
+}
+/* The reading meter: lidas, lendo, the rest, with a 2px gap of page between them. */
+.retrato-meter { display: flex; gap: 2px; height: 8px; margin-bottom: 12px; }
+.retrato-meter i { display: block; min-width: 3px; border-radius: 3px; background: var(--border); }
+.retrato-meter i[data-s="lida"] { background: var(--read); }
+.retrato-meter i[data-s="lendo"] { background: var(--retrato-lendo); }
+.retrato-legenda { display: flex; flex-direction: column; gap: 2px; }
+.retrato-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  margin-inline: -8px;
+  padding: 0 8px;
+  border-radius: var(--r-sm);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.retrato-status i { width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); flex-shrink: 0; }
+.retrato-status[data-s="lida"] i { background: var(--read); }
+.retrato-status[data-s="lendo"] i { background: var(--retrato-lendo); }
+.retrato-status:disabled { color: var(--text-muted); cursor: default; }
+@media (hover: hover) and (pointer: fine) {
+  .retrato-status:not(:disabled):hover { background: var(--surface-2); }
+}
 
 /* Capped, because a readout this quiet should not be the widest thing on the hub. */
 .hub-storage { max-width: 420px; }
