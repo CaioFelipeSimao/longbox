@@ -1,14 +1,14 @@
-import { useMemo, useRef } from "react";
-import { Search, Plus, X, Pencil, Trash2, Upload, Check } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Search, Plus, X, Pencil, Trash2, Upload, Check, Copy } from "lucide-react";
 
 import { sortKey } from "../lib/util";
-import { anoRange } from "../lib/biblioteca";
+import { anoRange, textoFaltantes } from "../lib/biblioteca";
 import { Sheet } from "../ui/base";
 
 export function SerieSheet({
   serie, contexto, verTudo, setVerTudo, edicoes, ownedIds, volumesQueColetam,
   busca, setBusca, selectedId, setSelectedId, onClose, onEdit, onDelete,
-  onImport, onNovaEdicao, onEditEdicao, onDeleteEdicao,
+  onImport, onNovaEdicao, onEditEdicao, onDeleteEdicao, avisar,
 }) {
   const kept = useRef(null);
   if (serie) kept.current = serie;
@@ -42,6 +42,28 @@ export function SerieSheet({
   const ownedCount = eds.filter((e) => ownedIds.has(e.id)).length;
   const selecionada = eds.find((e) => e.id === selectedId);
   const useGroups = !busca.trim() && eds.length > 60;
+
+  // v88: "Copiar faltantes" copies what is on screen: the faixa when one is
+  // applied (and says so), otherwise the whole série plus how far its meta goes
+  // past what is catalogued. When the clipboard refuses, the text is shown in a
+  // box to copy by hand instead.
+  const naoCatalogadas = s && !faixaAtiva && s.totalEdicoes ? s.totalEdicoes - edsTotal.length : 0;
+  const nomeCopia = s ? s.nome + (faixaAtiva ? " (nº " + (contexto.de ?? "?") + "-" + (contexto.ate ?? "?") + ")" : "") : "";
+  const faltantes = s ? textoFaltantes(nomeCopia, eds, ownedIds, naoCatalogadas) : null;
+  const [copiaManual, setCopiaManual] = useState(null);
+  const serieId = s ? s.id : null;
+  useEffect(() => { setCopiaManual(null); }, [serieId, faixaAtiva]);
+
+  async function copiarFaltantes() {
+    try {
+      await navigator.clipboard.writeText(faltantes);
+      setCopiaManual(null);
+      avisar("Faltantes copiadas.");
+    } catch (e) {
+      setCopiaManual(faltantes);
+      avisar("Não consegui copiar. O texto está logo abaixo.");
+    }
+  }
 
   const grupos = useMemo(() => {
     if (!useGroups) return null;
@@ -104,15 +126,36 @@ export function SerieSheet({
           )}
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <span className="num t-small muted">
-              {ownedCount} de {eds.length} possuídas
-              {s.totalEdicoes ? " (meta " + s.totalEdicoes + ")" : ""}
-            </span>
+            <div className="faltantes-cont">
+              <span className="num t-small muted">
+                {ownedCount} de {eds.length} possuídas
+                {s.totalEdicoes ? " (meta " + s.totalEdicoes + ")" : ""}
+              </span>
+              {faltantes && (
+                <button
+                  className="btn btn-ghost"
+                  style={{ padding: 0, fontSize: "0.75rem", color: "var(--accent-text)" }}
+                  onClick={copiarFaltantes}
+                >
+                  <Copy size={12} /> Copiar faltantes
+                </button>
+              )}
+            </div>
             <div className="row">
               <button className="btn btn-quiet" onClick={onImport}><Upload size={13} /> Importar</button>
               <button className="btn btn-quiet" onClick={onNovaEdicao}><Plus size={13} /> Edição</button>
             </div>
           </div>
+
+          {copiaManual && (
+            <textarea
+              className="textarea faltantes-manual"
+              readOnly
+              value={copiaManual}
+              aria-label="Edições que faltam"
+              onFocus={(e) => e.target.select()}
+            />
+          )}
 
           {eds.length === 0 ? (
             <p className="t-small muted" style={{ margin: 0 }}>

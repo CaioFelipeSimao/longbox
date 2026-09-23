@@ -34,6 +34,41 @@ export function deleteEdicao(lib, id) {
   };
 }
 
+// v88: the text "Copiar faltantes" puts on the clipboard, e.g.
+// "Demolidor (Volume 2): faltam 5, 12-14, 30, Anual 1, e mais 3 não catalogadas".
+// eds are the edições on screen, already in reading order. Plain whole numbers
+// that follow each other collapse into a range with a hyphen (the en dash is
+// banned in this app); anything else (12.1, "Anual 1") is listed on its own after
+// them. naoCatalogadas is how far the série's meta goes past what is catalogued.
+// Returns null when there is nothing to say.
+export function textoFaltantes(nome, eds, ownedIds, naoCatalogadas) {
+  const faltando = eds.filter((e) => !ownedIds.has(e.id));
+  const extra = naoCatalogadas > 0 ? naoCatalogadas : 0;
+  if (!faltando.length && !extra) return null;
+
+  const inteiros = [];
+  const avulsas = [];
+  faltando.forEach((e) => {
+    const n = String(e.numero).trim();
+    if (/^\d+$/.test(n)) inteiros.push(parseInt(n, 10)); else avulsas.push(n);
+  });
+  inteiros.sort((a, b) => a - b);
+  const trechos = [];
+  for (let i = 0; i < inteiros.length; i++) {
+    let j = i;
+    while (j + 1 < inteiros.length && inteiros[j + 1] === inteiros[j] + 1) j++;
+    trechos.push(j > i ? inteiros[i] + "-" + inteiros[j] : String(inteiros[i]));
+    i = j;
+  }
+  const partes = trechos.concat(avulsas);
+  const mais = extra ? "mais " + extra + (extra === 1 ? " não catalogada" : " não catalogadas") : "";
+  if (!partes.length) {
+    return nome + (extra === 1 ? ": falta só 1 não catalogada" : ": faltam só as " + extra + " não catalogadas");
+  }
+  const verbo = faltando.length === 1 && !extra ? "falta " : "faltam ";
+  return nome + ": " + verbo + partes.join(", ") + (mais ? ", e " + mais : "");
+}
+
 export function ensureRange(lib, serieId, de, ate) {
   const edicoes = [...lib.edicoes];
   const ids = [];

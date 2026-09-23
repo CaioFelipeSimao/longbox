@@ -1582,6 +1582,7 @@ export function App() {
         onNovaEdicao={() => { setEdicaoForm({ id: null, serieId: openSerie.id, numero: "", mes: "", ano: "", posicao: "" }); setShowEdicaoForm(true); }}
         onEditEdicao={(ed) => { setEdicaoForm({ ...ed, posicao: ed.posicao !== null && ed.posicao !== undefined ? String(ed.posicao) : "" }); setShowEdicaoForm(true); }}
         onDeleteEdicao={(ed) => remover({ type: "edicao", id: ed.id })}
+        avisar={showToast}
       />
 
       {/* ===================== forms ===================== */}
