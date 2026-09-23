@@ -1963,6 +1963,26 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   transition: transform 300ms ease, opacity 300ms ease;
 }
 .toast[data-in="true"] { transform: translate(-50%, 0); opacity: 1; }
+/* v88: a removal's toast carries "Desfazer". The button keeps a 32px touch
+   target inside the toast's own padding instead of growing the toast. */
+.toast[data-acao="true"] {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-block: 4px;
+  padding-right: 6px;
+}
+.toast-acao {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: var(--r-sm);
+  font-weight: 600;
+  color: var(--accent-text);
+  white-space: nowrap;
+}
+@media (hover: hover) and (pointer: fine) {
+  .toast-acao:hover { background: var(--surface); }
+}
 .toast[data-out="true"] { transition-duration: 200ms; }
 @media (min-width: 768px) { .toast { bottom: 24px; } }
 

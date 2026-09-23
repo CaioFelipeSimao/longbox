@@ -120,13 +120,15 @@ export function App() {
     return () => { cancelled = true; };
   }, []);
 
-  const showToast = useCallback((msg) => {
-    setToast({ msg, id: uid() });
+  // desfazer, when given, is { antes, depois, reabrir } from a removal (v88): the
+  // toast then offers "Desfazer" and stays up long enough to reach it.
+  const showToast = useCallback((msg, desfazer) => {
+    setToast({ msg, id: uid(), desfazer: desfazer || null });
   }, []);
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3000);
+    const t = setTimeout(() => setToast(null), toast.desfazer ? 8000 : 3000);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -853,21 +855,60 @@ export function App() {
   }
 
   /* ---------- deletion ---------- */
-  function confirmarExclusao() {
-    if (!confirmDelete) return;
-    const { type, id } = confirmDelete;
+  // v88: a single item goes at once, with "Desfazer" in the toast instead of a
+  // question first; only "Zerar tudo" still asks. Undo restores the whole library
+  // as it was just before, which is what brings back everything a removal touched
+  // (a volume's place in its collections, a série's edições and the volumes' links
+  // to them) without a restore rule per type. That is only safe while nothing else
+  // has changed since, so the offer holds exactly while the library is still the
+  // one the removal produced: persist is the only thing that replaces it.
+  const AVISO_REMOCAO = {
+    volume: "Volume removido.", colecao: "Coleção removida.", serie: "Série removida.",
+    edicao: "Edição removida.", all: "Biblioteca zerada.",
+  };
+
+  function remover({ type, id }) {
+    const antes = lib;
     let next = lib;
-    if (type === "volume") { next = deleteVolume(lib, id); if (openVolumeId === id) setOpenVolumeId(null); }
-    if (type === "colecao") { next = deleteColecao(lib, id); if (openColecaoId === id) setOpenColecaoId(null); }
-    if (type === "serie") { next = deleteSerie(lib, id); if (openSerieId === id) setOpenSerieId(null); }
-    if (type === "edicao") { next = deleteEdicao(lib, id); setSelectedEdicaoId(null); }
+    let reabrir = null;
+    if (type === "volume") {
+      next = deleteVolume(lib, id);
+      if (openVolumeId === id) { setOpenVolumeId(null); reabrir = () => setOpenVolumeId(id); }
+    }
+    if (type === "colecao") {
+      next = deleteColecao(lib, id);
+      if (openColecaoId === id) { setOpenColecaoId(null); reabrir = () => setOpenColecaoId(id); }
+    }
+    if (type === "serie") {
+      next = deleteSerie(lib, id);
+      if (openSerieId === id) { setOpenSerieId(null); reabrir = () => setOpenSerieId(id); }
+    }
+    if (type === "edicao") {
+      next = deleteEdicao(lib, id);
+      if (selectedEdicaoId === id) reabrir = () => setSelectedEdicaoId(id);
+      setSelectedEdicaoId(null);
+    }
     if (type === "all") {
       next = EMPTY_LIB;
       setOpenVolumeId(null); setOpenColecaoId(null); setOpenSerieId(null);
     }
     persist(next);
+    showToast(AVISO_REMOCAO[type], { antes, depois: next, reabrir });
+  }
+
+  function confirmarExclusao() {
+    if (!confirmDelete) return;
+    remover(confirmDelete);
     setConfirmDelete(null);
-    showToast(type === "all" ? "Biblioteca zerada." : "Removido.");
+  }
+
+  const desfazerAtual = toast && toast.desfazer && lib === toast.desfazer.depois ? toast.desfazer : null;
+
+  function desfazer() {
+    if (!desfazerAtual || libRef.current !== desfazerAtual.depois) return;
+    persist(desfazerAtual.antes);
+    if (desfazerAtual.reabrir) desfazerAtual.reabrir();
+    showToast("Desfeito.");
   }
 
   /* ---------- backup ---------- */
@@ -1480,7 +1521,7 @@ export function App() {
         onClose={() => { setOpenVolumeId(null); setLinkSerieId(null); }}
         onEdit={() => openEditarVolume(openVolume)}
         onDuplicate={() => duplicarVolume(openVolume)}
-        onDelete={() => setConfirmDelete({ type: "volume", id: openVolume.id })}
+        onDelete={() => remover({ type: "volume", id: openVolume.id })}
         onStatus={(s) => setStatusVolume(openVolume.id, s)}
         colecoes={openVolume ? colecoesDoVolume(openVolume.id) : []}
         grupos={openVolume ? edicoesDoVolumeAgrupadas(openVolume) : []}
@@ -1506,7 +1547,7 @@ export function App() {
       {/* ===================== collection detail ===================== */}
       <ColecaoSheet
         lib={lib}
-        setConfirmDelete={setConfirmDelete}
+        onRemover={remover}
         setOpenColecaoId={setOpenColecaoId}
         addMemberSel={addMemberSel}
         openColecao={openColecao}
@@ -1536,11 +1577,11 @@ export function App() {
         setSelectedId={setSelectedEdicaoId}
         onClose={() => { setOpenSerieId(null); setOpenSerieContexto(null); setSelectedEdicaoId(null); setSerieBusca(""); }}
         onEdit={() => openEditarSerie(openSerie)}
-        onDelete={() => setConfirmDelete({ type: "serie", id: openSerie.id })}
+        onDelete={() => remover({ type: "serie", id: openSerie.id })}
         onImport={() => { setImportSerieId(openSerie.id); setImportText(""); setShowImportModal(true); }}
         onNovaEdicao={() => { setEdicaoForm({ id: null, serieId: openSerie.id, numero: "", mes: "", ano: "", posicao: "" }); setShowEdicaoForm(true); }}
         onEditEdicao={(ed) => { setEdicaoForm({ ...ed, posicao: ed.posicao !== null && ed.posicao !== undefined ? String(ed.posicao) : "" }); setShowEdicaoForm(true); }}
-        onDeleteEdicao={(ed) => setConfirmDelete({ type: "edicao", id: ed.id })}
+        onDeleteEdicao={(ed) => remover({ type: "edicao", id: ed.id })}
       />
 
       {/* ===================== forms ===================== */}
@@ -1593,10 +1634,11 @@ export function App() {
       />
 
       {/* ===================== confirm ===================== */}
+      {/* Only "Zerar tudo" asks since v88; single items go at once and can be undone. */}
       <Modal
         open={!!confirmDelete}
         onClose={() => setConfirmDelete(null)}
-        title={confirmDelete && confirmDelete.type === "all" ? "Zerar a biblioteca?" : "Remover este item?"}
+        title="Zerar a biblioteca?"
         footer={
           <div className="row">
             <button className="btn btn-quiet" style={{ flex: 1 }} onClick={() => setConfirmDelete(null)}>Cancelar</button>
@@ -1605,11 +1647,8 @@ export function App() {
         }
       >
         <p className="t-body" style={{ margin: 0 }}>
-          {confirmDelete && confirmDelete.type === "volume" && "O volume sai das coleções em que estava. As edições da série continuam catalogadas."}
-          {confirmDelete && confirmDelete.type === "colecao" && "Só o agrupamento é removido. Os volumes continuam na aba HQs."}
-          {confirmDelete && confirmDelete.type === "serie" && "Remove a série, todas as suas edições, e desfaz o vínculo com qualquer volume."}
-          {confirmDelete && confirmDelete.type === "edicao" && "Remove a edição e desfaz o vínculo com qualquer volume que a colete."}
-          {confirmDelete && confirmDelete.type === "all" && "Apaga volumes, coleções, séries e edições. Exporte um backup antes se quiser poder voltar."}
+          Apaga volumes, coleções, séries e edições. Dá para desfazer logo em seguida, mas
+          exporte um backup antes se quiser uma cópia guardada.
         </p>
       </Modal>
 
@@ -1657,7 +1696,7 @@ export function App() {
         onClose={() => setCorPersonagem(null)}
       />
 
-      {toast && <Toast key={toast.id} message={toast.msg} />}
+      {toast && <Toast key={toast.id} message={toast.msg} acao={desfazerAtual ? { rotulo: "Desfazer", onClick: desfazer } : null} />}
     </div>
     </CoresContext.Provider>
   );

@@ -5,7 +5,7 @@ import { Field, Sheet } from "../ui/base";
 import { Swatch } from "../ui/CorPersonagem";
 
 export function ColecaoSheet({
-  lib, setConfirmDelete, setOpenColecaoId, addMemberSel, openColecao, colecaoRola,
+  lib, onRemover, setOpenColecaoId, addMemberSel, openColecao, colecaoRola,
   ordemRecolhida, alternarOrdem, definirCorBarra, openEditarColecao, adicionarMembro,
   removerMembro, moverMembro, personagensDaColecao,
 }) {
@@ -18,7 +18,7 @@ export function ColecaoSheet({
       actions={openColecao && (
         <>
           <button className="btn-icon" onClick={() => openEditarColecao(openColecao)} aria-label="Editar"><Pencil size={16} /></button>
-          <button className="btn-icon" onClick={() => setConfirmDelete({ type: "colecao", id: openColecao.id })} aria-label="Remover">
+          <button className="btn-icon" onClick={() => onRemover({ type: "colecao", id: openColecao.id })} aria-label="Remover">
             <Trash2 size={16} color="var(--danger-text)" />
           </button>
         </>

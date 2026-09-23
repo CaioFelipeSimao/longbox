@@ -109,11 +109,18 @@ export const Aba = React.memo(
   (antes, depois) => !antes.ativa && !depois.ativa
 );
 
-export function Toast({ message }) {
+// acao, when given, is { rotulo, onClick }: one button at the end of the line
+// (v88 uses it for "Desfazer" after a removal).
+export function Toast({ message, acao }) {
   const [shown, setShown] = useState(false);
   useEffect(() => {
     const r1 = requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)));
     return () => cancelAnimationFrame(r1);
   }, []);
-  return <div className="toast" data-in={shown ? "true" : "false"} role="status">{message}</div>;
+  return (
+    <div className="toast" data-in={shown ? "true" : "false"} data-acao={acao ? "true" : "false"} role="status">
+      <span>{message}</span>
+      {acao && <button type="button" className="toast-acao press" onClick={acao.onClick}>{acao.rotulo}</button>}
+    </div>
+  );
 }
