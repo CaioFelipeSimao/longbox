@@ -14,7 +14,10 @@ export function Field({ label, error, hint, children }) {
   );
 }
 
-export function Sheet({ open, onClose, title, subtitle, actions, children, recede }) {
+// nav (v88) is an optional row under the subtitle, used by the volume sheet for
+// its ‹ 3 de 22 › stepping; it lives there rather than among the actions so the
+// title keeps the header's width.
+export function Sheet({ open, onClose, title, subtitle, actions, nav, children, recede }) {
   const [mounted, shown] = useTransitionMount(open, 220);
   // While another sheet is stacked on top of this one, it recedes instead of
   // closing: no scrim of its own (the front sheet's scrim already dims the
@@ -46,6 +49,7 @@ export function Sheet({ open, onClose, title, subtitle, actions, children, reced
           <div style={{ minWidth: 0 }}>
             <p className="t-display" style={{ margin: 0 }}>{title}</p>
             {subtitle && <p className="t-small muted" style={{ margin: "3px 0 0" }}>{subtitle}</p>}
+            {nav}
           </div>
           <div className="sheet-actions">
             {actions}

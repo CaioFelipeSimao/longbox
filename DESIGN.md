@@ -109,6 +109,8 @@ Tracking is size-specific per `apple-design` Section 15. No single global `lette
 | Sheet / side panel | in `translateY(100%)`→0 320ms ease-drawer, out 200ms ease-out | Spatial: enters and exits along the same path |
 | Scrim | opacity 200ms | State transition |
 | Tab switch | opacity 120ms only | Used dozens of times a day, so it stays near-instant |
+| Volume sheet step (v88) | content in from the side stepped towards: opacity + translateX(16px), 160ms ease-out; none on first open | Spatial: says which way through the list you moved |
+| Toast with Desfazer (v88) | same as Toast, stays 8s instead of 3s | Time to reach the button |
 | Issue tile toggle | background 120ms + scale pop 100ms | Feedback |
 | Toast | in 300ms ease, out 200ms | State transition |
 | Skeleton blocks | opacity 1 to 0.5, 1800ms ease-pulse, looping | The only indeterminate wait in the app (v29) |

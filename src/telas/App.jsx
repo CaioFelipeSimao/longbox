@@ -415,10 +415,15 @@ export function App() {
     return seq;
   }
   const vizinhosDoVolume = (() => {
-    if (!openVolume) return { anterior: null, proximo: null };
+    if (!openVolume) return { anterior: null, proximo: null, posicao: 0, total: 0 };
     const seq = sequenciaDoVolume();
     const i = seq.indexOf(openVolumeId);
-    return { anterior: i > 0 ? seq[i - 1] : null, proximo: i >= 0 && i < seq.length - 1 ? seq[i + 1] : null };
+    return {
+      anterior: i > 0 ? seq[i - 1] : null,
+      proximo: i >= 0 && i < seq.length - 1 ? seq[i + 1] : null,
+      posicao: i + 1,
+      total: seq.length,
+    };
   })();
 
   function navegarVolume(id, direcao) {
@@ -1611,6 +1616,8 @@ export function App() {
         recede={!!openSerieId}
         anterior={vizinhosDoVolume.anterior}
         proximo={vizinhosDoVolume.proximo}
+        posicao={vizinhosDoVolume.posicao}
+        total={vizinhosDoVolume.total}
         onNavegar={navegarVolume}
         direcao={navDirecao}
       />

@@ -1861,11 +1861,13 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 .sheet-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
-/* v88: ‹ › step to the neighbouring volume. A little air after them keeps the pair
-   apart from edit, duplicate and remove; at either end the button stays in place,
-   dimmed, so the others never shift under the pointer. */
-.sheet-nav-fim { margin-right: 6px; }
-.sheet-actions .btn-icon:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+/* v88: ‹ 3 de 22 › under the volume sheet's subtitle. It first sat among the
+   header actions, which squeezed the title to three lines; here the title keeps
+   the width. At either end the button stays in place, dimmed, so the count never
+   shifts under the pointer. */
+.sheet-nav { display: flex; align-items: center; gap: 2px; margin: 6px 0 0 -8px; }
+.sheet-nav .btn-icon:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+.sheet-nav-pos { font-variant-numeric: tabular-nums; min-width: 4.5em; text-align: center; }
 /* The new volume's content comes in from the side it was stepped towards. Only
    opacity and transform, 160ms, and nothing on the first open. */
 @keyframes vol-nav-prox { from { opacity: 0; transform: translateX(16px); } }

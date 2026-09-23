@@ -13,7 +13,7 @@ export function VolumeSheet({
   linkSerieId, setLinkSerieId, linkPickSerie, setLinkPickSerie,
   rangeDe, setRangeDe, rangeAte, setRangeAte, avulsoNum, setAvulsoNum,
   onRange, onAvulsa, onToggle, onOpenEdicaoNaSerie, recede,
-  anterior, proximo, onNavegar, direcao,
+  anterior, proximo, posicao, total, onNavegar, direcao,
 }) {
   const inputRef = useRef(null);
   const kept = useRef(null);
@@ -80,14 +80,19 @@ export function VolumeSheet({
       recede={recede}
       title={v ? v.titulo : ""}
       subtitle={v ? v.personagem : null}
-      actions={v && (
-        <>
+      nav={v && total > 1 && (
+        <div className="sheet-nav">
           <button className="btn-icon" onClick={() => onNavegar(anterior, "ant")} disabled={!anterior} aria-label="Volume anterior">
             <ChevronLeft size={16} />
           </button>
-          <button className="btn-icon sheet-nav-fim" onClick={() => onNavegar(proximo, "prox")} disabled={!proximo} aria-label="Próximo volume">
+          <span className="t-small muted sheet-nav-pos">{posicao} de {total}</span>
+          <button className="btn-icon" onClick={() => onNavegar(proximo, "prox")} disabled={!proximo} aria-label="Próximo volume">
             <ChevronRight size={16} />
           </button>
+        </div>
+      )}
+      actions={v && (
+        <>
           <button className="btn-icon" onClick={onEdit} aria-label="Editar"><Pencil size={16} /></button>
           <button className="btn-icon" onClick={onDuplicate} aria-label="Duplicar este volume"><Copy size={16} /></button>
           <button className="btn-icon" onClick={onDelete} aria-label="Remover">

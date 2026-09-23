@@ -1812,3 +1812,42 @@ housekeeping, in one version so that any regression is unambiguously theirs:
   waits for a frame, and two screenshots in a row on the hub time out on v86 too.
 - **Docs.** `DESIGN.md` is now the current spec only; this file took the
   per-version record, in order, with nothing dropped.
+
+
+**v88: four quality-of-life features, each with its own JSDOM suite.** Designs were
+agreed in chat first; every open question went to the user and took the recommended
+option.
+
+- **Q1, undo instead of asking.** Removing a volume, collection, série or edição
+  happens at once; the toast says what went and offers "Desfazer" for 8s. Undo puts
+  back the whole library as it was just before, which restores everything a removal
+  touched (a volume's place in each collection, a série's edições and the volumes'
+  links to them) with no restore rule per type, and reopens the sheet that closed.
+  That is only safe while nothing else has changed, so the offer holds exactly while
+  the library is still the object the removal produced (`persist` is the only thing
+  that replaces it; there is no onSnapshot listener). "Zerar tudo" still asks, and can
+  be undone too. `tests/test-desfazer.mjs`, 32 checks.
+- **Q3, "Copiar faltantes"** under the count in the série sheet: `textoFaltantes` in
+  `lib/biblioteca.js` collapses runs to "3-5" (hyphen, the en dash is banned), lists
+  12.1 and "Anual 1" after them, and adds "e mais N não catalogadas" when the meta runs
+  past the catalogue. With a faixa applied it copies the faixa and says so. A refused
+  clipboard shows the text in a box. `tests/test-faltantes.mjs`, 12 checks.
+- **Q5, last backup** in the hub footer, from `library/meta` (see Data layer):
+  "Último backup há 12 dias"; with none or 30 days or more it stands out and offers
+  "Fazer backup agora". Only a finished export counts. The first version read the date
+  before letting the page show, one extra round trip on every boot; `test-boot.mjs`
+  caught it through its deliberately slow db, and the read now runs in parallel.
+  `tests/test-backup.mjs`, 18 checks.
+- **Q2, stepping between volumes** in the open sheet: ‹ › (← → on a keyboard, a swipe
+  on touch). The sequence is the list the volume was opened from (HQs tab as on
+  screen, a collection's reading order, or the full order from the hub and search),
+  worked out on each render from a stored context rather than stored as a list, so
+  filters, folds and removals are always current. The keys stand down while typing,
+  with a modifier, under a modal, and while the série sheet sits on top. First built
+  with ‹ › among the header actions; the harness showed the title squeezed to three
+  lines, so the pair moved under the subtitle as "‹ 3 de 22 ›" (tabular figures in the
+  UI font, not mono, after v60's verdict on mono counters). `tests/test-navegar.mjs`,
+  27 checks.
+
+Verified in the harness in Chrome (dark theme): the backup line, the sheet header, the
+toast and the série sheet. The light theme is D2's pass, next.
