@@ -270,7 +270,7 @@ if (scenario === "seeded") {
     console.log("  hidden from assistive tech: " + (gm.getAttribute("aria-hidden") === "true" ? "PASS" : "FAIL"));
     const strays = [...gm.querySelectorAll(".gm-item-content")]
       .map((el) => el.textContent || "")
-      .filter((x) => x.includes("/_blob/") || x.startsWith("http") || /^Item d+$/.test(x));
+      .filter((x) => x.includes("/_blob/") || x.startsWith("http") || /^Item \d+$/.test(x));
     console.log("  no path or placeholder printed as text: " + (strays.length === 0 ? "PASS" : "FAIL (" + strays[0] + ")"));
   }
 }
@@ -460,7 +460,7 @@ if (scenario === "seeded") {
                 (cssSrc.includes("transform 120ms var(--ease-out);") ? "PASS" : "FAIL"));
   // v86: the hub backdrop must take blob: thumbnails as images, not text.
   {
-    const gm = fs.readFileSync(new URL("./src/components/GridMotion/GridMotion.jsx", import.meta.url), "utf8");
+    const gm = fs.readFileSync(new URL("../src/components/GridMotion/GridMotion.jsx", import.meta.url), "utf8");
     console.log("  hub backdrop treats blob: URLs as images: " + (gm.includes("content.startsWith(\"blob:\")") ? "PASS" : "FAIL"));
   }
   // v82: the active pill moves by transform. A clip-path written each frame
@@ -549,7 +549,7 @@ if (scenario === "seeded") {
     const strips = visiveis(".coll-strip");
     const bars = visiveis(".shelf-bar");
     const track = visivel(".shelf-track");
-    const css = fs.readFileSync(new URL("./dist/styles.css", import.meta.url), "utf8");
+    const css = fs.readFileSync(new URL("../dist/styles.css", import.meta.url), "utf8");
     const rule = (css.match(/\.coll-strip \{[^}]*\}/) || [""])[0];
     console.log("  colecoes spine bar: one per strip " + (strips.length > 0 && bars.length === strips.length ? "PASS" : "FAIL") +
                 ", track is a scrollbar " + (track && track.getAttribute("role") === "scrollbar" && track.tabIndex === 0 ? "PASS" : "FAIL") +

@@ -1,10 +1,13 @@
 {
   "name": "longbox",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Longbox: biblioteca pessoal de HQs, publicada como Claude Artifact",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "node scripts/build.mjs",
+    "build:claro": "node scripts/build.mjs --claro",
+    "test": "node scripts/test.mjs",
+    "check": "node scripts/build.mjs && node scripts/test.mjs",
+    "harness": "npx -y http-server harness -p 8768 -c-1 -s"
   },
   "keywords": [],
   "author": "",
@@ -19,5 +22,6 @@
   },
   "devDependencies": {
     "jsdom": "^30.0.1"
-  }
+  },
+  "private": true
 }
