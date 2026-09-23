@@ -5,8 +5,8 @@ import { ACCENT_HEX, ED_SEM, ED_TODAS } from "../lib/constantes";
 import { COR_LONGBOX, PALETA_CROMATICA, PALETA_NEUTRA, swatchColors } from "../lib/cores";
 import { Sheet } from "./base";
 import { Swatch } from "./CorPersonagem";
-import { SegmentedTabs } from "./SegmentedTabs";
 import { OpcaoFiltro } from "./Filtros";
+import { SegmentedTabs } from "./SegmentedTabs";
 
 export function EditoraLogo({ editora, size }) {
   if (!editora || !editora.logoAssetId) return null;

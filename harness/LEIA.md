@@ -3,8 +3,8 @@
 Mock of the artifact runtime (`window.claude` db + assets, seeded library) for
 checking layout in real Chrome, which JSDOM cannot do.
 
-    cp dist/app.js dist/styles.css harness/
-    cd harness && npx -y http-server -p 8768 -c-1 -s
+    npm run build        # also refreshes harness/app.js and harness/styles.css
+    npm run harness      # serves harness/ on 8768 with caching off (-c-1)
     # open http://localhost:8768/index.html
 
 - `?lento` holds the db promise forever, so each tab's loading skeleton stays
@@ -14,15 +14,23 @@ checking layout in real Chrome, which JSDOM cannot do.
 - Typing into the search: click the field with the real mouse first; a
   script `focus()` does not route keyboard input from the automation.
 - A background Chrome tab freezes CSS transitions; a screenshot forces frames.
+  A sheet opened by a script is mounted at once but reads `data-in="false"`
+  until a frame runs: take a screenshot before deciding it did not open. Two
+  screenshots in a row on the hub can time out (the backdrop); v86 does the same.
+- Automated mouse clicks on a cover are unreliable (the card listens for pointer
+  events to arm the drag). `el.click()` from a script is deterministic.
+- The reorder gesture can be driven with synthetic `PointerEvent`s: pointerdown
+  on a card, wait past 450ms, pointermove to another card's centre, pointerup.
 
-app.js / styles.css here are copies and go stale; always re-copy from dist.
+app.js / styles.css here are copies (git ignores them); `npm run build` rewrites
+them every time, so they cannot go stale unless you skip the build. To compare
+against a published version, `git show v86:dist/app.js > harness/app.js`.
 
 ## Light theme and tablet (v79)
 
-- Light theme: the app only switches by `prefers-color-scheme`, so serve a copy
-  of the CSS with the light blocks forced on:
-  `sed 's/@media (prefers-color-scheme: light)/@media all/' dist/styles.css > harness/styles.css`
-  (re-copy dist/styles.css afterwards to get back to dark).
+- Light theme: the app only switches by `prefers-color-scheme`, so
+  `npm run build:claro` writes the harness CSS with the light blocks forced on;
+  a plain `npm run build` puts it back to dark.
 - Tablet: `resize_window` does nothing on a maximized Chrome, so open
   `tablet.html?w=768&h=1024&varios=1024x768,1180x820,800x1280`: each iframe is a
   real viewport, so the app's media queries answer as on the device. Pointer

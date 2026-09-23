@@ -510,7 +510,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 .segmented button[data-active="true"] { color: var(--text); }
 /* No focus ring here, on purpose — the button already carries its own
-   selected-state indicator (.seg-thumb, the sliding pill in app.jsx), and a
+   selected-state indicator (.seg-thumb, the sliding pill in ui/SegmentedTabs.jsx), and a
    second ring on top of it read as visual noise even once its geometry was
    made to match exactly (two rounds of fixes, 2026-09-20: outline-offset,
    then the button's own box inflated to fill the pill's height — see
@@ -523,7 +523,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    file is untouched everywhere else. */
 .segmented button:focus-visible { outline: none; }
 
-/* One shared pill, slid under the active button by SegmentedTabs (app.jsx)
+/* One shared pill, slid under the active button by SegmentedTabs (ui/SegmentedTabs.jsx)
    instead of each button toggling its own background — the elastic gsap tween
    on tab switches needs a single element to carry it. Sits behind the buttons
    in paint order only because they're both `position: relative`; z-index on

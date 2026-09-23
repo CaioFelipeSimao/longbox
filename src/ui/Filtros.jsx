@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { ArrowUp, ArrowDown, Check } from "lucide-react";
+import { Check } from "lucide-react";
 
 import { STATUS, STATUS_ORDER, TIPOS } from "../lib/constantes";
 import { specForCharacter, swatchColors, useCores } from "../lib/cores";

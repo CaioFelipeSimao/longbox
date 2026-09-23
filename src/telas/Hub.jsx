@@ -8,9 +8,9 @@ import {
 import { coverColors, useCores } from "../lib/cores";
 import { formatBytes } from "../lib/biblioteca";
 import { coverUrl, miniUrl, useMiniVersao } from "../lib/capas";
-import { CoverArt, VolumeCard } from "../ui/VolumeCard";
 import { EmptyState } from "../ui/base";
 import { HuntProgress } from "../ui/Series";
+import { CoverArt, VolumeCard } from "../ui/VolumeCard";
 
 // A representative sample, not the first N: capping a character-sorted list
 // alphabetically would erase whoever sorts last, and the shelf is meant to read

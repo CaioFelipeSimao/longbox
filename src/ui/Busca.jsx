@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Layers, Library, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, Layers, Library } from "lucide-react";
 
 import { coverColors, useCores } from "../lib/cores";
 import { CoverArt } from "./VolumeCard";

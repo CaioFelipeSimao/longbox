@@ -1,15 +1,13 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from "react";
-import { Plus, X, Pencil, Trash2, Download, Upload, BookOpen, Layers, Library, AlertTriangle, RotateCcw, ArrowUp, ArrowDown, SlidersHorizontal, ChevronLeft, ChevronDown, Copy } from "lucide-react";
+import { Plus, X, Download, Upload, Library, AlertTriangle, RotateCcw, SlidersHorizontal, ChevronLeft, Copy } from "lucide-react";
 import CursorGrid from "../components/CursorGrid/CursorGrid";
 
 import {
-  ACCENT_HEX, DOC_LIMIT, ED_SEM, ED_TODAS, EMPTY_LIB, QUASE_FECHANDO, SESSION_SEED, STATUS,
-  STATUS_ORDER, TABS, TIPOS, editoraDe, seededPick, slugify,
+  ACCENT_HEX, DOC_LIMIT, ED_SEM, ED_TODAS, EMPTY_LIB, QUASE_FECHANDO, SESSION_SEED, TABS,
+  TIPOS, editoraDe, seededPick, slugify,
 } from "../lib/constantes";
 import { parseNum, uid } from "../lib/util";
-import {
-  COR_LONGBOX, CoresContext, PALETA_CROMATICA, PALETA_NEUTRA, swatchColors, tintaSobre,
-} from "../lib/cores";
+import { COR_LONGBOX, CoresContext, swatchColors, tintaSobre } from "../lib/cores";
 import {
   anoRange, bytesOf, deleteColecao, deleteEdicao, deleteSerie, deleteVolume, ensureAvulsa,
   ensureRange, normalizeLib, parseImportText, personagensDaSerie, semearEditoras,
@@ -18,27 +16,28 @@ import { loadLibrary, scheduleSave, shardEdicoes, store } from "../lib/armazenam
 import {
   assetErrorMessage, esperarMiniaturas, prepararMiniaturas, uploadCover,
 } from "../lib/capas";
-import {
-  HOLD_EASE_LINEAR, HOLD_EASE_OUT, prefersReducedMotion, useHubUnlock, useLarguraDaBarra,
-  usePonteiroFino,
-} from "../lib/hooks";
+import { useHubUnlock, useLarguraDaBarra, usePonteiroFino } from "../lib/hooks";
 import {
   lerAbaSalva, lerColecoesFechadas, lerFiltros, lerGruposAbertos, lerGruposFechados,
   lerOrdemRecolhida, salvarAba, salvarColecoesFechadas, salvarFiltros, salvarGruposAbertos,
   salvarGruposFechados, salvarOrdemRecolhida,
 } from "../lib/sessao";
-import { VolumeCard, ordenarGrupoVolumes } from "../ui/VolumeCard";
+import { Aba, Modal, Toast } from "../ui/base";
 import { SUGESTOES_DA_ABA, SearchBox, ordenarPorNome, ordenarSugestoes } from "../ui/Busca";
-import { Aba, EmptyState, Field, Modal, Sheet, Toast } from "../ui/base";
-import { CorSheet, GroupHead, Swatch } from "../ui/CorPersonagem";
+import { CorSheet } from "../ui/CorPersonagem";
 import { EditoraBar, EditorasSheet } from "../ui/Editoras";
 import { ColecoesSkeleton, HubSkeleton, SeriesSkeleton, ShelfSkeleton } from "../ui/Esqueletos";
-import { ShelfStrip } from "../ui/Prateleira";
-import { SEM_EDICOES, SerieLinha } from "../ui/Series";
 import { OPCOES_STATUS, OPCOES_TIPO, OpcaoFiltro, PersonagemFiltro } from "../ui/Filtros";
+import { ordenarGrupoVolumes } from "../ui/VolumeCard";
+import { AbaColecoes } from "./AbaColecoes";
+import { AbaHqs } from "./AbaHqs";
+import { AbaSeries } from "./AbaSeries";
+import { ColecaoSheet } from "./ColecaoSheet";
+import { FormColecao, FormEdicao, FormSerie, FormVolume, ImportarEdicoes } from "./Formularios";
 import { Hub } from "./Hub";
-import { VolumeSheet } from "./VolumeSheet";
 import { SerieSheet } from "./SerieSheet";
+import { useArrastarVolumes } from "./useArrastarVolumes";
+import { VolumeSheet } from "./VolumeSheet";
 
 export function App() {
   const [lib, setLib] = useState(EMPTY_LIB);
@@ -360,288 +359,10 @@ export function App() {
   const podeReordenarVolumes = !query.trim() && !filtroStatus && !filtroTipo;
 
   /* ---------- drag to reorder HQs, held to one personagem group ---------- */
-  // A long press tells a hold apart from a tap or the start of a scroll. Pointer
-  // events cover mouse and touch alike, which native HTML5 drag and drop does not
-  // on a tablet. 450ms, raised from 350: the user found 350 too easy to trigger
-  // by accident while just scrolling or tapping a cover.
-  const HOLD_MS = 450;
-  // How long the FLIP slide takes to settle, and therefore how long a new target
-  // is locked out after one commits. The lockout is the whole fix for a drag that
-  // felt unstable: without it, every pixel of pointer movement could re-target the
-  // reflow mid-animation, and elementFromPoint would sometimes hit a card that was
-  // still sliding rather than the one actually under the pointer. Holding the
-  // target still for one settle window turns that into a deliberate, one-slot-at-
-  // a-time snap instead of a flicker, which is the "aim assist" the user asked for.
-  const FLIP_MS = 220;
-  // How long the fill takes to let go once the pointer comes up. Matches the
-  // old CSS transition's own release timing, kept here now that release is
-  // driven the same way the rise is.
-  const HOLD_RELEASE_MS = 150;
-  // Speed of the wave's sideways drift, in crests per second. Expressed
-  // against time rather than against HOLD_MS so the wave keeps the same
-  // speed if the press duration is ever retuned again — only the number of
-  // crests that fit in one press changes with it.
-  const HOLD_WAVE_CRISTAS_POR_S = 5;
-  const dragRef = useRef({ id: null, personagem: null, ids: null, startX: 0, startY: 0, active: false, timer: null });
-  // Drives --hold-p on whichever card is filling, once per frame, the same
-  // way the HoldButton reference this was adapted from drives --hb-p: a CSS
-  // transition cannot give the wave crest both its scroll (tied to progress,
-  // not to elapsed time) and its vanish-at-full behaviour, since both need the
-  // exact same progress number the fill's own clip-path is using that frame.
-  // el !== the last-driven element resets p to 0 instead of carrying over,
-  // so a fresh press on a different card never inherits the tail of whatever
-  // the previous card's release was mid-animating.
-  const holdMotionRef = useRef({ raf: 0, p: 0, el: null });
-  const suppressClickRef = useRef(false);
-  const cardNodesRef = useRef(new Map()); // volume id -> its .vol DOM node, for FLIP
-  const flipSnapshotRef = useRef(null); // rects captured just before a live reorder
-  const flipCleanupRef = useRef(new Map()); // volume id -> fallback timer clearing its transform
-  const flipBusyRef = useRef(false); // true while the last reflow is still settling
-  const flipBusyTimerRef = useRef(null);
-  const [dragVisual, setDragVisual] = useState(null); // { id, ids, personagem } while a drag is armed
-
-  // The press-fill and the dragged card both take their tint from the volume's
-  // own editora, the same "hue only" swatch every publisher-coloured element in
-  // the app already uses. A volume whose editora has no colour, or isn't in the
-  // list at all, falls back to the interface's own accent further down in CSS.
-  const editoraCorPorNome = useMemo(() => {
-    const mapa = {};
-    (lib.editoras || []).forEach((ed) => {
-      if (ed.cor) mapa[(ed.nome || "").trim().toLowerCase()] = swatchColors(ed.cor, 0).edge;
-    });
-    return mapa;
-  }, [lib.editoras]);
-
-  function registrarCardNode(id, el) {
-    if (el) cardNodesRef.current.set(id, el); else cardNodesRef.current.delete(id);
-  }
-
-  // Two things have to both be true for a move to retarget something. First,
-  // the pointer has to have actually left the dragged card's own current box:
-  // comparing raw distance-to-centre alone (the first cut of this) retargeted
-  // the instant a neighbour's centre was fractionally closer, which fired while
-  // the pointer was still plainly sitting over the card being dragged — the
-  // opposite of what holding a card should feel like. Second, once outside that
-  // box, elementFromPoint has dead zones: the grid gap between cards belongs to
-  // no card, and hovering it used to read as "no target" and drop the group back
-  // to its unmoved order. Picking whichever OTHER card's centre is nearest
-  // covers every point past the dragged card's own edge, gaps included, without
-  // widening the hitbox any click uses the rest of the time.
-  function alvoParaMover(personagem, draggedId, x, y) {
-    const draggedEl = cardNodesRef.current.get(draggedId);
-    if (draggedEl) {
-      const r = draggedEl.getBoundingClientRect();
-      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return null;
-    }
-    let melhorId = null;
-    let melhorDist = Infinity;
-    cardNodesRef.current.forEach((el, id) => {
-      if (id === draggedId || el.dataset.personagem !== personagem) return;
-      const r = el.getBoundingClientRect();
-      const dx = x - (r.left + r.width / 2);
-      const dy = y - (r.top + r.height / 2);
-      const d = dx * dx + dy * dy;
-      if (d < melhorDist) { melhorDist = d; melhorId = id; }
-    });
-    return melhorId;
-  }
-
-  function capturarRects(ids) {
-    const rects = new Map();
-    ids.forEach((id) => {
-      const el = cardNodesRef.current.get(id);
-      if (el) rects.set(id, el.getBoundingClientRect());
-    });
-    return rects;
-  }
-
-  // FLIP: the previous render's rects were captured synchronously before this
-  // update: invert every card straight to where it used to be (no transition),
-  // force layout, then release into a transition to its real spot. Only
-  // transform animates, per the rule that padding/width/height touch layout.
-  // The release is scheduled on rAF, which is the usual way to guarantee the
-  // inverted state actually painted first — but a rAF callback that never gets
-  // a turn (a backgrounded tab, a dropped frame) would leave the transform
-  // stuck forever, and the next flip would then invert from that already-offset
-  // position instead of a clean one. flipCleanupRef holds one fallback timer per
-  // card, past FLIP_MS, that force-clears it regardless; a healthy rAF beats it
-  // to the punch every time, so this only ever fires as real insurance.
-  useLayoutEffect(() => {
-    const before = flipSnapshotRef.current;
-    if (!before) return;
-    flipSnapshotRef.current = null;
-    if (prefersReducedMotion()) return; // snap instead of sliding the group around
-    before.forEach((prevRect, id) => {
-      const el = cardNodesRef.current.get(id);
-      if (!el) return;
-      clearTimeout(flipCleanupRef.current.get(id));
-      const now = el.getBoundingClientRect();
-      const dx = prevRect.left - now.left;
-      const dy = prevRect.top - now.top;
-      if (!dx && !dy) { el.style.transition = ""; el.style.transform = ""; return; }
-      el.style.transition = "none";
-      el.style.transform = "translate(" + dx + "px," + dy + "px)";
-      el.getBoundingClientRect(); // force reflow so the jump above isn't itself animated
-      const liberar = () => { el.style.transition = "transform " + FLIP_MS + "ms var(--ease-in-out)"; el.style.transform = ""; };
-      requestAnimationFrame(liberar);
-      flipCleanupRef.current.set(id, setTimeout(liberar, FLIP_MS + 150));
-    });
-  }, [dragVisual]);
-
-  // The committed order is exactly the live preview's own ids, not a fresh
-  // single move computed against the persisted order: the preview is what the
-  // user watched build up over the whole gesture, so it is what should land.
-  function persistirOrdemGrupo(personagem, ids) {
-    const grupo = lib.volumes.filter((v) => v.personagem === personagem);
-    const outros = lib.volumes.filter((v) => v.personagem !== personagem);
-    const porId = new Map(grupo.map((v) => [v.id, v]));
-    const ordenado = ids.map((id, i) => porId.has(id) ? { ...porId.get(id), ordem: i } : null).filter(Boolean);
-    persist({ ...lib, volumes: [...outros, ...ordenado] });
-  }
-
-  // Measured once per gesture, not tracked live: a card resizing mid-press
-  // (only a window resize could do it) is rare enough that re-measuring on
-  // every frame would be paying a layout read for a case that essentially
-  // never happens. cover is the box the fill and crest actually paint over;
-  // the button also has the title/meta text below it, which is not part of
-  // that box.
-  function comecarPreenchimento(cardEl) {
-    const cover = cardEl.querySelector(".cover");
-    if (!cover) return;
-    const r = cover.getBoundingClientRect();
-    cover.style.setProperty("--hold-w", r.width + "px");
-    cover.style.setProperty("--hold-h", r.height + "px");
-    // Crests that drift past any given point over the whole press. Counted
-    // in crests, not in card widths: HoldButton's holdTime/1100 ratio came
-    // out to about three quarters of ONE crest over these 450ms, and against
-    // a fill that climbs the cover's full height in the same time, a wave
-    // that never completes a single crest does not read as moving at all.
-    cover.style.setProperty("--hold-cycles", (HOLD_MS / 1000) * HOLD_WAVE_CRISTAS_POR_S);
-    driveHold(cover, 1, HOLD_MS, HOLD_EASE_LINEAR);
-  }
-
-  function soltarPreenchimento(cardEl) {
-    const cover = cardEl && cardEl.querySelector(".cover");
-    if (!cover) return;
-    driveHold(cover, 0, HOLD_RELEASE_MS, HOLD_EASE_OUT);
-  }
-
-  function driveHold(el, to, duration, ease) {
-    const m = holdMotionRef.current;
-    cancelAnimationFrame(m.raf);
-    if (m.el !== el) m.p = to === 1 ? 0 : m.p; // a different card never inherits a leftover value
-    if (m.el !== el && to !== 1) return; // releasing a card that was never driven: nothing to unwind
-    m.el = el;
-    const from = m.p;
-    const start = performance.now();
-    const step = (now) => {
-      if (m.el !== el) return; // superseded by a newer drive
-      const t = duration > 0 ? Math.min(1, (now - start) / duration) : 1;
-      m.p = from + (to - from) * ease(t);
-      el.style.setProperty("--hold-p", m.p.toFixed(4));
-      if (t < 1) { m.raf = requestAnimationFrame(step); return; }
-      m.raf = 0;
-    };
-    m.raf = requestAnimationFrame(step);
-  }
-
-  function volDragPointerDown(e, volume, personagem) {
-    const info = dragRef.current;
-    clearTimeout(info.timer);
-    info.id = volume.id;
-    info.personagem = personagem;
-    info.ids = null;
-    info.startX = e.clientX;
-    info.startY = e.clientY;
-    info.active = false;
-    const target = e.currentTarget;
-    try { target.setPointerCapture(e.pointerId); } catch {}
-    comecarPreenchimento(target);
-    info.timer = setTimeout(() => {
-      info.active = true;
-      target.style.touchAction = "none";
-      // The fill itself is not touched here on purpose: driveHold's own rAF
-      // loop is already most of the way to --hold-p:1 by the time this fires,
-      // and it keeps running past this point, through the whole drag, only
-      // unwinding in finalizarDrag() when the pointer actually comes up.
-      const grupo = lib.volumes.filter((v) => v.personagem === personagem);
-      info.ids = ordenarGrupoVolumes(grupo).map((v) => v.id);
-      setDragVisual({ id: volume.id, ids: info.ids, personagem });
-    }, HOLD_MS);
-  }
-
-  function volDragPointerMove(e) {
-    const info = dragRef.current;
-    if (!info.id) return;
-    if (!info.active) {
-      const dist = Math.hypot(e.clientX - info.startX, e.clientY - info.startY);
-      if (dist > 10) { clearTimeout(info.timer); info.id = null; soltarPreenchimento(e.currentTarget); }
-      return;
-    }
-    e.preventDefault();
-    if (flipBusyRef.current) return; // the last slot change hasn't settled yet
-    const alvoId = alvoParaMover(info.personagem, info.id, e.clientX, e.clientY);
-    if (!alvoId) return; // still over the dragged card's own box: nothing to do
-    const fromIdx = info.ids.indexOf(info.id);
-    const toIdx = info.ids.indexOf(alvoId);
-    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
-    flipSnapshotRef.current = capturarRects(info.ids);
-    const next = info.ids.slice();
-    const [item] = next.splice(fromIdx, 1);
-    next.splice(toIdx, 0, item);
-    info.ids = next;
-    setDragVisual({ id: info.id, ids: next, personagem: info.personagem });
-    flipBusyRef.current = true;
-    clearTimeout(flipBusyTimerRef.current);
-    flipBusyTimerRef.current = setTimeout(() => { flipBusyRef.current = false; }, FLIP_MS);
-  }
-
-  // Shared by the card's own onPointerUp/onPointerCancel and by the window-level
-  // safety net below, so both paths end a drag the exact same way. Guarded by
-  // info.id so a second call (both can legitimately fire for one release) is a
-  // harmless no-op instead of double-committing.
-  function finalizarDrag() {
-    const info = dragRef.current;
-    if (!info.id) return;
-    clearTimeout(info.timer);
-    clearTimeout(flipBusyTimerRef.current);
-    flipBusyRef.current = false;
-    const el = cardNodesRef.current.get(info.id);
-    soltarPreenchimento(el);
-    if (el && el.style) el.style.touchAction = "";
-    if (info.active && info.ids) {
-      persistirOrdemGrupo(info.personagem, info.ids);
-      suppressClickRef.current = true;
-    }
-    info.id = null;
-    info.active = false;
-    info.ids = null;
-    setDragVisual(null);
-  }
-
-  function volDragPointerEnd() {
-    finalizarDrag();
-  }
-
-  // Safety net: setPointerCapture should keep pointerup routed to the dragged
-  // card no matter where the button comes up, but releasing over a spot with no
-  // card under it (or the window losing focus mid-drag) has been seen to leave
-  // the gesture stuck armed forever, with no further pointer event ever reaching
-  // a .vol handler to end it. A window-level listener, live only while a drag is
-  // actually armed, guarantees the drag always ends when the button comes up
-  // (or focus leaves), regardless of what capture did or didn't do.
-  useEffect(() => {
-    if (!dragVisual) return undefined;
-    const finalizar = () => finalizarDrag();
-    window.addEventListener("pointerup", finalizar, true);
-    window.addEventListener("pointercancel", finalizar, true);
-    window.addEventListener("blur", finalizar);
-    return () => {
-      window.removeEventListener("pointerup", finalizar, true);
-      window.removeEventListener("pointercancel", finalizar, true);
-      window.removeEventListener("blur", finalizar);
-    };
-  }, [dragVisual]);
+  const {
+    suppressClickRef, dragVisual, editoraCorPorNome, registrarCardNode, volDragPointerDown,
+    volDragPointerMove, volDragPointerEnd,
+  } = useArrastarVolumes(lib, persist);
 
   function abrirVolumeCard(volumeId) {
     if (suppressClickRef.current) { suppressClickRef.current = false; return; }
@@ -1657,200 +1378,63 @@ export function App() {
         {/* ===================== HQs ===================== */}
         {!loading && abaMontada("volumes") && (
           <Aba ativa={tab === "volumes"} render={() => (
-          volumesFiltrados.length === 0 ? (
-            <EmptyState icon={BookOpen} title={lib.volumes.length === 0 ? "Sua caixa está vazia" : "Nada encontrado"}>
-              {lib.volumes.length === 0
-                ? 'Toque em "Novo" para catalogar seu primeiro volume.'
-                : "Tente outro termo de busca ou limpe os filtros."}
-            </EmptyState>
-          ) : (
-            <>
-              {/* Hidden while searching, same reason as the séries tab's own
-                  toggle: a search already forces every matching group open. */}
-              {!buscando && (
-                <div className="fold-all">
-                  <button
-                    className="btn btn-quiet press"
-                    onClick={() => alternarTodosVolumes(volumesFiltrados, !volumesFiltrados.every((g) => !gruposFechados.has(g.personagem)))}
-                  >
-                    <ChevronDown
-                      size={14}
-                      data-rot={volumesFiltrados.every((g) => !gruposFechados.has(g.personagem)) ? "false" : "true"}
-                    />
-                    {volumesFiltrados.every((g) => !gruposFechados.has(g.personagem)) ? "Esconder todas" : "Mostrar todas"}
-                  </button>
-                </div>
-              )}
-            {volumesFiltrados.map((grupo) => {
-              const arrastandoNesteGrupo = dragVisual != null && dragVisual.personagem === grupo.personagem;
-              const itensExibidos = arrastandoNesteGrupo
-                ? dragVisual.ids.map((id) => grupo.itens.find((v) => v.id === id)).filter(Boolean)
-                : grupo.itens;
-              const aberto = grupoAbertoVolumes(grupo.personagem) || arrastandoNesteGrupo;
-              return (
-              <section className="group" key={grupo.personagem}>
-                <GroupHead
-                  personagem={grupo.personagem}
-                  count={grupo.itens.length}
-                  onPickColor={setCorPersonagem}
-                  aberto={aberto}
-                  onAlternar={alternarGrupoVolumes}
-                  itemLabel="HQs"
-                />
-                {aberto && (
-                <div className="shelf stagger">
-                  {itensExibidos.map((v, i) => (
-                    <VolumeCard
-                      key={v.id}
-                      volume={v}
-                      index={i}
-                      open={v.id === openVolumeId}
-                      onClick={() => abrirVolumeCard(v.id)}
-                      reordenavel={podeReordenarVolumes}
-                      personagem={grupo.personagem}
-                      dragging={dragVisual != null && dragVisual.id === v.id}
-                      holdColor={editoraCorPorNome[(v.editora || "").trim().toLowerCase()]}
-                      cardRef={(el) => registrarCardNode(v.id, el)}
-                      onDragPointerDown={(e) => volDragPointerDown(e, v, grupo.personagem)}
-                      onDragPointerMove={volDragPointerMove}
-                      onDragPointerEnd={volDragPointerEnd}
-                    />
-                  ))}
-                </div>
-                )}
-              </section>
-              );
-            })}
-            </>
-          )
+          <AbaHqs
+            lib={lib}
+            setCorPersonagem={setCorPersonagem}
+            openVolumeId={openVolumeId}
+            buscando={buscando}
+            gruposFechados={gruposFechados}
+            grupoAbertoVolumes={grupoAbertoVolumes}
+            alternarGrupoVolumes={alternarGrupoVolumes}
+            alternarTodosVolumes={alternarTodosVolumes}
+            volumesFiltrados={volumesFiltrados}
+            podeReordenarVolumes={podeReordenarVolumes}
+            dragVisual={dragVisual}
+            editoraCorPorNome={editoraCorPorNome}
+            registrarCardNode={registrarCardNode}
+            volDragPointerDown={volDragPointerDown}
+            volDragPointerMove={volDragPointerMove}
+            volDragPointerEnd={volDragPointerEnd}
+            abrirVolumeCard={abrirVolumeCard}
+          />
           )} />
         )}
 
         {/* ===================== Coleções ===================== */}
         {!loading && abaMontada("colecoes") && (
           <Aba ativa={tab === "colecoes"} render={() => (
-          colecoesFiltradas.length === 0 ? (
-            <EmptyState icon={Layers} title={lib.colecoes.length === 0 ? "Nenhuma coleção ainda" : "Nada encontrado"}>
-              Uma coleção agrupa volumes em ordem de leitura, como uma saga espalhada por vários encadernados.
-            </EmptyState>
-          ) : (
-            <>
-            {/* Same control and same wording as the HQs tab; hidden while
-                searching, which forces every collection open anyway. */}
-            {!buscando && (
-              <div className="fold-all">
-                <button
-                  className="btn btn-quiet press"
-                  onClick={() => alternarTodasColecoes(colecoesFiltradas, !colecoesFiltradas.every((col) => !colecoesFechadas.has(col.id)))}
-                >
-                  <ChevronDown
-                    size={14}
-                    data-rot={colecoesFiltradas.every((col) => !colecoesFechadas.has(col.id)) ? "false" : "true"}
-                  />
-                  {colecoesFiltradas.every((col) => !colecoesFechadas.has(col.id)) ? "Esconder todas" : "Mostrar todas"}
-                </button>
-              </div>
-            )}
-            {colecoesFiltradas.map((c) => {
-              const membros = c.membros.map((vid) => lib.volumes.find((v) => v.id === vid)).filter(Boolean);
-              const aberta = colecaoAberta(c.id);
-              return (
-                <section className="coll" key={c.id} data-aberta={aberta ? "true" : "false"}>
-                  <div className="coll-head">
-                    <div style={{ minWidth: 0 }}>
-                      <h2 className="t-display" style={{ margin: 0 }}>{c.nome}</h2>
-                      <p className="t-small muted truncate" style={{ margin: "3px 0 0" }}>
-                        {membros.length === 0 ? "Sem volumes ainda" : membros.length + " volumes"}
-                      </p>
-                    </div>
-                    <div className="coll-acoes">
-                      <button className="btn btn-quiet" onClick={() => setOpenColecaoId(c.id)}>Gerenciar</button>
-                      <button
-                        className="btn-icon"
-                        onClick={() => alternarColecao(c.id)}
-                        aria-expanded={aberta ? "true" : "false"}
-                        aria-label={(aberta ? "Esconder" : "Mostrar") + " os volumes de " + c.nome}
-                        data-dica={aberta ? "Esconder volumes" : "Mostrar volumes"}
-                      >
-                        <ChevronDown size={16} data-rot={aberta ? "false" : "true"} />
-                      </button>
-                    </div>
-                  </div>
-                  {!aberta ? null : membros.length === 0 ? (
-                    <p className="t-small muted">Abra em Gerenciar para adicionar volumes.</p>
-                  ) : (
-                    <ShelfStrip total={membros.length} cor={c.corBarra}>
-                      {membros.map((v, i) => (
-                        <div key={v.id + ":" + i}>
-                          <div className="slot-order">{String(i + 1).padStart(2, "0")}</div>
-                          <VolumeCard
-                            volume={v}
-                            index={0}
-                            open={false}
-                            onClick={() => { switchTab("volumes"); setOpenVolumeId(v.id); }}
-                          />
-                        </div>
-                      ))}
-                    </ShelfStrip>
-                  )}
-                </section>
-              );
-            })}
-            </>
-          )
+          <AbaColecoes
+            lib={lib}
+            setOpenVolumeId={setOpenVolumeId}
+            buscando={buscando}
+            setOpenColecaoId={setOpenColecaoId}
+            colecoesFiltradas={colecoesFiltradas}
+            colecoesFechadas={colecoesFechadas}
+            colecaoAberta={colecaoAberta}
+            alternarColecao={alternarColecao}
+            alternarTodasColecoes={alternarTodasColecoes}
+            switchTab={switchTab}
+          />
           )} />
         )}
 
         {/* ===================== Séries ===================== */}
         {!loading && abaMontada("series") && (
           <Aba ativa={tab === "series"} render={() => (
-          seriesFiltradas.length === 0 ? (
-            <EmptyState icon={Library} title={lib.series.length === 0 ? "Nenhuma série ainda" : "Nada encontrado"}>
-              Cadastre uma série para acompanhar quais edições você já tem e quais faltam.
-            </EmptyState>
-          ) : (
-            <>
-              {/* Hidden while searching on purpose: a search already forces every
-                  matching group open, so this would either read as broken or
-                  quietly rewrite a state the user cannot see the effect of. */}
-              {!buscando && (
-                <div className="fold-all">
-                  <button
-                    className="btn btn-quiet press"
-                    onClick={() => alternarTodos(seriesFiltradas, !seriesFiltradas.every((g) => gruposAbertos.has(g.personagem)))}
-                  >
-                    <ChevronDown
-                      size={14}
-                      data-rot={seriesFiltradas.every((g) => gruposAbertos.has(g.personagem)) ? "false" : "true"}
-                    />
-                    {seriesFiltradas.every((g) => gruposAbertos.has(g.personagem)) ? "Esconder todas" : "Mostrar todas"}
-                  </button>
-                </div>
-              )}
-              {seriesFiltradas.map((grupo) => (
-              <section className="group" key={grupo.personagem}>
-                <GroupHead
-                  personagem={grupo.personagem}
-                  count={grupo.itens.length}
-                  onPickColor={setCorPersonagem}
-                  aberto={grupoAberto(grupo.personagem)}
-                  onAlternar={alternarGrupo}
-                />
-                {grupoAberto(grupo.personagem) && grupo.itens.map((item) => (
-                  <SerieLinha
-                    key={item.serie.id + ":" + item.faixa.nome}
-                    serie={item.serie}
-                    faixa={item.faixa}
-                    eds={edicoesPorSerie[item.serie.id] || SEM_EDICOES}
-                    ownedIds={ownedEdicaoIds}
-                    aberta={item.serie.id === openSerieId}
-                    onAbrir={abrirSerieNaFaixa}
-                  />
-                ))}
-              </section>
-              ))}
-            </>
-          )
+          <AbaSeries
+            lib={lib}
+            setCorPersonagem={setCorPersonagem}
+            edicoesPorSerie={edicoesPorSerie}
+            ownedEdicaoIds={ownedEdicaoIds}
+            buscando={buscando}
+            openSerieId={openSerieId}
+            gruposAbertos={gruposAbertos}
+            grupoAberto={grupoAberto}
+            alternarGrupo={alternarGrupo}
+            alternarTodos={alternarTodos}
+            seriesFiltradas={seriesFiltradas}
+            abrirSerieNaFaixa={abrirSerieNaFaixa}
+          />
           )} />
         )}
 
@@ -1920,106 +1504,22 @@ export function App() {
       />
 
       {/* ===================== collection detail ===================== */}
-      <Sheet
-        open={!!openColecao}
-        onClose={() => setOpenColecaoId(null)}
-        title={openColecao ? openColecao.nome : ""}
-        subtitle={openColecao && openColecao.descricao ? openColecao.descricao : null}
-        actions={openColecao && (
-          <>
-            <button className="btn-icon" onClick={() => openEditarColecao(openColecao)} aria-label="Editar"><Pencil size={16} /></button>
-            <button className="btn-icon" onClick={() => setConfirmDelete({ type: "colecao", id: openColecao.id })} aria-label="Remover">
-              <Trash2 size={16} color="var(--danger-text)" />
-            </button>
-          </>
-        )}
-      >
-        {openColecao && (
-          <>
-            {personagensDaColecao(openColecao).length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {personagensDaColecao(openColecao).map((p) => <span className="chip" key={p}>{p}</span>)}
-              </div>
-            )}
-            <div>
-              <button
-                type="button"
-                className="ordem-head"
-                onClick={() => alternarOrdem(openColecao.id)}
-                aria-expanded={ordemRecolhida.has(openColecao.id) ? "false" : "true"}
-              >
-                <span className="t-micro">Ordem de leitura</span>
-                <span className="t-small muted num">{openColecao.membros.length}</span>
-                <ChevronDown size={16} data-rot={ordemRecolhida.has(openColecao.id) ? "true" : "false"} />
-              </button>
-              {!ordemRecolhida.has(openColecao.id) && (<>
-              {openColecao.membros.length === 0 && (
-                <p className="t-small muted" style={{ margin: 0 }}>Nenhum volume nesta coleção ainda.</p>
-              )}
-              {openColecao.membros.map((vid, idx) => {
-                const v = lib.volumes.find((x) => x.id === vid);
-                if (!v) return null;
-                return (
-                  <div key={vid + ":" + idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
-                    <span className="num t-small muted" style={{ width: 22, flexShrink: 0 }}>{idx + 1}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p className="t-small truncate" style={{ margin: 0, fontWeight: 500 }}>{v.titulo}</p>
-                      <p className="t-small muted truncate" style={{ margin: 0 }}>{v.personagem}</p>
-                    </div>
-                    <button className="btn-icon" onClick={() => moverMembro(openColecao.id, idx, -1)} aria-label="Mover para cima"><ArrowUp size={14} /></button>
-                    <button className="btn-icon" onClick={() => moverMembro(openColecao.id, idx, 1)} aria-label="Mover para baixo"><ArrowDown size={14} /></button>
-                    <button className="btn-icon" onClick={() => removerMembro(openColecao.id, vid)} aria-label="Remover da coleção">
-                      <X size={14} color="var(--danger-text)" />
-                    </button>
-                  </div>
-                );
-              })}
-              </>)}
-            </div>
-            {/* Only offered when this collection's strip is long enough to have
-                a bar, folded or not: a colour for a bar that cannot exist would
-                change nothing. */}
-            {colecaoRola(openColecao) && (
-              <div className="cor-barra">
-                <p className="t-micro" style={{ margin: "0 0 8px" }}>Cor da barra</p>
-                <div className="swatches">
-                  {PALETA_CROMATICA.map((spec, i) => (
-                    <Swatch key={"c" + i} spec={spec} atual={openColecao.corBarra}
-                      onPick={(_, s) => definirCorBarra(openColecao.id, s)} />
-                  ))}
-                </div>
-                <p className="t-micro" style={{ margin: "14px 0 8px" }}>Neutros</p>
-                <div className="swatches">
-                  {PALETA_NEUTRA.map((spec, i) => (
-                    <Swatch key={"n" + i} spec={spec} atual={openColecao.corBarra}
-                      onPick={(_, s) => definirCorBarra(openColecao.id, s)} />
-                  ))}
-                </div>
-                <button
-                  className="btn btn-quiet"
-                  style={{ width: "100%", marginTop: 10 }}
-                  data-on={!openColecao.corBarra ? "true" : "false"}
-                  onClick={() => definirCorBarra(openColecao.id, null)}
-                >
-                  {!openColecao.corBarra ? "Usando a cor da editora" : "Voltar para a cor da editora"}
-                </button>
-              </div>
-            )}
-            <Field label="Adicionar volume">
-              <select
-                className="select"
-                value={addMemberSel}
-                onChange={(e) => { if (e.target.value) adicionarMembro(openColecao.id, e.target.value); }}
-              >
-                <option value="">Escolha um volume</option>
-                {lib.volumes.filter((v) => !openColecao.membros.includes(v.id)).map((v) => (
-                  <option key={v.id} value={v.id}>{v.titulo}</option>
-                ))}
-              </select>
-            </Field>
-          </>
-        )}
-      </Sheet>
+      <ColecaoSheet
+        lib={lib}
+        setConfirmDelete={setConfirmDelete}
+        setOpenColecaoId={setOpenColecaoId}
+        addMemberSel={addMemberSel}
+        openColecao={openColecao}
+        colecaoRola={colecaoRola}
+        ordemRecolhida={ordemRecolhida}
+        alternarOrdem={alternarOrdem}
+        definirCorBarra={definirCorBarra}
+        openEditarColecao={openEditarColecao}
+        adicionarMembro={adicionarMembro}
+        removerMembro={removerMembro}
+        moverMembro={moverMembro}
+        personagensDaColecao={personagensDaColecao}
+      />
 
       {/* ===================== series detail ===================== */}
       <SerieSheet
@@ -2044,251 +1544,53 @@ export function App() {
       />
 
       {/* ===================== forms ===================== */}
-      {volumeForm && (
-        <Modal
-          open={showVolumeForm}
-          onClose={() => setShowVolumeForm(false)}
-          title={volumeForm.id ? "Editar volume" : "Novo volume"}
-          footer={
-            volumeForm.id ? (
-              <div className="row">
-                <button className="btn btn-quiet" style={{ flex: 1 }} onClick={() => setShowVolumeForm(false)}>Cancelar</button>
-                <button className="btn btn-primary" style={{ flex: 1 }} onClick={salvarVolume}>Salvar</button>
-              </div>
-            ) : (
-              <>
-                <div className="row">
-                  <button className="btn btn-quiet" style={{ flex: 1 }} onClick={() => setShowVolumeForm(false)}>Cancelar</button>
-                  <button className="btn btn-primary" style={{ flex: 1 }} onClick={salvarVolume}>Salvar e fechar</button>
-                </div>
-                <div className="row row-center">
-                  <button className="btn btn-ghost" onClick={salvarVolumeEContinuar}>Salvar e cadastrar outro</button>
-                </div>
-              </>
-            )
-          }
-        >
-          <Field label="Título" error={volumeErrors.titulo}>
-            <input
-              className="input"
-              data-invalid={volumeErrors.titulo ? "true" : "false"}
-              value={volumeForm.titulo}
-              onChange={(e) => setVolumeForm((f) => ({ ...f, titulo: e.target.value }))}
-            />
-          </Field>
-          <Field label="Personagem principal" error={volumeErrors.personagem}>
-            <input
-              className="input"
-              list="personagens-list"
-              data-invalid={volumeErrors.personagem ? "true" : "false"}
-              value={volumeForm.personagem}
-              onChange={(e) => setVolumeForm((f) => ({ ...f, personagem: e.target.value }))}
-            />
-          </Field>
-          <div className="grid-2">
-            <Field label="Tipo">
-              <select className="select" value={volumeForm.tipo} onChange={(e) => setVolumeForm((f) => ({ ...f, tipo: e.target.value }))}>
-                {TIPOS.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </Field>
-            <Field label="Ano">
-              <input className="input" value={volumeForm.ano} onChange={(e) => setVolumeForm((f) => ({ ...f, ano: e.target.value }))} />
-            </Field>
-          </div>
-          <Field label="Editora">
-            <input className="input" value={volumeForm.editora} onChange={(e) => setVolumeForm((f) => ({ ...f, editora: e.target.value }))} />
-          </Field>
-          <Field label="Status de leitura">
-            <div className="seg3">
-              {STATUS_ORDER.map((k) => (
-                <button
-                  key={k}
-                  data-kind={k}
-                  data-on={volumeForm.status === k ? "true" : "false"}
-                  onClick={() => setVolumeForm((f) => ({ ...f, status: k }))}
-                >
-                  {STATUS[k].label}
-                </button>
-              ))}
-            </div>
-          </Field>
-          <Field label="Notas">
-            <textarea className="textarea" value={volumeForm.notas} onChange={(e) => setVolumeForm((f) => ({ ...f, notas: e.target.value }))} />
-          </Field>
-          {volumeDupWarning && <p className="field-error">{volumeDupWarning}</p>}
-        </Modal>
-      )}
+      <FormVolume
+        personagens={personagens}
+        showVolumeForm={showVolumeForm}
+        setShowVolumeForm={setShowVolumeForm}
+        volumeForm={volumeForm}
+        setVolumeForm={setVolumeForm}
+        volumeErrors={volumeErrors}
+        volumeDupWarning={volumeDupWarning}
+        salvarVolume={salvarVolume}
+        salvarVolumeEContinuar={salvarVolumeEContinuar}
+      />
 
-      {colecaoForm && (
-        <Modal
-          open={showColecaoForm}
-          onClose={() => setShowColecaoForm(false)}
-          title={colecaoForm.id ? "Editar coleção" : "Nova coleção"}
-          footer={
-            <div className="row">
-              <button className="btn btn-quiet" style={{ flex: 1 }} onClick={() => setShowColecaoForm(false)}>Cancelar</button>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={salvarColecao}>Salvar</button>
-            </div>
-          }
-        >
-          <Field label="Nome" error={colecaoErrors.nome}>
-            <input
-              className="input"
-              data-invalid={colecaoErrors.nome ? "true" : "false"}
-              value={colecaoForm.nome}
-              onChange={(e) => setColecaoForm((f) => ({ ...f, nome: e.target.value }))}
-            />
-          </Field>
-          <Field label="Descrição">
-            <textarea className="textarea" value={colecaoForm.descricao} onChange={(e) => setColecaoForm((f) => ({ ...f, descricao: e.target.value }))} />
-          </Field>
-        </Modal>
-      )}
+      <FormColecao
+        showColecaoForm={showColecaoForm}
+        setShowColecaoForm={setShowColecaoForm}
+        colecaoForm={colecaoForm}
+        setColecaoForm={setColecaoForm}
+        colecaoErrors={colecaoErrors}
+        salvarColecao={salvarColecao}
+      />
 
-      {serieForm && (
-        <Modal
-          open={showSerieForm}
-          onClose={() => setShowSerieForm(false)}
-          title={serieForm.id ? "Editar série" : "Nova série"}
-          footer={
-            <div className="row">
-              <button className="btn btn-quiet" style={{ flex: 1 }} onClick={() => setShowSerieForm(false)}>Cancelar</button>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={salvarSerie}>Salvar</button>
-            </div>
-          }
-        >
-          <Field label="Nome" error={serieErrors.nome}>
-            <input
-              className="input"
-              placeholder="Nightwing (Volume 2)"
-              data-invalid={serieErrors.nome ? "true" : "false"}
-              value={serieForm.nome}
-              onChange={(e) => setSerieForm((f) => ({ ...f, nome: e.target.value }))}
-            />
-          </Field>
-          <Field
-            label="Personagens"
-            error={serieErrors.personagem}
-            hint='Deixe "de" e "até" em branco para o personagem valer na série toda. Preencha só quando o protagonista muda no meio da numeração.'
-          >
-            {serieForm.personagensList.map((p, idx) => (
-              <div className="row" key={idx} style={{ marginBottom: 6, alignItems: "center" }}>
-                <input
-                  className="input"
-                  list="personagens-list"
-                  placeholder="Personagem"
-                  style={{ flex: 1 }}
-                  value={p.nome}
-                  onChange={(e) => setSerieForm((f) => ({ ...f, personagensList: f.personagensList.map((x, i) => (i === idx ? { ...x, nome: e.target.value } : x)) }))}
-                />
-                <input
-                  className="input" type="number" placeholder="de" style={{ width: 68 }}
-                  value={p.de}
-                  onChange={(e) => setSerieForm((f) => ({ ...f, personagensList: f.personagensList.map((x, i) => (i === idx ? { ...x, de: e.target.value } : x)) }))}
-                />
-                <input
-                  className="input" type="number" placeholder="até" style={{ width: 68 }}
-                  value={p.ate}
-                  onChange={(e) => setSerieForm((f) => ({ ...f, personagensList: f.personagensList.map((x, i) => (i === idx ? { ...x, ate: e.target.value } : x)) }))}
-                />
-                {serieForm.personagensList.length > 1 && (
-                  <button
-                    className="btn-icon"
-                    onClick={() => setSerieForm((f) => ({ ...f, personagensList: f.personagensList.filter((_, i) => i !== idx) }))}
-                    aria-label="Remover personagem"
-                  >
-                    <X size={15} color="var(--danger-text)" />
-                  </button>
-                )}
-              </div>
-            ))}
-            <button
-              className="btn btn-quiet"
-              onClick={() => setSerieForm((f) => ({ ...f, personagensList: [...f.personagensList, { nome: "", de: "", ate: "" }] }))}
-            >
-              <Plus size={14} /> Adicionar personagem
-            </button>
-          </Field>
-          <Field label="Editora">
-            <input className="input" value={serieForm.editora} onChange={(e) => setSerieForm((f) => ({ ...f, editora: e.target.value }))} />
-          </Field>
-          <div className="grid-3">
-            <Field label="Ano início">
-              <input className="input" value={serieForm.anoInicio} onChange={(e) => setSerieForm((f) => ({ ...f, anoInicio: e.target.value }))} />
-            </Field>
-            <Field label="Ano fim">
-              <input className="input" placeholder="presente" value={serieForm.anoFim} onChange={(e) => setSerieForm((f) => ({ ...f, anoFim: e.target.value }))} />
-            </Field>
-            <Field label="Total edições">
-              <input className="input" type="number" min="0" value={serieForm.totalEdicoes} onChange={(e) => setSerieForm((f) => ({ ...f, totalEdicoes: e.target.value }))} />
-            </Field>
-          </div>
-          <Field
-            label="Ordem manual dentro do personagem"
-            hint="Em branco ordena pelo ano de início. Preenchendo, número menor aparece primeiro."
-          >
-            <input className="input" type="number" step="0.1" value={serieForm.ordem} onChange={(e) => setSerieForm((f) => ({ ...f, ordem: e.target.value }))} />
-          </Field>
-          {serieDupWarning && <p className="field-error">{serieDupWarning}</p>}
-        </Modal>
-      )}
+      <FormSerie
+        personagens={personagens}
+        showSerieForm={showSerieForm}
+        setShowSerieForm={setShowSerieForm}
+        serieForm={serieForm}
+        setSerieForm={setSerieForm}
+        serieErrors={serieErrors}
+        serieDupWarning={serieDupWarning}
+        salvarSerie={salvarSerie}
+      />
 
-      {edicaoForm && (
-        <Modal
-          open={showEdicaoForm}
-          onClose={() => setShowEdicaoForm(false)}
-          title={edicaoForm.id ? "Editar edição" : "Catalogar edição"}
-          footer={
-            <div className="row">
-              <button className="btn btn-quiet" style={{ flex: 1 }} onClick={() => setShowEdicaoForm(false)}>Cancelar</button>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={salvarEdicao}>Salvar</button>
-            </div>
-          }
-        >
-          <Field label="Número">
-            <input className="input" value={edicaoForm.numero} onChange={(e) => setEdicaoForm((f) => ({ ...f, numero: e.target.value }))} />
-          </Field>
-          <div className="grid-2">
-            <Field label="Mês">
-              <input className="input" placeholder="Outubro" value={edicaoForm.mes} onChange={(e) => setEdicaoForm((f) => ({ ...f, mes: e.target.value }))} />
-            </Field>
-            <Field label="Ano">
-              <input className="input" value={edicaoForm.ano} onChange={(e) => setEdicaoForm((f) => ({ ...f, ano: e.target.value }))} />
-            </Field>
-          </div>
-          <Field
-            label="Posição no checklist"
-            hint="Em branco ordena pelo número normal. Use 25.5 para ficar entre a 25 e a 26."
-          >
-            <input className="input" value={edicaoForm.posicao} onChange={(e) => setEdicaoForm((f) => ({ ...f, posicao: e.target.value }))} />
-          </Field>
-        </Modal>
-      )}
+      <FormEdicao
+        showEdicaoForm={showEdicaoForm}
+        setShowEdicaoForm={setShowEdicaoForm}
+        edicaoForm={edicaoForm}
+        setEdicaoForm={setEdicaoForm}
+        salvarEdicao={salvarEdicao}
+      />
 
-      <Modal
-        open={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        title="Importar edições"
-        footer={
-          <div className="row">
-            <button className="btn btn-quiet" style={{ flex: 1 }} onClick={() => setShowImportModal(false)}>Cancelar</button>
-            <button className="btn btn-primary" style={{ flex: 1 }} onClick={importarEdicoes}>Importar</button>
-          </div>
-        }
-      >
-        <p className="t-small muted" style={{ margin: 0 }}>
-          Uma edição por linha, no formato <span className="num">número, mês, ano</span>. Só o número
-          é obrigatório. Uma linha como <span className="num">21-30</span> cria o intervalo inteiro de
-          uma vez. Número que já existe na série é atualizado, não duplicado. Colar de planilha funciona.
-        </p>
-        <textarea
-          className="textarea num"
-          rows={9}
-          value={importText}
-          onChange={(e) => setImportText(e.target.value)}
-          placeholder={"1, Outubro, 1996\n2, Novembro, 1996\n0\n12.1, Janeiro, 2012\n21-30"}
-        />
-      </Modal>
+      <ImportarEdicoes
+        showImportModal={showImportModal}
+        setShowImportModal={setShowImportModal}
+        importText={importText}
+        setImportText={setImportText}
+        importarEdicoes={importarEdicoes}
+      />
 
       {/* ===================== confirm ===================== */}
       <Modal

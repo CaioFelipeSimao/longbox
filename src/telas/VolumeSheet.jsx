@@ -4,8 +4,8 @@ import { Pencil, Trash2, Link2, ImagePlus, Copy } from "lucide-react";
 import { STATUS, STATUS_ORDER } from "../lib/constantes";
 import { parseNum } from "../lib/util";
 import { usePasteImage } from "../lib/hooks";
-import { CoverArt } from "../ui/VolumeCard";
 import { Field, Sheet } from "../ui/base";
+import { CoverArt } from "../ui/VolumeCard";
 
 export function VolumeSheet({
   volume, onClose, onEdit, onDuplicate, onDelete, onStatus, colecoes, grupos,
