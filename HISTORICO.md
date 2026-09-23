@@ -1781,3 +1781,34 @@ two visits of one profile (thumbnails generated, then read from the device):
 78 of 78 tiles are images, none text. `test-render` guards the `blob:` case.
 v85 was never checked on the hub; the lesson is to walk every screen that
 shows a cover after changing how covers are addressed.
+
+**v87: the code gets structure, and nothing on screen changes.** Four pieces of
+housekeeping, in one version so that any regression is unambiguously theirs:
+
+- **Git.** The project had no version control; each version overwrote the last.
+  The first commit is v86 exactly as published (its `app.js` compared byte for
+  byte with the live one), tagged `v86`. Every version from here is a tag.
+- **One command.** `npm run check` builds and runs every suite. The build goes
+  through esbuild's JS API (no more PowerShell quoting), copies `styles.css` and
+  `index.html` itself, refreshes the harness, and refuses a bundle over 450 KB.
+  The runner fails a suite on a FAIL line, a non-zero exit, an error or dash
+  count, or fewer passes than its floor; it was proven by planting a wrong
+  accent colour, which `test-render.mjs` alone reported with exit code 0. Two
+  latent test bugs surfaced: a regex that had lost its backslash
+  (`/^Item d+$/`) and so never tested anything, and an encoding check that
+  flagged itself. Tests moved to `tests/`.
+- **Modules.** The 5.856-line `app.jsx` became 30 files under `lib/`, `ui/` and
+  `telas/` (see Build in `DESIGN.md`). Code was moved by line ranges without
+  edits; imports were generated and then checked by an independent script, which
+  was itself checked by removing a real import and watching it get caught.
+  `App` went from 2.362 to 1.665 lines: the three tabs, the collection sheet,
+  the forms and the reorder gesture (`useArrastarVolumes`) are their own files,
+  taking as props exactly the App values they read. Verified: all suites, then
+  the real harness in Chrome (every tab, both sheets, the collection sheet, a
+  form, the reorder gesture by synthetic pointer events, and the thumbnail path
+  with 14 uploaded covers: 14 thumbnails in IndexedDB, 14 `blob:` images), each
+  compared against the v86 bundle under the same conditions where behaviour
+  looked off. It never was: the automation tab is hidden, so a sheet mounts but
+  waits for a frame, and two screenshots in a row on the hub time out on v86 too.
+- **Docs.** `DESIGN.md` is now the current spec only; this file took the
+  per-version record, in order, with nothing dropped.
