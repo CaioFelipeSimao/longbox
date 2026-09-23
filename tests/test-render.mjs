@@ -2,6 +2,13 @@
 import fs from "node:fs";
 
 const bundle = fs.readFileSync("dist/app.js", "utf8");
+// The app's own source, every module under src/ (it was one app.jsx until the
+// split), for the assertions that read code rather than the rendered page.
+function fonteDoApp() {
+  const andar = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? andar(d + "/" + e.name) : /[.]jsx?$/.test(e.name) ? [d + "/" + e.name] : []);
+  return andar("src").map((p) => fs.readFileSync(p, "utf8")).join("\n");
+}
 const errors = [];
 const logs = [];
 
@@ -275,7 +282,7 @@ if (scenario === "seeded") {
   }
 }
 
-const srcText = fs.readFileSync("src/app.jsx", "utf8");
+const srcText = fonteDoApp();
 const srcEm = [...srcText.matchAll(/.{0,60}[—–].{0,60}/g)].map((m) => m[0]);
 console.log("EM/EN-DASH in source:", srcEm.length);
 srcEm.forEach((s) => console.log("   >>> " + s.replace(/\n/g, " ")));
@@ -359,7 +366,7 @@ if (scenario === "seeded") {
   // twice; this is what catches the two drifting apart.
   const accentDecl = cssSrcTop.split("--accent:")[1];
   const accentTok = accentDecl ? accentDecl.split(";")[0].trim() : "";
-  const appSrcTop = fs.readFileSync("src/app.jsx", "utf8");
+  const appSrcTop = fonteDoApp();
   const hexDecl = appSrcTop.split("ACCENT_HEX = ")[1];
   const hexTok = hexDecl ? hexDecl.split(";")[0].trim().replace(/"/g, "") : "";
   console.log("  lattice accent matches the token: " +
@@ -395,7 +402,7 @@ if (scenario === "seeded") {
   // HSL lightness a yellow and a blue are nowhere near the same brightness. Run
   // the real picker rather than trusting it: blue must take white, yellow dark.
   const srcInk = appSrcTop.slice(appSrcTop.indexOf("const INK_ESCURA"), appSrcTop.indexOf("function swatchColors"));
-  const tintaSobre = new Function(srcInk + "; return tintaSobre;")();
+  const tintaSobre = new Function(srcInk.replace(/^export /gm, "") + "; return tintaSobre;")();
   const azul = tintaSobre(240, 100, 42);
   const amarelo = tintaSobre(60, 100, 42);
   const seuAzul = tintaSobre(211.3, 100, 42);

@@ -19,7 +19,7 @@ const claro = process.argv.includes("--claro");
 const TETO_KB = 450;
 
 await build({
-  entryPoints: ["src/app.jsx"],
+  entryPoints: ["src/main.jsx"],
   bundle: true,
   minify: true,
   format: "iife",
