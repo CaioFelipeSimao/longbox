@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { Pencil, Trash2, Link2, ImagePlus, Copy } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Pencil, Trash2, Link2, ImagePlus, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 
 import { STATUS, STATUS_ORDER } from "../lib/constantes";
 import { parseNum } from "../lib/util";
@@ -13,6 +13,7 @@ export function VolumeSheet({
   linkSerieId, setLinkSerieId, linkPickSerie, setLinkPickSerie,
   rangeDe, setRangeDe, rangeAte, setRangeAte, avulsoNum, setAvulsoNum,
   onRange, onAvulsa, onToggle, onOpenEdicaoNaSerie, recede,
+  anterior, proximo, onNavegar, direcao,
 }) {
   const inputRef = useRef(null);
   const kept = useRef(null);
@@ -20,6 +21,57 @@ export function VolumeSheet({
   const v = volume || kept.current;
 
   usePasteImage(!!volume && canUpload, onCoverPick);
+
+  // v88: ← → step to the neighbouring volume. Not while typing, not with a
+  // modifier held (those belong to the browser and the text field), not while a
+  // modal is up, and not while the série sheet sits on top of this one.
+  const navRef = useRef(null);
+  const vizinhos = useRef({ anterior, proximo, onNavegar });
+  vizinhos.current = { anterior, proximo, onNavegar };
+  useEffect(() => {
+    if (!volume || recede) return undefined;
+    const h = (e) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      const alvo = e.target;
+      if (alvo && alvo.closest && alvo.closest("input, textarea, select, [contenteditable], [role='scrollbar']")) return;
+      if (document.querySelector(".modal")) return;
+      const n = vizinhos.current;
+      const id = e.key === "ArrowLeft" ? n.anterior : n.proximo;
+      if (!id) return;
+      e.preventDefault();
+      n.onNavegar(id, e.key === "ArrowLeft" ? "ant" : "prox");
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [!!volume, recede]);
+
+  // A swipe counts when it travels 60px sideways and clearly more sideways than
+  // down, so scrolling the sheet never turns into a step.
+  const toque = useRef(null);
+  function toqueInicio(e) {
+    const t = e.touches && e.touches[0];
+    toque.current = t && e.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null;
+  }
+  function toqueFim(e) {
+    const ini = toque.current;
+    toque.current = null;
+    const t = e.changedTouches && e.changedTouches[0];
+    if (!ini || !t) return;
+    const dx = t.clientX - ini.x;
+    const dy = t.clientY - ini.y;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0 && proximo) onNavegar(proximo, "prox");
+    if (dx > 0 && anterior) onNavegar(anterior, "ant");
+  }
+
+  // Each step starts at the top of the new volume, not wherever the last one
+  // was scrolled to.
+  const idAtual = v ? v.id : null;
+  useEffect(() => {
+    const corpo = navRef.current && navRef.current.closest(".sheet-body");
+    if (corpo) corpo.scrollTop = 0;
+  }, [idAtual]);
 
   return (
     <Sheet
@@ -30,6 +82,12 @@ export function VolumeSheet({
       subtitle={v ? v.personagem : null}
       actions={v && (
         <>
+          <button className="btn-icon" onClick={() => onNavegar(anterior, "ant")} disabled={!anterior} aria-label="Volume anterior">
+            <ChevronLeft size={16} />
+          </button>
+          <button className="btn-icon sheet-nav-fim" onClick={() => onNavegar(proximo, "prox")} disabled={!proximo} aria-label="Próximo volume">
+            <ChevronRight size={16} />
+          </button>
           <button className="btn-icon" onClick={onEdit} aria-label="Editar"><Pencil size={16} /></button>
           <button className="btn-icon" onClick={onDuplicate} aria-label="Duplicar este volume"><Copy size={16} /></button>
           <button className="btn-icon" onClick={onDelete} aria-label="Remover">
@@ -39,7 +97,14 @@ export function VolumeSheet({
       )}
     >
       {v && (
-        <>
+        <div
+          className="vol-nav"
+          key={v.id}
+          ref={navRef}
+          data-dir={direcao || undefined}
+          onTouchStart={toqueInicio}
+          onTouchEnd={toqueFim}
+        >
           <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
             <div className="detail-cover">
               <div className="cover"><CoverArt volume={v} grande /></div>
@@ -169,7 +234,7 @@ export function VolumeSheet({
               />
             )}
           </div>
-        </>
+        </div>
       )}
     </Sheet>
   );

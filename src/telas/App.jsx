@@ -204,6 +204,10 @@ export function App() {
 
   /* ---------- volumes ---------- */
   const [openVolumeId, setOpenVolumeId] = useState(null);
+  // v88: where the open volume was opened from, which decides what ‹ › step
+  // through (see sequenciaDoVolume), and which way the last step went.
+  const [navVolume, setNavVolume] = useState({ tipo: "todas" });
+  const [navDirecao, setNavDirecao] = useState(null);
   const [showVolumeForm, setShowVolumeForm] = useState(false);
   const [volumeForm, setVolumeForm] = useState(null);
   const [volumeErrors, setVolumeErrors] = useState({});
@@ -374,10 +378,55 @@ export function App() {
 
   function abrirVolumeCard(volumeId) {
     if (suppressClickRef.current) { suppressClickRef.current = false; return; }
-    setOpenVolumeId(volumeId);
+    abrirVolume(volumeId, { tipo: "hqs" });
   }
 
   const openVolume = lib.volumes.find((v) => v.id === openVolumeId) || null;
+
+  /* ---------- stepping between volumes in the open sheet (v88) ---------- */
+  // contexto is { tipo: "hqs" } for the HQs tab, { tipo: "colecao", id } for a
+  // collection, { tipo: "todas" } for the hub and the search box.
+  function abrirVolume(id, contexto) {
+    setNavVolume(contexto);
+    setNavDirecao(null);
+    setOpenVolumeId(id);
+  }
+
+  // Worked out when asked, not stored, so a filter, a fold or a removal since the
+  // sheet opened is already reflected. The HQs tab is what is on screen: filtered
+  // groups only, folded ones left out. A collection is its reading order. The full
+  // order is the HQs tab with nothing applied, publisher band included, since the
+  // hub and the search ignore it too. A volume missing from its own sequence (a
+  // filter changed under it) falls back to the full order.
+  function sequenciaDoVolume() {
+    let seq = null;
+    if (navVolume.tipo === "hqs") {
+      seq = volumesFiltrados.filter((g) => grupoAbertoVolumes(g.personagem)).flatMap((g) => g.itens.map((v) => v.id));
+    } else if (navVolume.tipo === "colecao") {
+      const c = lib.colecoes.find((x) => x.id === navVolume.id);
+      if (c) seq = c.membros.filter((id) => lib.volumes.some((v) => v.id === id));
+    }
+    if (!seq || !seq.includes(openVolumeId)) {
+      const grupos = {};
+      lib.volumes.forEach((v) => { (grupos[v.personagem] = grupos[v.personagem] || []).push(v); });
+      seq = Object.keys(grupos).sort((a, b) => a.localeCompare(b, "pt-BR"))
+        .flatMap((p) => ordenarGrupoVolumes(grupos[p]).map((v) => v.id));
+    }
+    return seq;
+  }
+  const vizinhosDoVolume = (() => {
+    if (!openVolume) return { anterior: null, proximo: null };
+    const seq = sequenciaDoVolume();
+    const i = seq.indexOf(openVolumeId);
+    return { anterior: i > 0 ? seq[i - 1] : null, proximo: i >= 0 && i < seq.length - 1 ? seq[i + 1] : null };
+  })();
+
+  function navegarVolume(id, direcao) {
+    if (!id) return;
+    setNavDirecao(direcao);
+    setOpenVolumeId(id);
+    setLinkSerieId(null);
+  }
 
   function openNovoVolume() {
     // Prefilled from whichever publisher is being browsed, so cataloguing inside
@@ -1279,7 +1328,7 @@ export function App() {
                   return;
                 }
                 switchTab("volumes");
-                setOpenVolumeId(s.id);
+                abrirVolume(s.id, { tipo: "todas" });
               }}
             />
           )}
@@ -1370,7 +1419,7 @@ export function App() {
             docUsage={docUsage}
             edicoesPorSerie={edicoesPorSerie}
             ownedIds={ownedEdicaoIds}
-            onOpenVolume={(id) => { switchTab("volumes"); setOpenVolumeId(id); }}
+            onOpenVolume={(id) => { switchTab("volumes"); abrirVolume(id, { tipo: "todas" }); }}
             onOpenSerie={(id) => { switchTab("series"); setOpenSerieId(id); setOpenSerieContexto(null); }}
             onNovo={openNovoVolume}
             onEnter={entrarNaColecao}
@@ -1464,7 +1513,7 @@ export function App() {
           <Aba ativa={tab === "colecoes"} render={() => (
           <AbaColecoes
             lib={lib}
-            setOpenVolumeId={setOpenVolumeId}
+            abrirVolume={abrirVolume}
             buscando={buscando}
             setOpenColecaoId={setOpenColecaoId}
             colecoesFiltradas={colecoesFiltradas}
@@ -1560,6 +1609,10 @@ export function App() {
         onToggle={(edId) => toggleLigacaoEdicao(openVolume.id, edId)}
         onOpenEdicaoNaSerie={abrirEdicaoNaSerie}
         recede={!!openSerieId}
+        anterior={vizinhosDoVolume.anterior}
+        proximo={vizinhosDoVolume.proximo}
+        onNavegar={navegarVolume}
+        direcao={navDirecao}
       />
 
       {/* ===================== collection detail ===================== */}

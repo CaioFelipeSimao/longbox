@@ -5,7 +5,7 @@ import { ShelfStrip } from "../ui/Prateleira";
 import { VolumeCard } from "../ui/VolumeCard";
 
 export function AbaColecoes({
-  lib, setOpenVolumeId, buscando, setOpenColecaoId, colecoesFiltradas, colecoesFechadas,
+  lib, abrirVolume, buscando, setOpenColecaoId, colecoesFiltradas, colecoesFechadas,
   colecaoAberta, alternarColecao, alternarTodasColecoes, switchTab,
 }) {
   return (
@@ -67,7 +67,7 @@ export function AbaColecoes({
                       volume={v}
                       index={0}
                       open={false}
-                      onClick={() => { switchTab("volumes"); setOpenVolumeId(v.id); }}
+                      onClick={() => { switchTab("volumes"); abrirVolume(v.id, { tipo: "colecao", id: c.id }); }}
                     />
                   </div>
                 ))}
