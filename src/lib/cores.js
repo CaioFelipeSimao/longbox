@@ -123,6 +123,17 @@ export function nomeDaCor(spec) {
   return (spec && NOMES_COR.get(chaveCor(spec))) || "Cor";
 }
 
+// v90 (D2): the ink for text laid on a swatch's edge colour, which is what the
+// band's pill is painted with. Mirrors swatchColors' edge below, so the two cannot
+// disagree about which colour the text sits on.
+export function tintaSobreBorda(spec) {
+  if (spec && spec.longbox) spec = LONGBOX_HSL;
+  const h = spec.h || 0;
+  const s = spec.s === undefined ? 56 : spec.s;
+  const l = spec.l === undefined ? 56 : spec.l;
+  return spec.light ? tintaSobre(h, Math.round(s * 0.8), 34) : tintaSobre(h, s, l);
+}
+
 export function swatchColors(spec, lift) {
   if (spec && spec.longbox) spec = LONGBOX_HSL;
   const h = spec.h || 0;

@@ -16,6 +16,7 @@
   --danger: #F04438;
   --danger-text: #FF7A70;
   --read: #5B9E6F;
+  --read-ink: #06170C; /* v90: numbers on --read tiles; white read 3.2:1, this 5.8 */
   /* D1: "lendo" beside "lida" in the hub's reading meter. The accent itself sat
      too close to --read for full colour vision (validator: OKLab dE 14.1 dark,
      12.4 light, floor 15), so the meter takes its own step: 16.8 and 16.9. */
@@ -81,12 +82,13 @@
     --border-strong: #D0D4DA;
     --text: #14161A;
     --text-muted: #5B6370;
-    --accent: #0090A8;
+    --accent: #007F94; /* v90: was #0090A8, white on it read 3.78:1; now 4.70 */
     --accent-text: #00707F;
     --accent-ink: #FFFFFF;
     --danger: #D92D20;
     --danger-text: #B42318;
     --read: #3F7D52;
+    --read-ink: #FFFFFF;
     --retrato-lendo: #00A5BF;
     --warm: #B4791A;
 
@@ -564,7 +566,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .pil-janela { overflow: hidden; border-radius: 0 var(--r-sm) var(--r-sm) 0; }
 .pil-corpo { background: var(--pilula); border-radius: var(--r-sm) 0 0 var(--r-sm); }
 .ed-band[data-tinted="true"] .seg-thumb { --pilula: var(--ed-cor); }
-.ed-band[data-tinted="true"] .segmented button[data-active="true"] { color: #fff; }
+/* v90 (D2): the ink is measured against the pill (EditoraBar sets it); white was
+   hard-coded here and read at 2.3:1 on the Longbox cyan that "Todas" wears. */
+.ed-band[data-tinted="true"] .segmented button[data-active="true"] { color: var(--ed-cor-tinta, #fff); }
 /* With no publisher colour to borrow (Todas as editoras, Sem editora, or a
    publisher saved without one) the pill takes the interface accent, the same
    colour the rest of the app uses when no publisher is in play (v65). Dark ink,
@@ -790,6 +794,10 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 /* v74: the shelf's 3px character stripe is a tenth of a 30px thumbnail and
    hid the art; the colour still reads at half that. */
 .sug-cover.cover::after { width: 1.5px; }
+/* v90 (D2): at 30px the drawn cover's title broke into single letters; the
+   thumbnail keeps its gradient and the character's edge, and the row beside it
+   already says the title. */
+.sug-cover .cover-fb > * { display: none; }
 .sug-text { min-width: 0; flex: 1; }
 .sug-title { display: block; font-size: 0.8125rem; font-weight: 500; }
 .sug-meta { display: block; margin-top: 1px; font-size: 0.75rem; color: var(--text-muted); }
@@ -1653,6 +1661,7 @@ button.retrato-linha { cursor: pointer; }
 .retrato-status[data-s="lida"] i { background: var(--read); }
 .retrato-status[data-s="lendo"] i { background: var(--retrato-lendo); }
 .retrato-status:disabled { color: var(--text-muted); cursor: default; }
+.retrato-status:disabled[data-s] i { background: var(--border-strong); }
 @media (hover: hover) and (pointer: fine) {
   .retrato-status:not(:disabled):hover { background: var(--surface-2); }
 }
@@ -1827,7 +1836,7 @@ button.retrato-linha { cursor: pointer; }
               color 120ms var(--ease-out), border-color 120ms var(--ease-out);
 }
 .tile:active { transform: scale(0.94); }
-.tile[data-owned="true"] { background: var(--read); border-color: var(--read); color: #fff; }
+.tile[data-owned="true"] { background: var(--read); border-color: var(--read); color: var(--read-ink); }
 .tile[data-sel="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 .bucket { border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 8px; overflow: hidden; }

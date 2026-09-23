@@ -1868,3 +1868,31 @@ test-render assertion counted the word "Outro" in the hub to prove the hunt has 
 reroll button; "Outros" broke it, so it now counts buttons labelled exactly "Outro"
 (same intent, rewritten, not deleted). Seen in the harness with the real volumes
 (a temporary page, deleted afterwards), dark, light and 800px wide.
+
+**v90: D2, the light theme and the tablet, reviewed and fixed.** Reviewed in headless
+Chrome driven by puppeteer (installed in the scratchpad, not the repo): PC light at
+1707x960, tablet 800x1280 dark and light and 1280x800 light with touch really emulated
+(`isMobile` + `hasTouch`, so `pointer: coarse` and `hover: none` apply), 13 screens
+each. Every screen was measured in-page for sideways overflow and for the WCAG contrast
+of each visible text against the first opaque background behind it. 52 screens, no
+overflow, no script errors; the report went to the user as a private page with crops
+and before/after samples, and they picked all five fixes:
+
+- **The open tab's label on the band pill** was white on the Longbox cyan, 2.3:1, in
+  both themes. v70 routed "Todas as editoras" through the tinted path, whose CSS
+  hard-coded `color: #fff`, silently dropping v65's dark ink. The ink is now chosen
+  against the pill's own colour (`tintaSobreBorda` in `lib/cores.js`, passed as
+  `--ed-cor-tinta`): dark on the cyan (7.7:1) and on a light publisher colour, white on
+  a strong blue.
+- **Light-theme accent** #0090A8 to #007F94: white on it went from 3.78 to 4.70.
+- **Owned tiles in the dark theme**: the number takes `--read-ink` (#06170C), 3.2 to 5.8.
+- "0 lendo" in the hub portrait greys its dot; a search thumbnail without a cover shows
+  only its colour (at 30px the drawn title broke into single letters).
+- `--read`'s low chroma (flagged in v89) stays, by the user's choice.
+
+`tests/test-contraste.mjs` (8 checks) now computes those token pairs with the WCAG
+formula and checks the pill ink on the rendered band, since JSDOM applies no media
+queries and nothing had caught v70 for twenty versions. Re-running the whole review on
+the fixed build left one reported failure, the pill label itself, which the scanner
+measures against the grey track because the pill is a separate element behind the text;
+the screenshots confirm the dark ink on the cyan.

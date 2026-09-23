@@ -2,7 +2,9 @@ import { useState, useMemo, useRef } from "react";
 import { Plus, Trash2, ImagePlus, ChevronDown } from "lucide-react";
 
 import { ACCENT_HEX, ED_SEM, ED_TODAS } from "../lib/constantes";
-import { COR_LONGBOX, PALETA_CROMATICA, PALETA_NEUTRA, swatchColors } from "../lib/cores";
+import {
+  COR_LONGBOX, PALETA_CROMATICA, PALETA_NEUTRA, swatchColors, tintaSobreBorda,
+} from "../lib/cores";
 import { Sheet } from "./base";
 import { Swatch } from "./CorPersonagem";
 import { OpcaoFiltro } from "./Filtros";
@@ -25,8 +27,11 @@ export function EditoraBar({
   // "Todas as editoras" (and a stale id, which reads as Todas) wears the Longbox
   // cyan (v70), so the band is tinted on every view but "Sem editora".
   const todas = !atual && selecionada !== ED_SEM;
-  const cor = atual && atual.cor ? swatchColors(atual.cor, 0)
-    : todas ? swatchColors(COR_LONGBOX, 0) : null;
+  const corSpec = atual && atual.cor ? atual.cor : todas ? COR_LONGBOX : null;
+  const cor = corSpec ? swatchColors(corSpec, 0) : null;
+  // v90 (D2): the open tab's label on the pill takes whichever ink reads on the
+  // pill's colour. It was always white, which gave 2.3:1 on the Longbox cyan.
+  const corTinta = corSpec ? tintaSobreBorda(corSpec) : null;
   // Each publisher carries its own colour in the list, as characters do theirs.
   const opcoesEditora = useMemo(() => [
     // The Longbox cyan, as a literal: inside the band --accent is the selected
@@ -46,7 +51,7 @@ export function EditoraBar({
       style={
         cor || edHue != null
           ? {
-              ...(cor ? { "--ed-cor": cor.edge, "--ed-fundo": cor.b } : null),
+              ...(cor ? { "--ed-cor": cor.edge, "--ed-fundo": cor.b, "--ed-cor-tinta": corTinta } : null),
               ...(edCroma == null
                 ? null
                 : {

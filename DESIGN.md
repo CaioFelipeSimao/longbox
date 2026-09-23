@@ -56,11 +56,12 @@ DARK                          LIGHT
 --border-strong #333941       #D0D4DA
 --text          #E8EAED       #14161A
 --text-muted    #9AA1AA       #5B6370
---accent        #00B8D4       #0090A8
+--accent        #00B8D4       #007F94   (light was #0090A8 until v90: white on it read 3.78:1)
 --accent-text   #22C8E0       #00707F   (accent used AS text, contrast-safe)
 --accent-ink    #04191E       #FFFFFF   (text ON accent fill)
 --danger        #F04438       #D92D20
 --read          #5B9E6F       #3F7D52
+--read-ink      #06170C       #FFFFFF   (numbers on owned tiles, v90)
 --retrato-lendo #22C8E0       #00A5BF   ("lendo" in the hub's reading meter only, v89)
 ```
 
