@@ -208,6 +208,20 @@ oversized body is caught and surfaced as a real message, never swallowed.
 Entity shapes are unchanged from v2, so the exported JSON imports without transformation
 (import fans `edicoes` out into the per-series shards).
 
+**Formats belong to publishers (v95).** `constantes.js` holds `TIPOS_COMUNS` (Trade
+Paperback, Omnibus, Hardcover, Outro, offered for any publisher) and
+`TIPOS_POR_EDITORA` (DC: Compendium, Absolute Edition, DC Finest; Marvel: Epic
+Collection, Marvel Masterworks), looked up by `tiposDaEditora(nome)`, which ignores a
+trailing " Comics". A new publisher or format is added there and nowhere else; the
+cataloguing skill reads the same two constants. The volume and série forms pick the
+publisher from `library/editoras` (a select, publisher above format); the format list
+follows it, and a format the new publisher lacks falls back to Trade Paperback with a
+one-line note under the field. Values the lists do not know (an old format, a
+publisher no longer registered) stay on offer, so saving never rewrites them. The HQs
+format filter offers the band's publisher's formats, all of them under "Todas as
+editoras", the common four under "Sem editora", and releases a saved format the band
+no longer has.
+
 Writes are optimistic locally, debounced, and always write the whole document (`set`, not
 `update`, since `update` requires the document to exist). `onSnapshot` per document keeps a
 second device current; an incoming snapshot is applied only when that document has no
@@ -376,6 +390,9 @@ It exits non-zero on a failure.
 
 `tests/test-filtro-series.mjs` covers the séries character filter and the per-row
 search (v93), including the suggestions under the filter and a reload.
+
+`tests/test-formatos.mjs` covers formats per publisher (v95): the form's publisher
+select and format list, the fallback and its note, old values kept, the filter per band.
 
 `tests/test-colecoes.mjs` covers the collection manage sheet (v66): the reading
 order fold and its session memory, and the bar colour option that only appears

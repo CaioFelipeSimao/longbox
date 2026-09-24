@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Check } from "lucide-react";
 
-import { STATUS, STATUS_ORDER, TIPOS } from "../lib/constantes";
+import { STATUS, STATUS_ORDER } from "../lib/constantes";
 import { specForCharacter, swatchColors, useCores } from "../lib/cores";
 import { dobrar } from "../lib/sessao";
 
 export const OPCOES_STATUS = STATUS_ORDER.map((k) => ({ valor: k, rotulo: STATUS[k].label }));
-export const OPCOES_TIPO = TIPOS.map((t) => ({ valor: t, rotulo: t }));
 
 /* Status and tipo on the HQs tab: the character filter's look without its typing,
    since three statuses and eight types need no search. A native select was used

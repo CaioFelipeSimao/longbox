@@ -1,12 +1,52 @@
+import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 
-import { STATUS, STATUS_ORDER, TIPOS } from "../lib/constantes";
+import { STATUS, STATUS_ORDER, tiposDaEditora } from "../lib/constantes";
 import { Field, Modal } from "../ui/base";
 
+// v95: the publisher is picked from the registered ones (Gerenciar editoras), so a
+// typo cannot leave a volume under a publisher of its own with no formats. A value
+// already stored that is not registered stays on offer, so opening and saving an
+// old record never rewrites it behind the user's back.
+function opcoesEditora(editoras, atual) {
+  const nomes = (editoras || []).map((e) => e.nome).filter(Boolean);
+  const extra = atual && !nomes.some((n) => n.toLowerCase() === atual.trim().toLowerCase()) ? [atual] : [];
+  return [...nomes, ...extra];
+}
+
+function SeletorEditora({ editoras, valor, onChange }) {
+  return (
+    <select className="select" value={valor || ""} onChange={(e) => onChange(e.target.value)}>
+      <option value="">Sem editora</option>
+      {opcoesEditora(editoras, valor).map((n) => <option key={n} value={n}>{n}</option>)}
+    </select>
+  );
+}
+
 export function FormVolume({
-  personagens, showVolumeForm, setShowVolumeForm, volumeForm, setVolumeForm,
+  personagens, editoras, showVolumeForm, setShowVolumeForm, volumeForm, setVolumeForm,
   volumeErrors, volumeDupWarning, salvarVolume, salvarVolumeEContinuar,
 }) {
+  // Kept out of volumeForm on purpose: the form object is spread into the stored
+  // volume on save, and this line is not part of it.
+  const [avisoTipo, setAvisoTipo] = useState(null);
+  useEffect(() => { setAvisoTipo(null); }, [showVolumeForm, volumeForm && volumeForm.id]);
+
+  // Formats follow the publisher. One the new publisher does not have falls back
+  // to Trade Paperback, and the form says so instead of changing it silently.
+  const trocarEditora = (editora) => {
+    const tipo = volumeForm.tipo;
+    if (!tipo || tiposDaEditora(editora).includes(tipo)) {
+      setVolumeForm((f) => ({ ...f, editora }));
+      setAvisoTipo(null);
+      return;
+    }
+    setVolumeForm((f) => ({ ...f, editora, tipo: "Trade Paperback" }));
+    setAvisoTipo(tipo + " não existe " + (editora ? "na " + editora : "sem editora") + ", o tipo voltou para Trade Paperback.");
+  };
+  const tipos = volumeForm ? tiposDaEditora(volumeForm.editora) : [];
+  const tiposComAtual = volumeForm && volumeForm.tipo && !tipos.includes(volumeForm.tipo) ? [...tipos, volumeForm.tipo] : tipos;
+
   return (
     <>
       {volumeForm && (
@@ -50,19 +90,19 @@ export function FormVolume({
               onChange={(e) => setVolumeForm((f) => ({ ...f, personagem: e.target.value }))}
             />
           </Field>
+          <Field label="Editora">
+            <SeletorEditora editoras={editoras} valor={volumeForm.editora} onChange={trocarEditora} />
+          </Field>
           <div className="grid-2">
-            <Field label="Tipo">
-              <select className="select" value={volumeForm.tipo} onChange={(e) => setVolumeForm((f) => ({ ...f, tipo: e.target.value }))}>
-                {TIPOS.map((t) => <option key={t} value={t}>{t}</option>)}
+            <Field label="Tipo" hint={avisoTipo || undefined}>
+              <select className="select" value={volumeForm.tipo} onChange={(e) => { setAvisoTipo(null); setVolumeForm((f) => ({ ...f, tipo: e.target.value })); }}>
+                {tiposComAtual.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </Field>
             <Field label="Ano">
               <input className="input" value={volumeForm.ano} onChange={(e) => setVolumeForm((f) => ({ ...f, ano: e.target.value }))} />
             </Field>
           </div>
-          <Field label="Editora">
-            <input className="input" value={volumeForm.editora} onChange={(e) => setVolumeForm((f) => ({ ...f, editora: e.target.value }))} />
-          </Field>
           <Field label="Status de leitura">
             <div className="seg3">
               {STATUS_ORDER.map((k) => (
@@ -123,7 +163,7 @@ export function FormColecao({
 }
 
 export function FormSerie({
-  personagens, showSerieForm, setShowSerieForm, serieForm, setSerieForm, serieErrors,
+  personagens, editoras, showSerieForm, setShowSerieForm, serieForm, setSerieForm, serieErrors,
   serieDupWarning, salvarSerie,
 }) {
   return (
@@ -193,7 +233,7 @@ export function FormSerie({
             </button>
           </Field>
           <Field label="Editora">
-            <input className="input" value={serieForm.editora} onChange={(e) => setSerieForm((f) => ({ ...f, editora: e.target.value }))} />
+            <SeletorEditora editoras={editoras} valor={serieForm.editora} onChange={(editora) => setSerieForm((f) => ({ ...f, editora }))} />
           </Field>
           <div className="grid-3">
             <Field label="Ano início">

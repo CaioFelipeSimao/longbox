@@ -151,7 +151,9 @@ m1.tecla(status, "Enter"); await sleep(80);
 check("teclado escolhe Lida", status.textContent === "Lida" && !m1.root.querySelector("#filtro-status-lista"), status.textContent);
 const tipo = m1.root.querySelector("#filtro-tipo");
 tipo.click(); await sleep(60);
-check("lista de tipos com Todos primeiro", m1.root.querySelectorAll("#filtro-tipo-lista [role=option]").length === 8 && m1.root.querySelector("#filtro-tipo-lista [role=option]").textContent === "Todos os tipos");
+// v95: under "Todas as editoras" every publisher's formats are on offer, the DC and
+// Marvel lines included, so 9 formats plus "Todos os tipos" (was 7 plus 1).
+check("lista de tipos com Todos primeiro", m1.root.querySelectorAll("#filtro-tipo-lista [role=option]").length === 10 && m1.root.querySelector("#filtro-tipo-lista [role=option]").textContent === "Todos os tipos", m1.root.querySelectorAll("#filtro-tipo-lista [role=option]").length);
 m1.root.querySelector("#filtro-tipo-lista [role=option]").click(); await sleep(60);
 check("escolher Todos os tipos deixa sem filtro de tipo", tipo.textContent === "Todos os tipos" && !m1.root.querySelector("#filtro-tipo-lista"));
 check("status continua combinando", m1.root.querySelectorAll(".vol").length === 1);

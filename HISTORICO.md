@@ -1955,3 +1955,19 @@ lists it, and the button's hint reads "Esconder todas · Q" / "Mostrar todas · 
 following the button's own label. test-atalhos 41 checks, test-filtro-series 27. Looked
 at in the harness: the hint sits over the first group header with no sideways overflow,
 and a real Q keypress folds the HQs tab.
+
+**v95: formats belong to publishers.** Groundwork for cataloguing Marvel: the user did
+not want DC Finest offered for a Marvel book, and asked for the structure change before
+the skill. Agreed in chat: lists in code, not editable in Gerenciar editoras (user's
+pick); the publisher field becomes a select of registered publishers ("no cons" per the
+user, with the old-value caveat stated). Common: Trade Paperback, Omnibus, Hardcover,
+Outro. DC adds Compendium, Absolute Edition, DC Finest; Marvel adds Epic Collection and
+Marvel Masterworks. `tiposDaEditora` ignores a trailing " Comics" after the harness,
+whose publisher is spelled "Marvel", showed a Marvel entry named that way would get the
+common four only. Publisher now sits above format in the volume form; the série form's
+publisher is a select too. The fallback note lives in the form component's own state,
+never in `volumeForm`, since that object is spread into the stored volume on save.
+`OPCOES_TIPO` removed (the filter's options are computed per band). test-filtros'
+"lista de tipos" count rewritten 8 -> 10 (9 formats plus "Todos os tipos"), not
+deleted. New `tests/test-formatos.mjs`, 24 checks. Looked at in the harness: the
+form reads in order, the note wraps under the format column, no sideways overflow.

@@ -6,10 +6,35 @@ export const STATUS = {
   lida: { label: "Lida" },
 };
 export const STATUS_ORDER = ["nao_lida", "lendo", "lida"];
+// v95: formats belong to publishers. Four exist for any publisher; each publisher
+// adds its own lines, keyed by its name in lower case (the same comparison the
+// publisher band uses). A publisher with no entry offers the common four only.
+// The cataloguing skill reads these two constants from this file, so a new
+// publisher or format is added here and nowhere else.
+export const TIPOS_COMUNS = ["Trade Paperback", "Omnibus", "Hardcover", "Outro"];
+export const TIPOS_POR_EDITORA = {
+  "dc comics": ["Compendium", "Absolute Edition", "DC Finest"],
+  "marvel comics": ["Epic Collection", "Marvel Masterworks"],
+};
+// Every format any publisher offers: the band's "Todas as editoras" filter, and
+// the check that a saved filter still names a real format.
 export const TIPOS = [
-  "Trade Paperback", "Compendium", "Omnibus", "Absolute Edition",
-  "DC Finest", "Hardcover", "Outro",
+  "Trade Paperback",
+  ...Object.values(TIPOS_POR_EDITORA).flat(),
+  "Omnibus", "Hardcover", "Outro",
 ];
+// A trailing " Comics" is ignored, so a publisher registered as "Marvel" still gets
+// Marvel's formats (the harness and a hand-made entry both spell it that way).
+export function chaveEditora(nome) {
+  const k = (nome || "").trim().toLowerCase();
+  return k.endsWith(" comics") ? k : k + " comics";
+}
+// Trade Paperback first (the default), then the publisher's own lines, then the
+// rest of the common ones, "Outro" last.
+export function tiposDaEditora(nome) {
+  const proprios = TIPOS_POR_EDITORA[chaveEditora(nome)] || [];
+  return ["Trade Paperback", ...proprios, "Omnibus", "Hardcover", "Outro"];
+}
 // Format names that were renamed after volumes were already stored with them
 // (v77: "Encadernado (TPB)" became "Trade Paperback"; v78: "Capa Dura" became
 // "Hardcover" and "Edição Absoluta" became "Absolute Edition"). normalizeLib rewrites

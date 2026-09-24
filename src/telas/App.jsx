@@ -4,7 +4,7 @@ import CursorGrid from "../components/CursorGrid/CursorGrid";
 
 import {
   ACCENT_HEX, DOC_LIMIT, ED_SEM, ED_TODAS, EMPTY_LIB, QUASE_FECHANDO, SESSION_SEED, TABS,
-  TIPOS, editoraDe, seededPick, slugify,
+  TIPOS, editoraDe, seededPick, slugify, tiposDaEditora, TIPOS_COMUNS,
 } from "../lib/constantes";
 import { parseNum, uid } from "../lib/util";
 import { COR_LONGBOX, CoresContext, swatchColors, tintaSobre } from "../lib/cores";
@@ -29,7 +29,7 @@ import { SUGESTOES_DA_ABA, SearchBox, ordenarPorNome, ordenarSugestoes } from ".
 import { CorSheet } from "../ui/CorPersonagem";
 import { EditoraBar, EditorasSheet } from "../ui/Editoras";
 import { ColecoesSkeleton, HubSkeleton, SeriesSkeleton, ShelfSkeleton } from "../ui/Esqueletos";
-import { OPCOES_STATUS, OPCOES_TIPO, OpcaoFiltro, PersonagemFiltro } from "../ui/Filtros";
+import { OPCOES_STATUS, OpcaoFiltro, PersonagemFiltro } from "../ui/Filtros";
 import { ordenarGrupoVolumes } from "../ui/VolumeCard";
 import { AbaColecoes } from "./AbaColecoes";
 import { AbaHqs } from "./AbaHqs";
@@ -355,6 +355,20 @@ export function App() {
     if (loading || !filtroPersonagem) return;
     if (!personagensDisponiveis.some((o) => o.nome === filtroPersonagem)) setFiltroPersonagem("");
   }, [loading, filtroPersonagem, personagensDisponiveis]);
+
+  // v95: the format filter offers what the band's publisher has: its own list
+  // under a publisher, the common four under "Sem editora", everything under
+  // "Todas as editoras".
+  const opcoesTipo = useMemo(() => {
+    const sel = lib.editoraSel || ED_TODAS;
+    const lista = sel === ED_TODAS ? TIPOS : sel === ED_SEM ? TIPOS_COMUNS : tiposDaEditora(editoraAtual ? editoraAtual.nome : "");
+    return lista.map((t) => ({ valor: t, rotulo: t }));
+  }, [lib.editoraSel, editoraAtual]);
+  // Same release as the character filter when the band no longer has the format.
+  useEffect(() => {
+    if (loading || !filtroTipo) return;
+    if (!opcoesTipo.some((o) => o.valor === filtroTipo)) setFiltroTipo("");
+  }, [loading, filtroTipo, opcoesTipo]);
 
   const volumesFiltrados = useMemo(() => {
     let vs = lib.volumes.filter(casaEditora);
@@ -1549,7 +1563,7 @@ export function App() {
               rotulo="Filtrar por tipo"
               todos="Todos os tipos"
               valor={filtroTipo}
-              opcoes={OPCOES_TIPO}
+              opcoes={opcoesTipo}
               onChange={setFiltroTipo}
             />
             <PersonagemFiltro
@@ -1786,6 +1800,7 @@ export function App() {
       {/* ===================== forms ===================== */}
       <FormVolume
         personagens={personagens}
+        editoras={lib.editoras}
         showVolumeForm={showVolumeForm}
         setShowVolumeForm={setShowVolumeForm}
         volumeForm={volumeForm}
@@ -1807,6 +1822,7 @@ export function App() {
 
       <FormSerie
         personagens={personagens}
+        editoras={lib.editoras}
         showSerieForm={showSerieForm}
         setShowSerieForm={setShowSerieForm}
         serieForm={serieForm}
