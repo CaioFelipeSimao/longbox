@@ -5,7 +5,7 @@ import { GroupHead } from "../ui/CorPersonagem";
 import { SEM_EDICOES, SerieLinha } from "../ui/Series";
 
 export function AbaSeries({
-  lib, setCorPersonagem, edicoesPorSerie, ownedEdicaoIds, buscando, openSerieId,
+  lib, setCorPersonagem, edicoesPorSerie, ownedEdicaoIds, buscando, filtrando, openSerieId,
   gruposAbertos, grupoAberto, alternarGrupo, alternarTodos, seriesFiltradas,
   abrirSerieNaFaixa,
 }) {
@@ -18,8 +18,9 @@ export function AbaSeries({
       <>
         {/* Hidden while searching on purpose: a search already forces every
             matching group open, so this would either read as broken or
-            quietly rewrite a state the user cannot see the effect of. */}
-        {!buscando && (
+            quietly rewrite a state the user cannot see the effect of. Hidden
+            under the character filter too: one group left, already open. */}
+        {!buscando && !filtrando && (
           <div className="fold-all">
             <button
               className="btn btn-quiet press"

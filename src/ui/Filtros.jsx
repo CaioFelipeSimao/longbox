@@ -118,7 +118,7 @@ export function OpcaoFiltro({ id, valor, todos, opcoes, onChange, rotulo, acao, 
 /* The character filter on the HQs tab: a field you can type into that narrows a
    list, with "Todos os personagens" always first. Closed, it shows the choice;
    open, it is a search over the choices. Keys and outside-click follow SearchBox. */
-export function PersonagemFiltro({ valor, opcoes, onChange }) {
+export function PersonagemFiltro({ id = "filtro-personagem", valor, opcoes, onChange }) {
   const [aberta, setAberta] = useState(false);
   const [texto, setTexto] = useState("");
   const [idx, setIdx] = useState(0);
@@ -183,7 +183,7 @@ export function PersonagemFiltro({ valor, opcoes, onChange }) {
     <div className="pfiltro" ref={raiz}>
       <input
         ref={campo}
-        id="filtro-personagem"
+        id={id}
         className="select pfiltro-input"
         data-on={valor ? "true" : "false"}
         value={aberta ? texto : valor}
@@ -195,7 +195,7 @@ export function PersonagemFiltro({ valor, opcoes, onChange }) {
         aria-label="Filtrar por personagem"
         role="combobox"
         aria-expanded={aberta ? "true" : "false"}
-        aria-controls="filtro-personagem-lista"
+        aria-controls={id + "-lista"}
         aria-autocomplete="list"
         aria-activedescendant={aberta && lista[idx] ? optId(lista[idx]) : undefined}
         autoComplete="off"
@@ -204,7 +204,7 @@ export function PersonagemFiltro({ valor, opcoes, onChange }) {
       {aberta && (
         <div
           className="sug pfiltro-lista"
-          id="filtro-personagem-lista"
+          id={id + "-lista"}
           role="listbox"
           aria-label="Personagens"
           onMouseDown={(e) => e.preventDefault()}

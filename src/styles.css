@@ -917,6 +917,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 /* Three filters and the clear button on one row: the filters share the width,
    the button takes what its label needs, and under 560px only its X. */
 .filtros-linha { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 10px; }
+/* The séries tab has one filter (v93): the field keeps the width of one of the
+   HQs row's three, so it does not stretch into a bar across the page. */
+.filtros-linha[data-campos="1"] { grid-template-columns: minmax(0, 320px) auto; justify-content: start; }
 .filtros-limpar { gap: 6px; height: 100%; white-space: nowrap; }
 .filtros-limpar:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
 /* As wide as the field it drops from. Only on a phone, where a third of the row

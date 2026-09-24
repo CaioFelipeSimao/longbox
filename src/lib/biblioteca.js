@@ -123,6 +123,16 @@ export function personagensDaSerie(s) {
   return [];
 }
 
+// The séries tab's group for a série with no character, and what the character
+// filter offers for it (v93).
+export const SEM_PERSONAGEM = "(sem personagem)";
+
+// Whether a série sits in the named character's group on the séries tab.
+export function serieDoGrupo(s, personagem) {
+  const ps = personagensDaSerie(s);
+  return ps.length ? ps.some((p) => p.nome === personagem) : personagem === SEM_PERSONAGEM;
+}
+
 export function anoRange(s) {
   const ini = s.anoInicio || "?";
   const fim = s.anoFim || "presente";

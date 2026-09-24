@@ -185,6 +185,30 @@ export function salvarFiltros(f) {
   }
 }
 
+// The séries tab's character filter (v93), kept apart from the HQs tab's on
+// purpose: a filter carried over from another tab would shrink this list with
+// nothing here saying why. Same lifetime as the HQs filters.
+export const FILTRO_SERIES_KEY = "longbox:filtro-series";
+
+export function lerFiltroSeries() {
+  try {
+    if (typeof window === "undefined") return "";
+    return window.sessionStorage.getItem(FILTRO_SERIES_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function salvarFiltroSeries(personagem) {
+  try {
+    if (typeof window === "undefined") return;
+    if (!personagem) window.sessionStorage.removeItem(FILTRO_SERIES_KEY);
+    else window.sessionStorage.setItem(FILTRO_SERIES_KEY, personagem);
+  } catch {
+    // Not remembered here, and the filter still works for this page load.
+  }
+}
+
 // Accent- and case-blind, so "robin" finds "Róbin" and "asa" finds "Asa Noturna".
 export function dobrar(s) {
   return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();

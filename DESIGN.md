@@ -161,6 +161,14 @@ Each tab gets a **different layout family**, which is what actually fixes the sa
 3. **Séries** - run rows. Each series shows a compact owned-vs-missing bar across its
    numbering. Opening one expands the full issue grid (the existing tile concept, restyled),
    keeping the 100-issue bucketing for long runs.
+   A série with several characters sits in each one's group. The search is matched
+   per row: a row stays when the série's name or that group's character matches, so
+   a character's name does not pull in the other groups its séries sit in (v93).
+   A character filter (the same filter button and typeable field as HQs, one field
+   only, its own `longbox:filtro-series` session key) leaves one group, open; under
+   it the search reads série names only and the séries part of the suggestions is
+   titled "Séries · Nome" and holds only that character's séries. HQs and Séries
+   filters are separate on purpose.
 
 Detail view: bottom sheet under 768px, right side panel above it. Large cover with the
 upload affordance, title in display, metadata as a label/value grid (no chained `·`),
@@ -365,6 +373,9 @@ written record of why the rule existed.
 typing and keys, and whether the filters survive a reload but not a fresh visit,
 by mounting several times with and without the previous mount's `sessionStorage`.
 It exits non-zero on a failure.
+
+`tests/test-filtro-series.mjs` covers the séries character filter and the per-row
+search (v93), including the suggestions under the filter and a reload.
 
 `tests/test-colecoes.mjs` covers the collection manage sheet (v66): the reading
 order fold and its session memory, and the bar colour option that only appears

@@ -10,7 +10,7 @@ import { parseNum, uid } from "../lib/util";
 import { COR_LONGBOX, CoresContext, swatchColors, tintaSobre } from "../lib/cores";
 import {
   anoRange, bytesOf, deleteColecao, deleteEdicao, deleteSerie, deleteVolume, ensureAvulsa,
-  ensureRange, normalizeLib, parseImportText, personagensDaSerie, semearEditoras,
+  ensureRange, normalizeLib, parseImportText, personagensDaSerie, SEM_PERSONAGEM, serieDoGrupo, semearEditoras,
 } from "../lib/biblioteca";
 import {
   gravarUltimoBackup, lerUltimoBackup, loadLibrary, scheduleSave, shardEdicoes, store,
@@ -20,8 +20,8 @@ import {
 } from "../lib/capas";
 import { useHubUnlock, useLarguraDaBarra, usePonteiroFino } from "../lib/hooks";
 import {
-  lerAbaSalva, lerColecoesFechadas, lerFiltros, lerGruposAbertos, lerGruposFechados,
-  lerOrdemRecolhida, salvarAba, salvarColecoesFechadas, salvarFiltros, salvarGruposAbertos,
+  lerAbaSalva, lerColecoesFechadas, lerFiltroSeries, lerFiltros, lerGruposAbertos, lerGruposFechados,
+  lerOrdemRecolhida, salvarAba, salvarColecoesFechadas, salvarFiltroSeries, salvarFiltros, salvarGruposAbertos,
   salvarGruposFechados, salvarOrdemRecolhida,
 } from "../lib/sessao";
 import { Aba, Modal, Toast } from "../ui/base";
@@ -219,6 +219,7 @@ export function App() {
   const [filtroStatus, setFiltroStatus] = useState(filtrosSalvos.status);
   const [filtroTipo, setFiltroTipo] = useState(filtrosSalvos.tipo);
   const [filtroPersonagem, setFiltroPersonagem] = useState(filtrosSalvos.personagem);
+  const [filtroSerie, setFiltroSerie] = useState(lerFiltroSeries);
   const [showFiltros, setShowFiltros] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
 
@@ -230,6 +231,9 @@ export function App() {
   // carries the count; otherwise a reload or a trip to the hub could leave a
   // filtered shelf with nothing on screen saying so.
   const filtrosAtivos = [filtroStatus, filtroTipo, filtroPersonagem].filter(Boolean).length;
+  useEffect(() => { salvarFiltroSeries(filtroSerie); }, [filtroSerie]);
+  // What the filter button counts: each tab has its own filters.
+  const filtrosAtivosAba = tab === "series" ? (filtroSerie ? 1 : 0) : filtrosAtivos;
 
   const buscando = query.trim().length > 0;
   const editoraAtual = useMemo(
@@ -288,19 +292,23 @@ export function App() {
         };
       });
     } else {
-      daAba = ordenarPorNome(lib.series, query, (s) => personagensDaSerie(s).map((p) => p.nome).join(" "))
+      // v93: with the character filter on, only that character's séries, matched
+      // by name alone (the character is already fixed); the HQs below stay whole.
+      const candidatas = filtroSerie ? lib.series.filter((s) => serieDoGrupo(s, filtroSerie)) : lib.series;
+      const porPersonagem = filtroSerie ? undefined : (s) => personagensDaSerie(s).map((p) => p.nome).join(" ");
+      daAba = ordenarPorNome(candidatas, query, porPersonagem)
         .slice(0, SUGESTOES_DA_ABA).map((s) => {
           const eds = edicoesPorSerie[s.id] || [];
           const tenho = eds.filter((e) => ownedEdicaoIds.has(e.id)).length;
           return {
-            tipo: "serie", chave: "s-" + s.id, id: s.id, titulo: s.nome, secao: "Séries",
+            tipo: "serie", chave: "s-" + s.id, id: s.id, titulo: s.nome, secao: filtroSerie ? "Séries · " + filtroSerie : "Séries",
             meta: [personagensDaSerie(s).map((p) => p.nome).join(", "), anoRange(s),
               eds.length ? tenho + " de " + eds.length : ""].filter(Boolean).join(" · "),
           };
         });
     }
     return daAba.concat(hqs.slice(0, SUGESTOES_DA_ABA).map((v) => ({ ...comoVolume(v), secao: "HQs" })));
-  }, [tab, lib.volumes, lib.colecoes, lib.series, textoBusca, query, edicoesPorSerie, ownedEdicaoIds]);
+  }, [tab, lib.volumes, lib.colecoes, lib.series, textoBusca, query, edicoesPorSerie, ownedEdicaoIds, filtroSerie]);
 
   // Fold state for the HQs tab's character groups — see lerGruposFechados'
   // own comment for why this stores the closed names, inverted from the
@@ -684,7 +692,9 @@ export function App() {
   // the set keeps what the user chose by hand, and the search only overrides how
   // it is read while a query exists. Clearing the field puts the list back
   // exactly as they left it, instead of having quietly opened half of it.
-  const grupoAberto = (personagem) => buscando || gruposAbertos.has(personagem);
+  // Picking a character opens its group for the same reason as on HQs: the one
+  // group left on screen, folded, would read as an empty result.
+  const grupoAberto = (personagem) => buscando || personagem === filtroSerie || gruposAbertos.has(personagem);
 
   function alternarGrupo(personagem) {
     setGruposAbertos((antes) => {
@@ -721,16 +731,36 @@ export function App() {
   const [importSerieId, setImportSerieId] = useState(null);
   const [importText, setImportText] = useState("");
 
-  const seriesFiltradas = useMemo(() => {
-    let ss = lib.series.filter(casaEditora);
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      ss = ss.filter((s) => s.nome.toLowerCase().includes(q) || personagensDaSerie(s).some((p) => p.nome.toLowerCase().includes(q)));
-    }
-    const grupos = {};
-    ss.forEach((s) => {
+  // v93: a search is matched per row (a série inside one character's group), not
+  // per série. A row stays when the série's name matches or when its own group's
+  // character does, so "batman" no longer drags in every other group a Batman
+  // série also sits in. With the character filter on, only that group, and the
+  // search looks at the série's name alone.
+  // The characters the séries filter offers: every group the tab can show under
+  // the publisher band, counted in séries, the way the HQs filter counts volumes.
+  const personagensDasSeries = useMemo(() => {
+    const n = {};
+    lib.series.filter(casaEditora).forEach((s) => {
       const ps = personagensDaSerie(s);
-      (ps.length ? ps : [{ nome: "(sem personagem)", de: null, ate: null }]).forEach((p) => {
+      (ps.length ? ps.map((p) => p.nome) : [SEM_PERSONAGEM]).forEach((nome) => { n[nome] = (n[nome] || 0) + 1; });
+    });
+    return Object.keys(n).sort((x, y) => x.localeCompare(y, "pt-BR")).map((nome) => ({ nome, n: n[nome] }));
+  }, [lib.series, casaEditora]);
+  // Same release as the HQs filter when the band leaves the character with nothing.
+  useEffect(() => {
+    if (loading || !filtroSerie) return;
+    if (!personagensDasSeries.some((o) => o.nome === filtroSerie)) setFiltroSerie("");
+  }, [loading, filtroSerie, personagensDasSeries]);
+
+  const seriesFiltradas = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const grupos = {};
+    lib.series.filter(casaEditora).forEach((s) => {
+      const ps = personagensDaSerie(s);
+      const nomeCasa = !q || s.nome.toLowerCase().includes(q);
+      (ps.length ? ps : [{ nome: SEM_PERSONAGEM, de: null, ate: null, vazio: true }]).forEach((p) => {
+        if (filtroSerie && p.nome !== filtroSerie) return;
+        if (!nomeCasa && (filtroSerie || p.vazio || !p.nome.toLowerCase().includes(q))) return;
         (grupos[p.nome] = grupos[p.nome] || []).push({ serie: s, faixa: p });
       });
     });
@@ -744,7 +774,7 @@ export function App() {
         return (parseInt(a.serie.anoInicio, 10) || 9999) - (parseInt(b.serie.anoInicio, 10) || 9999);
       }),
     }));
-  }, [lib.series, query, casaEditora]);
+  }, [lib.series, query, casaEditora, filtroSerie]);
 
   const openSerie = lib.series.find((s) => s.id === openSerieId) || null;
 
@@ -1358,7 +1388,7 @@ export function App() {
               <span className="wordmark">LONG<b>BOX</b></span>
             </span>
           ) : (
-            <button className="brand" onClick={() => switchTab("hub")} aria-label="Voltar ao início">
+            <button className="brand" onClick={() => switchTab("hub")} aria-label="Voltar ao início" data-dica="Início · 0">
               <ChevronLeft size={18} className="brand-chev" />
               <span className="mark" aria-hidden="true"><i /><i /><i /><i /></span>
               <span className="wordmark">LONG<b>BOX</b></span>
@@ -1387,19 +1417,19 @@ export function App() {
               }}
             />
           )}
-          {tab === "volumes" && (
+          {(tab === "volumes" || tab === "series") && (
             <button
               className="btn-icon btn-filtros"
               data-active={showFiltros ? "true" : "false"}
-              data-filtrando={filtrosAtivos > 0 ? "true" : "false"}
+              data-filtrando={filtrosAtivosAba > 0 ? "true" : "false"}
               onClick={() => setShowFiltros((s) => !s)}
-              aria-label={filtrosAtivos > 0 ? "Filtros, " + filtrosAtivos + (filtrosAtivos === 1 ? " ativo" : " ativos") : "Filtros"}
+              aria-label={filtrosAtivosAba > 0 ? "Filtros, " + filtrosAtivosAba + (filtrosAtivosAba === 1 ? " ativo" : " ativos") : "Filtros"}
               aria-expanded={showFiltros ? "true" : "false"}
               data-dica={(showFiltros ? "Esconder filtros" : "Mostrar filtros") +
-                (filtrosAtivos > 0 ? " (" + filtrosAtivos + (filtrosAtivos === 1 ? " ativo)" : " ativos)") : "")}
+                (filtrosAtivosAba > 0 ? " (" + filtrosAtivosAba + (filtrosAtivosAba === 1 ? " ativo)" : " ativos)") : "")}
             >
               <SlidersHorizontal size={16} />
-              {filtrosAtivos > 0 && <span className="btn-badge" aria-hidden="true">{filtrosAtivos}</span>}
+              {filtrosAtivosAba > 0 && <span className="btn-badge" aria-hidden="true">{filtrosAtivosAba}</span>}
             </button>
           )}
           <button className={isHub ? "btn btn-quiet" : "btn btn-primary"} onClick={novoNaAba} data-dica="Novo · N">
@@ -1527,6 +1557,28 @@ export function App() {
           </div>
         )}
 
+        {tab === "series" && showFiltros && (
+          <div className="filtros-hqs" style={{ marginBottom: 20 }}>
+          <div className="filtros-linha" data-campos="1">
+            <PersonagemFiltro
+              id="filtro-personagem-series"
+              valor={filtroSerie}
+              opcoes={personagensDasSeries}
+              onChange={setFiltroSerie}
+            />
+            <button
+              type="button"
+              className="btn btn-quiet filtros-limpar"
+              disabled={!filtroSerie}
+              aria-label="Limpar filtros"
+              onClick={() => setFiltroSerie("")}
+            >
+              <X size={14} /> <span className="label-wide">Limpar filtros</span>
+            </button>
+          </div>
+          </div>
+        )}
+
         {loading && (
           <>
             {/* The blocks themselves are hidden from a screen reader, since a
@@ -1591,6 +1643,7 @@ export function App() {
             edicoesPorSerie={edicoesPorSerie}
             ownedEdicaoIds={ownedEdicaoIds}
             buscando={buscando}
+            filtrando={!!filtroSerie}
             openSerieId={openSerieId}
             gruposAbertos={gruposAbertos}
             grupoAberto={grupoAberto}

@@ -5,6 +5,7 @@ import { Modal } from "../ui/base";
 const GRUPOS = [
   ["Em qualquer tela", [
     [["/"], "Ir para a busca"],
+    [["0"], "Voltar ao início"],
     [["1", "2", "3"], "Abrir HQs, Coleções ou Séries"],
     [["N"], "Novo na aba aberta (volume, coleção ou série)"],
     [["?"], "Esta lista"],

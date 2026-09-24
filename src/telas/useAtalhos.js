@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 // Q4 (v91): the keyboard shortcuts, one window listener for all of them.
-//   /        search                    1 2 3   HQs, Coleções, Séries
+//   /        search                    1 2 3   HQs, Coleções, Séries (0 the hub, v93)
 //   N        new, as the tab's "Novo"  E       edit what the open sheet shows
 //   Ctrl+Z   undo the last removal     ?       the list of shortcuts
 // Esc and ← → live with the sheets that own them (useEscape, VolumeSheet).
@@ -38,9 +38,9 @@ export function useAtalhos(acoes) {
       }
       if (a.fichaAberta) return;
       if (k === "/") { e.preventDefault(); a.focarBusca(); return; }
-      if (k === "1" || k === "2" || k === "3") {
+      if (k === "0" || k === "1" || k === "2" || k === "3") {
         e.preventDefault();
-        a.abrirAba(["volumes", "colecoes", "series"][Number(k) - 1]);
+        a.abrirAba(["hub", "volumes", "colecoes", "series"][Number(k)]);
         return;
       }
       if (k === "n" || k === "N") { e.preventDefault(); a.novo(); }

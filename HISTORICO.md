@@ -1928,3 +1928,20 @@ the capture phase, a blur without it). Fix: `useAtalhos` claims every Esc with
 (`useEscape`, search, dropdowns) never read `defaultPrevented`, so they still close
 sheets, modals and menus. Trade-off: Esc on a bare screen no longer leaves the frame;
 a click outside or Tab still does. `tests/test-atalhos.mjs` 30 checks.
+
+**v93: séries character filter, per-row séries search, and 0 for the hub.** The user
+found looking for one character's séries confusing: searching "batman" also showed the
+Batgirl group, because a série with Batman and Batgirl sat in both groups and the search
+kept the whole série. Agreed in chat: (1) the search is matched per row, a série inside
+one group stays when its name or that group's character matches; a name match still
+shows the série in all its groups. (2) A character filter on Séries, reusing the HQs
+filter button and `PersonagemFiltro` (now takes an `id`), counted in séries, with
+"(sem personagem)" offered; it leaves one group, forced open, hides "Mostrar todas",
+makes the search read série names only, and turns the séries suggestions into "Séries ·
+Nome" with only that character's séries while the HQs part stays whole. Separate from
+the HQs filters (recommended, not contested), saved in `longbox:filtro-series`,
+released like the HQs one when the publisher band leaves it empty. Coleções filter
+deferred by the user. Mid-turn addition: `0` opens the hub (panel row, "Início · 0"
+hint on the wordmark). `tests/test-filtro-series.mjs` 26 checks, test-atalhos 32.
+Looked at in the harness in Chrome: the one-field row is 320px wide, no sideways
+overflow, the suggestions heading and the wordmark hint read right.
