@@ -1916,3 +1916,15 @@ passes keys to the app after a click inside it; the panel says so, since the app
 work around it. `tests/test-atalhos.mjs`, 28 checks; checked again with a real keyboard
 and mouse in headless Chrome (the "/" is not typed into the field, the hints sit where
 intended, the panel reads in both themes).
+
+**v92: Esc no longer throws focus out of the app.** Reported on the PC: every Esc left
+the whole Longbox and put a focus ring on the claude.ai bar, which also killed the v91
+shortcuts until the next click. Cause, found with a throwaway probe artifact: the host
+injects a runtime into every artifact page that includes an `installEscapeForward`,
+handing any Esc to claude.ai, which pulls focus out of the frame. The probe showed it
+skips an Esc whose default was prevented (no `window` blur with `preventDefault` in
+the capture phase, a blur without it). Fix: `useAtalhos` claims every Esc with
+`preventDefault` in a capture listener on `window`. The app's own Esc handlers
+(`useEscape`, search, dropdowns) never read `defaultPrevented`, so they still close
+sheets, modals and menus. Trade-off: Esc on a bare screen no longer leaves the frame;
+a click outside or Tab still does. `tests/test-atalhos.mjs` 30 checks.

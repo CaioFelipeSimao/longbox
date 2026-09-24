@@ -48,4 +48,15 @@ export function useAtalhos(acoes) {
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, []);
+
+  // The artifact host injects a runtime that hands an unhandled Esc to claude.ai,
+  // which pulls focus out of the whole app (and with it every shortcut). It skips
+  // an Esc whose default was prevented, so claim every Esc here, in the capture
+  // phase so it runs before the host's own listener. The app's Esc handlers
+  // (useEscape, search, dropdowns) never check defaultPrevented, so they still run.
+  useEffect(() => {
+    const h = (e) => { if (e.key === "Escape") e.preventDefault(); };
+    window.addEventListener("keydown", h, true);
+    return () => window.removeEventListener("keydown", h, true);
+  }, []);
 }

@@ -121,9 +121,13 @@ check("? abre a lista de atalhos", m.tituloModal() === "Atalhos do teclado", m.t
 const teclas = [...(m.root.querySelector(".modal")?.querySelectorAll("kbd") || [])].map((k) => k.textContent);
 const esperadas = ["/", "1", "2", "3", "N", "?", "E", "←", "→", "Ctrl+V", "Esc", "Ctrl+Z"];
 check("a lista traz todas as teclas", esperadas.every((t) => teclas.includes(t)), teclas.join(" "));
-await m.tecla("Escape");
+const escLista = await m.tecla("Escape");
 await sleep(300);
 check("Esc fecha a lista", m.tituloModal() === null, m.tituloModal());
+// The host runtime pulls focus out of the artifact on any Esc left unprevented.
+check("Esc com a lista aberta não sai do app", escLista.defaultPrevented);
+const escSolto = await m.tecla("Escape");
+check("Esc sem nada aberto também não sai do app", escSolto.defaultPrevented);
 
 console.log("=== dicas ===");
 const dica = (el) => (el && el.getAttribute("data-dica")) || "";
