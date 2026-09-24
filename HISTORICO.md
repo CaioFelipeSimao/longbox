@@ -1996,3 +1996,13 @@ notice appears on phone and PC, and asked for it a little bigger on the desktop.
 768px up every toast grows from `small` (13px, padding 10px 16px) to `title` size (16px,
 padding 14px 22px), about 36px to 52px tall; the "Desfazer" toast and its button grow with
 it. Phones are unchanged. Checked in the harness at 1707px.
+
+**v98: the toast glows in the publisher's colour.** With the bigger v97 toast the user
+noticed a grey "aura" around it: the toast borrowed `--shadow-sheet`, an upward black
+shadow (0 -12px 48px, 50%) meant for sheets docked at the bottom edge, which on a
+floating box over the dark page reads as a lopsided halo. Replaced, at the user's
+suggestion, by a light behind the toast that fades out: two colour `box-shadow`s (22px at
+38%, 64px at 16%) of `--toast-luz`, which is the cyan accent on the hub and on "Todas" and
+`hsl(var(--ed-hue) 100% 50%)` when a publisher is picked. A `::before` layer was rejected:
+inside the toast's own stacking context (fixed + z-index) a negative z-index child paints
+over the toast's background. Checked in the harness: cyan with no publisher, red on Marvel.

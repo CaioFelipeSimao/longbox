@@ -2084,7 +2084,14 @@ button.retrato-linha { cursor: pointer; }
   border-radius: var(--r);
   background: var(--surface-2);
   border: 1px solid var(--border-strong);
-  box-shadow: var(--shadow-sheet);
+  /* v98: was --shadow-sheet, an upward black shadow made for sheets docked at the
+     bottom edge. On a toast floating over the dark page it read as a lopsided grey
+     aura. Now a light in the publisher's colour sits behind it and fades out:
+     cyan on the hub and on "Todas" (no hue), the publisher's hue otherwise. */
+  --toast-luz: var(--accent);
+  box-shadow:
+    0 0 22px 1px color-mix(in srgb, var(--toast-luz) 38%, transparent),
+    0 0 64px 10px color-mix(in srgb, var(--toast-luz) 16%, transparent);
   font-size: 0.8125rem;
   max-width: calc(100vw - 32px);
   transform: translate(-50%, 12px);
@@ -2092,6 +2099,7 @@ button.retrato-linha { cursor: pointer; }
   transition: transform 300ms ease, opacity 300ms ease;
 }
 .toast[data-in="true"] { transform: translate(-50%, 0); opacity: 1; }
+.app[data-ed-tint="true"] .toast { --toast-luz: hsl(var(--ed-hue) 100% 50%); }
 /* Q4 (v91): shortcut hints ride the existing [data-dica] label. Two places need
    it moved or held back: the search field shows its label only while idle (focused
    it would sit over the suggestions as you type), and the toast sits at the foot

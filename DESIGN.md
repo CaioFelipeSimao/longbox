@@ -101,7 +101,9 @@ Scale (rem, so it scales with the user's text-size setting):
 Tracking is size-specific per `apple-design` Section 15. No single global `letter-spacing`.
 
 The toast is `small` on phones and `title` size (1rem, padding 14px 22px) from 768px up
-(v97): at 13px it read too small on a desktop screen.
+(v97): at 13px it read too small on a desktop screen. Since v98 it has no dark shadow:
+a light in the accent behind it fades out (`box-shadow` 22px at 38% plus 64px at 16%),
+cyan on the hub and on "Todas", the publisher's hue (`hsl(--ed-hue 100% 50%)`) when one is picked.
 
 ### Motion
 
