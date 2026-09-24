@@ -100,6 +100,9 @@ Scale (rem, so it scales with the user's text-size setting):
 
 Tracking is size-specific per `apple-design` Section 15. No single global `letter-spacing`.
 
+The toast is `small` on phones and `title` size (1rem, padding 14px 22px) from 768px up
+(v97): at 13px it read too small on a desktop screen.
+
 ### Motion
 
 ```

@@ -1990,3 +1990,9 @@ promised `onSnapshot` since the data layer was specified, but no version ever ha
 Cost measured on the real library: 0.2 ms to compare volumes, 3 ms once at start for all
 242 edição shards. New `tests/test-sincronia.mjs`, 32 checks, including the exact
 2026-09-24 scenario (20 volumes written behind a stale tab, then a status change).
+
+**v97: bigger toast on desktop.** 2026-09-24, the user confirmed the v96 live-update
+notice appears on phone and PC, and asked for it a little bigger on the desktop. From
+768px up every toast grows from `small` (13px, padding 10px 16px) to `title` size (16px,
+padding 14px 22px), about 36px to 52px tall; the "Desfazer" toast and its button grow with
+it. Phones are unchanged. Checked in the harness at 1707px.

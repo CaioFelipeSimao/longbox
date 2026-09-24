@@ -2146,7 +2146,13 @@ button.retrato-linha { cursor: pointer; }
   .toast-acao:hover { background: var(--surface); }
 }
 .toast[data-out="true"] { transition-duration: 200ms; }
-@media (min-width: 768px) { .toast { bottom: 24px; } }
+/* v97: at 13px the toast read too small on a desktop screen (user, after the v96
+   live-update notice). Phones keep the compact size; from 768px up it grows. */
+@media (min-width: 768px) {
+  .toast { bottom: 24px; padding: 14px 22px; font-size: 1rem; }
+  .toast[data-acao="true"] { gap: 18px; padding-block: 6px; padding-right: 8px; }
+  .toast-acao { min-height: 38px; padding: 0 14px; }
+}
 
 .empty {
   text-align: center;
