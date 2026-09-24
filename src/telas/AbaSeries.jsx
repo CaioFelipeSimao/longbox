@@ -24,6 +24,7 @@ export function AbaSeries({
           <div className="fold-all">
             <button
               className="btn btn-quiet press"
+              data-dica={(seriesFiltradas.every((g) => gruposAbertos.has(g.personagem)) ? "Esconder todas" : "Mostrar todas") + " · Q"}
               onClick={() => alternarTodos(seriesFiltradas, !seriesFiltradas.every((g) => gruposAbertos.has(g.personagem)))}
             >
               <ChevronDown

@@ -1945,3 +1945,13 @@ deferred by the user. Mid-turn addition: `0` opens the hub (panel row, "Início 
 hint on the wordmark). `tests/test-filtro-series.mjs` 26 checks, test-atalhos 32.
 Looked at in the harness in Chrome: the one-field row is 320px wide, no sideways
 overflow, the suggestions heading and the wordmark hint read right.
+
+**v94: Q folds or unfolds every group.** Asked by the user, key their choice. `Q` runs
+exactly what the tab's "Esconder todas / Mostrar todas" button does on HQs and Séries
+(`alternarDobra` in App), and only while that button is on screen: not during a search,
+not under the séries character filter, and nowhere on Coleções, so the key never changes
+a state the user cannot see; when it does nothing it leaves the event alone. The panel
+lists it, and the button's hint reads "Esconder todas · Q" / "Mostrar todas · Q",
+following the button's own label. test-atalhos 41 checks, test-filtro-series 27. Looked
+at in the harness: the hint sits over the first group header with no sideways overflow,
+and a real Q keypress folds the HQs tab.

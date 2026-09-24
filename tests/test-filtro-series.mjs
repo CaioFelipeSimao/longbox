@@ -107,6 +107,12 @@ check("botão conta 1 filtro", m.botao().querySelector(".btn-badge")?.textConten
 check("guardado na sessão", m.window.sessionStorage.getItem("longbox:filtro-series") === "Batman");
 check("contador diz 2 séries", m.root.querySelector(".ed-note")?.textContent === "2 séries", m.root.querySelector(".ed-note")?.textContent);
 
+// v94: with the fold button hidden under the filter, Q leaves the one group alone.
+const qFiltro = new m.window.KeyboardEvent("keydown", { key: "q", bubbles: true, cancelable: true });
+m.window.document.body.dispatchEvent(qFiltro);
+await sleep(120);
+check("com filtro, Q não fecha o grupo", m.linhas() === 2 && !qFiltro.defaultPrevented, m.linhas());
+
 console.log("=== busca com filtro ===");
 await m.setValor(m.busca(), "batgirl");
 check("com filtro, a busca olha só o nome: Batgirl não traz nada", m.nomesGrupos().length === 0, m.nomesGrupos().join(","));

@@ -1337,7 +1337,23 @@ export function App() {
     };
     tentar();
   }
+  // v94: Q does what the tab's "Esconder todas / Mostrar todas" does, and only
+  // while that button is on screen (not during a search, not under the séries
+  // character filter), so the key never acts on a state the user cannot see.
+  function alternarDobra() {
+    if (buscando) return false;
+    if (tab === "volumes" && volumesFiltrados.length) {
+      alternarTodosVolumes(volumesFiltrados, !volumesFiltrados.every((g) => !gruposFechados.has(g.personagem)));
+      return true;
+    }
+    if (tab === "series" && !filtroSerie && seriesFiltradas.length) {
+      alternarTodos(seriesFiltradas, !seriesFiltradas.every((g) => gruposAbertos.has(g.personagem)));
+      return true;
+    }
+    return false;
+  }
   useAtalhos({
+    alternarDobra,
     podeDesfazer: !!desfazerAtual,
     desfazer,
     mostrarAtalhos: () => setShowAtalhos(true),

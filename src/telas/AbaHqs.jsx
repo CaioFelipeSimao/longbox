@@ -25,6 +25,7 @@ export function AbaHqs({
           <div className="fold-all">
             <button
               className="btn btn-quiet press"
+              data-dica={(volumesFiltrados.every((g) => !gruposFechados.has(g.personagem)) ? "Esconder todas" : "Mostrar todas") + " · Q"}
               onClick={() => alternarTodosVolumes(volumesFiltrados, !volumesFiltrados.every((g) => !gruposFechados.has(g.personagem)))}
             >
               <ChevronDown

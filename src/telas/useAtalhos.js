@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 //   /        search                    1 2 3   HQs, Coleções, Séries (0 the hub, v93)
 //   N        new, as the tab's "Novo"  E       edit what the open sheet shows
 //   Ctrl+Z   undo the last removal     ?       the list of shortcuts
+//   Q        fold or unfold every group on HQs and Séries (v94)
 // Esc and ← → live with the sheets that own them (useEscape, VolumeSheet).
 // Rules: nothing fires while typing in a field or under a modal; letters and digits
 // never with Ctrl, Alt or Cmd, since Ctrl+1 and Ctrl+N are the browser's; Ctrl+Z is
@@ -43,7 +44,8 @@ export function useAtalhos(acoes) {
         a.abrirAba(["hub", "volumes", "colecoes", "series"][Number(k)]);
         return;
       }
-      if (k === "n" || k === "N") { e.preventDefault(); a.novo(); }
+      if (k === "n" || k === "N") { e.preventDefault(); a.novo(); return; }
+      if (k === "q" || k === "Q") { if (a.alternarDobra()) e.preventDefault(); }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);

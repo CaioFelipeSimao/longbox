@@ -8,6 +8,7 @@ const GRUPOS = [
     [["0"], "Voltar ao início"],
     [["1", "2", "3"], "Abrir HQs, Coleções ou Séries"],
     [["N"], "Novo na aba aberta (volume, coleção ou série)"],
+    [["Q"], "Esconder ou mostrar todos os grupos (HQs e Séries)"],
     [["?"], "Esta lista"],
   ]],
   ["Com uma ficha aberta", [
