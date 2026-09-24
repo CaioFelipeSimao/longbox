@@ -2,6 +2,7 @@ import { Library } from "lucide-react";
 
 import { ED_TODAS } from "./constantes";
 import { normalizeLib } from "./biblioteca";
+import { mesclarEditoras, mesclarLista, mesclarMapa } from "./mesclar";
 
 export const store = {
   db: null,
@@ -16,7 +17,38 @@ export const store = {
   timer: null,
   inFlight: 0,
   onError: null,
+  // v96: saves run one at a time, in order (a second flush used to be able to
+  // overlap the first one).
+  fila: Promise.resolve(),
+  // v96: App hands these in. lerLib() is the library as the screen has it now;
+  // aoMesclar(mudancas) takes documents that came back merged with changes made
+  // elsewhere, either at save time or live, and puts them on screen.
+  lerLib: null,
+  aoMesclar: null,
 };
+
+// v96: the part of each document the app edits, how to read it out of the stored
+// body, how to wrap it back, and how to merge three copies of it (see mesclar.js).
+const DOCS = {
+  volumes: { path: "library/volumes", parte: (d) => d?.items || [], corpo: (p) => ({ items: p }), mesclar: mesclarLista, last: "lastVolumes", daLib: (lib) => lib.volumes },
+  colecoes: { path: "library/colecoes", parte: (d) => d?.items || [], corpo: (p) => ({ items: p }), mesclar: mesclarLista, last: "lastColecoes", daLib: (lib) => lib.colecoes },
+  series: { path: "library/series", parte: (d) => d?.items || [], corpo: (p) => ({ items: p }), mesclar: mesclarLista, last: "lastSeries", daLib: (lib) => lib.series },
+  cores: { path: "library/cores", parte: (d) => d?.mapa || {}, corpo: (p) => ({ mapa: p }), mesclar: mesclarMapa, last: "lastCores", daLib: (lib) => lib.cores || {} },
+  editoras: {
+    path: "library/editoras",
+    parte: (d) => ({ itens: d?.itens || [], selecionada: d?.selecionada || ED_TODAS }),
+    corpo: (p) => p, mesclar: mesclarEditoras, last: "lastEditoras",
+    daLib: (lib) => ({ itens: lib.editoras || [], selecionada: lib.editoraSel || ED_TODAS }),
+  },
+};
+const lerLast = (chave) => (chave.startsWith("ed:") ? store.lastEdicoes.get(chave.slice(3)) : store[DOCS[chave].last]);
+function gravarLast(chave, json) {
+  if (chave.startsWith("ed:")) {
+    if (json === null) store.lastEdicoes.delete(chave.slice(3));
+    else store.lastEdicoes.set(chave.slice(3), json);
+  } else store[DOCS[chave].last] = json;
+}
+const parseOu = (json, vazio) => { try { return json ? JSON.parse(json) : vazio; } catch (e) { return vazio; } };
 
 export function shardEdicoes(edicoes) {
   const m = new Map();
@@ -69,60 +101,61 @@ export function dbErrorMessage(e) {
   return "Não consegui salvar. Tente de novo.";
 }
 
-export async function flushLibrary(lib) {
+// Writes what changed on this tab. v96: each changed document is read again
+// right before it is written; if the server copy is no longer the one this tab
+// last saw (someone else wrote in the meantime), the tab's changes are merged on
+// top of it instead of replacing it, and the merged result goes back to the
+// screen through store.aoMesclar.
+export function flushLibrary(lib) {
+  const vez = store.fila.then(() => flushAgora(lib));
+  store.fila = vez.catch(() => {});
+  return vez;
+}
+
+async function flushAgora(lib) {
   const db = store.db;
   if (!db) return;
 
   const writes = [];
-  const volumesJson = JSON.stringify(lib.volumes);
-  if (volumesJson !== store.lastVolumes) {
-    writes.push({ key: "volumes", ref: db.doc("library/volumes"), body: { items: lib.volumes }, json: volumesJson });
+  for (const chave of Object.keys(DOCS)) {
+    const local = DOCS[chave].daLib(lib);
+    const json = JSON.stringify(local);
+    if (json !== lerLast(chave)) writes.push({ chave, ref: db.doc(DOCS[chave].path), local, json });
   }
-  const colecoesJson = JSON.stringify(lib.colecoes);
-  if (colecoesJson !== store.lastColecoes) {
-    writes.push({ key: "colecoes", ref: db.doc("library/colecoes"), body: { items: lib.colecoes }, json: colecoesJson });
-  }
-  const seriesJson = JSON.stringify(lib.series);
-  if (seriesJson !== store.lastSeries) {
-    writes.push({ key: "series", ref: db.doc("library/series"), body: { items: lib.series }, json: seriesJson });
-  }
-  const coresJson = JSON.stringify(lib.cores || {});
-  if (coresJson !== store.lastCores) {
-    writes.push({ key: "cores", ref: db.doc("library/cores"), body: { mapa: lib.cores || {} }, json: coresJson });
-  }
-  const ediBody = { itens: lib.editoras || [], selecionada: lib.editoraSel || ED_TODAS };
-  const ediJson = JSON.stringify(ediBody);
-  if (ediJson !== store.lastEditoras) {
-    writes.push({ key: "editoras", ref: db.doc("library/editoras"), body: ediBody, json: ediJson });
-  }
-
   const shards = shardEdicoes(lib.edicoes);
   shards.forEach((items, sid) => {
     const json = JSON.stringify(items);
-    if (json !== store.lastEdicoes.get(sid)) {
-      writes.push({ key: "ed:" + sid, sid, ref: db.collection("edicoes").doc(sid), body: { items }, json });
-    }
+    if (json !== store.lastEdicoes.get(sid)) writes.push({ chave: "ed:" + sid, ref: db.collection("edicoes").doc(sid), local: items, json });
   });
   store.lastEdicoes.forEach((_, sid) => {
-    if (!shards.has(sid)) writes.push({ key: "ed:" + sid, sid, ref: db.collection("edicoes").doc(sid), remove: true });
+    if (!shards.has(sid)) writes.push({ chave: "ed:" + sid, ref: db.collection("edicoes").doc(sid), local: [], json: "[]", remover: true });
   });
 
   if (!writes.length) return;
+  const mescladas = [];
   store.inFlight++;
   try {
     for (const w of writes) {
       try {
-        if (w.remove) {
+        const ed = w.chave.startsWith("ed:");
+        const cfg = ed ? null : DOCS[w.chave];
+        const snap = await w.ref.get();
+        const remoto = ed ? (snap.exists ? snap.data()?.items || [] : []) : cfg.parte(snap.exists ? snap.data() : null);
+        const baseJson = lerLast(w.chave);
+        let final = w.local, finalJson = w.json;
+        // The server copy moved since this tab last saw it: merge, don't overwrite.
+        if (JSON.stringify(remoto) !== (baseJson ?? (ed ? "[]" : JSON.stringify(cfg.parte(null))))) {
+          const base = parseOu(baseJson, ed ? [] : cfg.parte(null));
+          final = (ed ? mesclarLista : cfg.mesclar)(base, w.local, remoto);
+          finalJson = JSON.stringify(final);
+          mescladas.push({ chave: w.chave, parte: final, local: w.local });
+        }
+        if (ed && Array.isArray(final) && !final.length) {
           await w.ref.delete();
-          store.lastEdicoes.delete(w.sid);
+          gravarLast(w.chave, null);
         } else {
-          await w.ref.set(w.body);
-          if (w.key === "volumes") store.lastVolumes = w.json;
-          else if (w.key === "colecoes") store.lastColecoes = w.json;
-          else if (w.key === "series") store.lastSeries = w.json;
-          else if (w.key === "cores") store.lastCores = w.json;
-          else if (w.key === "editoras") store.lastEditoras = w.json;
-          else store.lastEdicoes.set(w.sid, w.json);
+          await w.ref.set(ed ? { items: final } : cfg.corpo(final));
+          gravarLast(w.chave, finalJson);
         }
       } catch (e) {
         if (store.onError) store.onError(dbErrorMessage(e));
@@ -131,7 +164,69 @@ export async function flushLibrary(lib) {
     }
   } finally {
     store.inFlight--;
+    if (mescladas.length && store.aoMesclar) store.aoMesclar(mescladas, "ao-salvar");
   }
+}
+
+// v96: live updates. Listens to the library documents and the edições
+// collection; when something changes on the server that this tab did not write,
+// it is merged into the screen (nothing to merge against while the tab has no
+// unsaved change, so the server copy simply replaces the tab's). While a save is
+// pending or running the change waits: the save reads the server first and merges
+// it anyway, and applying it underneath a pending save would lose the tab's edit.
+// Snapshots of an unchanged document are the same object, and ones equal to what
+// this tab last wrote are ignored, so a quiet library costs nothing.
+export function ouvirMudancas(db) {
+  const pendentes = new Map(); // chave -> última parte remota ainda não aplicada
+  let agendado = null;
+
+  function aplicar() {
+    agendado = null;
+    if (storeIsBusy()) { agendado = setTimeout(aplicar, 600); return; }
+    const lib = store.lerLib ? store.lerLib() : null;
+    if (!lib || !pendentes.size) return;
+    const mudancas = [];
+    pendentes.forEach((remoto, chave) => {
+      const json = JSON.stringify(remoto);
+      if (json === lerLast(chave)) return;
+      const ed = chave.startsWith("ed:");
+      const local = ed ? lib.edicoes.filter((e) => e.serieId === chave.slice(3)) : DOCS[chave].daLib(lib);
+      const vazio = ed ? [] : DOCS[chave].parte(null);
+      const final = (ed ? mesclarLista : DOCS[chave].mesclar)(parseOu(lerLast(chave), vazio), local, remoto);
+      gravarLast(chave, ed && !remoto.length ? null : json);
+      mudancas.push({ chave, parte: final, local });
+    });
+    pendentes.clear();
+    if (mudancas.length && store.aoMesclar) store.aoMesclar(mudancas, "ao-vivo");
+  }
+  function chegou(chave, remoto) {
+    pendentes.set(chave, remoto);
+    if (!agendado) agendado = setTimeout(aplicar, 150); // coalesce a burst of snapshots
+  }
+
+  const cancelar = [];
+  const erro = () => {}; // a dead subscription only means no live updates; saves still merge
+  for (const chave of Object.keys(DOCS)) {
+    let ultimo = null;
+    cancelar.push(db.doc(DOCS[chave].path).onSnapshot((snap) => {
+      if (snap.metadata?.hasPendingWrites) return;
+      const d = snap.exists ? snap.data() : null;
+      if (d === ultimo) return;
+      ultimo = d;
+      chegou(chave, DOCS[chave].parte(d));
+    }, erro));
+  }
+  const ultimos = new Map();
+  cancelar.push(db.collection("edicoes").onSnapshot((qs) => {
+    if (qs.metadata?.hasPendingWrites) return;
+    for (const ch of qs.docChanges()) {
+      const d = ch.type === "removed" ? null : ch.doc.data();
+      if (d && ultimos.get(ch.doc.id) === d) continue;
+      ultimos.set(ch.doc.id, d);
+      chegou("ed:" + ch.doc.id, d?.items || []);
+    }
+  }, erro));
+  return () => { cancelar.forEach((f) => { try { f(); } catch (e) {} }); if (agendado) clearTimeout(agendado); };
 }
 
 // v88: when the library was last backed up, in its own document rather than in
@@ -168,3 +263,26 @@ export function scheduleSave(lib) {
 }
 
 export function storeIsBusy() { return store.timer !== null || store.inFlight > 0; }
+
+// v96: puts documents that came back merged (at save time or live) into the
+// library on screen. `local` is the copy the merge started from: if the screen
+// moved on since (the person kept editing), those newer edits are merged on top
+// again rather than dropped.
+export function aplicarMescladas(lib, mudancas) {
+  let next = { ...lib };
+  for (const m of mudancas) {
+    if (m.chave.startsWith("ed:")) {
+      const sid = m.chave.slice(3);
+      const atual = next.edicoes.filter((e) => e.serieId === sid);
+      const parte = JSON.stringify(atual) === JSON.stringify(m.local) ? m.parte : mesclarLista(m.local, atual, m.parte);
+      next.edicoes = [...next.edicoes.filter((e) => e.serieId !== sid), ...parte];
+      continue;
+    }
+    const cfg = DOCS[m.chave];
+    const atual = cfg.daLib(next);
+    const parte = JSON.stringify(atual) === JSON.stringify(m.local) ? m.parte : cfg.mesclar(m.local, atual, m.parte);
+    if (m.chave === "editoras") { next.editoras = parte.itens; next.editoraSel = parte.selecionada; }
+    else next[m.chave] = parte;
+  }
+  return normalizeLib(next);
+}

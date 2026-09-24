@@ -222,10 +222,21 @@ format filter offers the band's publisher's formats, all of them under "Todas as
 editoras", the common four under "Sem editora", and releases a saved format the band
 no longer has.
 
-Writes are optimistic locally, debounced, and always write the whole document (`set`, not
-`update`, since `update` requires the document to exist). `onSnapshot` per document keeps a
-second device current; an incoming snapshot is applied only when that document has no
-pending local write, since writes are last-writer-wins.
+Writes are optimistic locally, debounced, run one at a time, and always write the whole
+document (`set`, not `update`, since `update` requires the document to exist). The db has no
+conditional write, so since v96 a save never writes blind: each changed document is read
+again first, and if the server copy moved since this tab last saw it (another device, or
+Claude cataloguing books), the tab's own changes are merged on top of it instead of
+replacing it (`lib/mesclar.js`, a three-way merge by item id: base = what the tab last
+read or wrote, local = the screen, remote = the server; the tab wins only on items it
+changed itself). The merged result goes back to the screen. `onSnapshot` on the five
+library documents and the `edicoes` collection brings changes made elsewhere in live,
+merged the same way, with a quiet "Biblioteca atualizada em outro aparelho" toast at most
+every few seconds; a change that arrives while a save is pending waits for it (the save
+merges it anyway). Snapshots equal to what the tab last saw cost one string comparison
+(0.2 ms for volumes, 3 ms once at start for all edições, measured on the real 147-volume
+library). Before v96 this paragraph promised `onSnapshot` although the code never had it.
+The remaining gap is the few milliseconds between that read and the write.
 
 `use("db")` returning `null` (reader view, capability unavailable): the app runs in memory
 for the session and says so plainly in a banner. Export stays available. No localStorage
@@ -264,7 +275,8 @@ src/lib/              everything that is not interface
   util.js               uid, issue-number parsing, string hash
   cores.js              character palette, contrast-picked ink, colour context
   biblioteca.js         pure edits on the library (delete, link ranges, import, normalise)
-  armazenamento.js      db documents: load, shard, debounced save, errors
+  armazenamento.js      db documents: load, shard, debounced save, errors, live updates (v96)
+  mesclar.js            three-way merge of a document: this tab's changes over the server's (v96)
   capas.js              cover upload and the device-local shelf thumbnails (v85)
   hooks.js              shared hooks (sheet mount, Escape, paste, hub unlock gesture)
   sessao.js             everything kept in sessionStorage (tab, folds, filters)

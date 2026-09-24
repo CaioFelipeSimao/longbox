@@ -1971,3 +1971,22 @@ never in `volumeForm`, since that object is spread into the stored volume on sav
 "lista de tipos" count rewritten 8 -> 10 (9 formats plus "Todos os tipos"), not
 deleted. New `tests/test-formatos.mjs`, 24 checks. Looked at in the harness: the
 form reads in order, the note wraps under the format column, no sideways overflow.
+
+**v96: a stale tab can no longer erase what was written elsewhere.** 2026-09-24, while
+Claude catalogued books into the db, a Longbox tab opened earlier reordered three
+volumes and saved: `flushLibrary` wrote its whole old `library/volumes` array with a
+plain `set`, and the 20 volumes catalogued in the meantime vanished (restored the same
+day from the last server read). The artifact db has no conditional write, so the fix
+lives in the app, agreed in chat (the user picked a quiet toast over a silent update):
+every save re-reads each changed document and, when the server copy moved, merges this
+tab's changes on top of it (`lib/mesclar.js`: three-way merge by id; items the tab
+added, edited or removed win, everything else comes from the server; on an item changed
+on both sides the tab wins). Saves now run one at a time through a queue. The tab also
+listens (`ouvirMudancas`: `onSnapshot` on the five library documents and the `edicoes`
+collection) and brings in changes made elsewhere live, toast "Biblioteca atualizada em
+outro aparelho" at most every 4 s; an undo on offer expires by itself because the
+library is no longer the one it would restore over. Found on the way: DESIGN.md had
+promised `onSnapshot` since the data layer was specified, but no version ever had it.
+Cost measured on the real library: 0.2 ms to compare volumes, 3 ms once at start for all
+242 edição shards. New `tests/test-sincronia.mjs`, 32 checks, including the exact
+2026-09-24 scenario (20 volumes written behind a stale tab, then a status change).

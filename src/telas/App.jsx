@@ -13,7 +13,7 @@ import {
   ensureRange, normalizeLib, parseImportText, personagensDaSerie, SEM_PERSONAGEM, serieDoGrupo, semearEditoras,
 } from "../lib/biblioteca";
 import {
-  gravarUltimoBackup, lerUltimoBackup, loadLibrary, scheduleSave, shardEdicoes, store,
+  aplicarMescladas, gravarUltimoBackup, lerUltimoBackup, loadLibrary, ouvirMudancas, scheduleSave, shardEdicoes, store,
 } from "../lib/armazenamento";
 import {
   assetErrorMessage, esperarMiniaturas, prepararMiniaturas, uploadCover,
@@ -85,12 +85,28 @@ export function App() {
   /* ---------- boot ---------- */
   useEffect(() => {
     let cancelled = false;
+    let pararDeOuvir = null;
     (async () => {
       const claude = window.claude;
       const db = claude && claude.use ? await claude.use("db") : null;
       if (cancelled) return;
       store.db = db;
       store.onError = (msg) => showToast(msg);
+      // v96: changes written elsewhere (another device, or Claude cataloguing
+      // books) arrive merged with this tab's own; they go on screen here, with a
+      // quiet toast at most every few seconds. Any undo on offer expires by
+      // itself, since the library is no longer the one it would restore over.
+      store.lerLib = () => libRef.current;
+      let ultimoAviso = 0;
+      store.aoMesclar = (mudancas) => {
+        if (cancelled) return;
+        const next = aplicarMescladas(libRef.current, mudancas);
+        setLib(next);
+        libRef.current = next;
+        scheduleSave(next); // only writes if the merge left something unsaved
+        const agora = Date.now();
+        if (agora - ultimoAviso > 4000) { ultimoAviso = agora; showToast("Biblioteca atualizada em outro aparelho"); }
+      };
 
       if (!db) {
         setStorageMode("memory");
@@ -108,6 +124,9 @@ export function App() {
             libRef.current = semeado;
             if (semeado !== loaded) scheduleSave(semeado);
           }
+          // v96: listen only after the library is on screen, so the first
+          // snapshots compare against what was just loaded and cost nothing.
+          if (!cancelled && typeof db.doc("library/volumes").onSnapshot === "function") pararDeOuvir = ouvirMudancas(db);
         } catch (e) {
           if (!cancelled) showToast("Não consegui carregar a biblioteca. Recarregue a página.");
         }
@@ -125,7 +144,7 @@ export function App() {
       store.downloads = downloads;
       setCanUpload(!!assets);
     })();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; if (pararDeOuvir) pararDeOuvir(); };
   }, []);
 
   // desfazer, when given, is { antes, depois, reabrir } from a removal (v88): the
