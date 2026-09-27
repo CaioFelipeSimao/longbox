@@ -62,10 +62,15 @@ export function RunBar({ edicoes, ownedIds }) {
 // The hub's own bar, continuous rather than bucketed: the hunt is three series
 // at a time, so there is room to read an exact percentage instead of the
 // coarse blocks the séries tab needs for runs of hundreds of issues.
+export function tierDaCaca(owned, total) {
+  const fracao = total > 0 ? Math.min(1, owned / total) : 0;
+  return fracao < QUASE_MORNO ? "baixo" : fracao < QUASE_PRONTO ? "medio" : "alto";
+}
+
 export function HuntProgress({ owned, total }) {
   const pct = total > 0 ? Math.min(100, (owned / total) * 100) : 0;
   const fracao = pct / 100;
-  const tier = fracao < QUASE_MORNO ? "baixo" : fracao < QUASE_PRONTO ? "medio" : "alto";
+  const tier = tierDaCaca(owned, total);
   return (
     <div className="prog-bar" aria-hidden="true">
       {/* transform, not width: width is a layout property and would thrash on animate */}

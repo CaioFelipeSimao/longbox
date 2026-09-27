@@ -22,6 +22,7 @@
      12.4 light, floor 15), so the meter takes its own step: 16.8 and 16.9. */
   --retrato-lendo: #22C8E0;
   --warm: #E2A83B; /* the hunt bar's lowest tier: still needs attention, not a warning */
+  --warm-text: #E2A83B;
 
   --scrim: rgba(0, 0, 0, 0.62);
   --topbar-bg: rgba(14, 15, 17, 0.5);
@@ -91,6 +92,7 @@
     --read-ink: #FFFFFF;
     --retrato-lendo: #00A5BF;
     --warm: #B4791A;
+    --warm-text: #8A5A0E; /* v109: amber as text; #B4791A reads 3.4:1 on the light page, this 6:1 */
 
     --scrim: rgba(20, 22, 26, 0.38);
     --topbar-bg: rgba(251, 251, 252, 0.6);
@@ -1368,6 +1370,22 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 /* Every hub section rides above the backdrop, which is the one out-of-flow child. */
 .hub > * { position: relative; z-index: 1; }
+/* v109: the backdrop sits in this block with the suggestion. In the dark theme the
+   block is static, so the backdrop still measures the whole hub and drifts behind
+   "Falta pouco" as before. In the light theme the block is its containing box and
+   the backdrop ends before the hunt: there its darkest stretch sat right behind
+   the bars and made "faltam N" unreadable. The user chose to change the light only. */
+.hub > .hub-topo { position: static; }
+.hub-topo > .suggest { position: relative; z-index: 1; }
+@media (prefers-color-scheme: light) {
+  .hub > .hub-topo { position: relative; }
+  .hub-topo > .gm {
+    height: calc(100% + var(--topbar-h) + var(--hub-gap) / 2);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
+  }
+}
+.suggest-rotulo { margin: 0; }
 
 /* ---- the hub backdrop: GridMotion, from React Bits ----
    A drifting grid of your own covers behind the top of the hub. It is bled to
@@ -1553,6 +1571,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    while it's simply moving along, read's green once it's genuinely close. */
 .prog-bar i[data-tier="baixo"] { background: var(--warm); }
 .prog-bar i[data-tier="medio"] { background: var(--accent); }
+.prog-faltam { color: var(--read); }
+.prog-faltam[data-tier="medio"] { color: var(--accent-text); }
+.prog-faltam[data-tier="baixo"] { color: var(--warm-text); }
 
 /* Both the hint that the scroll gesture exists and a button doing the same thing. */
 .hub-enter {
@@ -2048,7 +2069,7 @@ button.retrato-linha { cursor: pointer; }
    on top of the 440px sheet; from 1024px (PC, tablet on its side) the sheet widens and
    the cover takes a column of its own, holding still while the rest scrolls. */
 .detail-cover { width: min(240px, 62%); align-self: center; display: flex; flex-direction: column; gap: 8px; position: relative; z-index: 1; }
-.detail-cover .cover { box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); }
+.detail-cover .cover { box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35); border-color: transparent; }
 .detail-cover .cover-paste-hint { margin: 0; }
 .vs-info { display: flex; flex-direction: column; gap: 18px; min-width: 0; position: relative; z-index: 1; }
 @media (min-width: 1024px) {

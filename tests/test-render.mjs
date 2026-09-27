@@ -257,7 +257,7 @@ if (scenario === "seeded") {
   // would be two moving grounds arguing under the same column of text.
   console.log("  lattice stays off the hub: " +
     (!visivel(".cursor-grid") ? "PASS" : "FAIL"));
-  const gm = visivel(".hub > .gm");
+  const gm = visivel(".hub > .hub-topo > .gm");
   console.log("  backdrop mounted behind the hub: " + (gm ? "PASS" : "FAIL"));
   if (gm) {
     const rows = gm.querySelectorAll(".gm-row");

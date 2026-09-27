@@ -9,7 +9,7 @@ import { coverColors, useCores } from "../lib/cores";
 import { formatBytes } from "../lib/biblioteca";
 import { coverUrl, miniUrl, useMiniVersao } from "../lib/capas";
 import { EmptyState } from "../ui/base";
-import { HuntProgress } from "../ui/Series";
+import { HuntProgress, tierDaCaca } from "../ui/Series";
 import { CoverArt, VolumeCard } from "../ui/VolumeCard";
 import { RetratoAcervo } from "./RetratoAcervo";
 
@@ -120,6 +120,9 @@ export function Hub({
 
   return (
     <div className="hub" ref={rootRef} data-returning={returning ? "true" : "false"}>
+      {/* v109: the backdrop is sized by this block, the suggestion only, so it has
+          faded out before "Falta pouco" on any screen and in either theme. */}
+      <div className="hub-topo">
       {backdrop.length > 0 && (
         <GridMotion items={backdrop} rows={BACKDROP_ROWS} cols={BACKDROP_COLS} />
       )}
@@ -131,7 +134,7 @@ export function Hub({
             </div>
           </div>
           <div className="suggest-body">
-            <p className="t-micro" style={{ margin: 0 }}>Do seu acervo</p>
+            <p className="t-small muted suggest-rotulo">Do seu acervo</p>
             <h2 className="suggest-title">{sugestao.titulo}</h2>
             <p className="t-small muted" style={{ margin: "4px 0 0" }}>
               {sugestao.personagem}
@@ -146,6 +149,7 @@ export function Hub({
           </div>
         </section>
       )}
+      </div>
 
       {stats.faltaPouco.length > 0 && (
         <section>
@@ -284,7 +288,8 @@ export function HuntRow({ item, onClick }) {
     <button className="prog-row press" onClick={onClick}>
       <div className="prog-top">
         <span className="t-small truncate" style={{ fontWeight: 500 }}>{item.serie.nome}</span>
-        <span className="num t-small" style={{ flexShrink: 0, color: "var(--accent-text)" }}>
+        {/* v109: the count takes its bar's tier colour, one colour code per row. */}
+        <span className="num t-small prog-faltam" data-tier={tierDaCaca(item.owned, item.total)} style={{ flexShrink: 0 }}>
           {faltam === 1 ? "falta 1" : "faltam " + faltam}
         </span>
       </div>

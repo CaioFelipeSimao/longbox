@@ -124,7 +124,8 @@ export function RetratoAcervo({ lib, onRecorte }) {
               ["lida", leitura.lida, leitura.lida === 1 ? "lida" : "lidas"],
               ["lendo", leitura.lendo, "lendo"],
               ["nao_lida", leitura.nao_lida, "na fila"],
-            ].map(([status, n, rotulo]) => (
+            // v109: a status with nothing in it ("0 lendo") is left out, not listed greyed.
+            ].filter(([, n]) => n > 0).map(([status, n, rotulo]) => (
               <li key={status}>
                 <button
                   type="button"

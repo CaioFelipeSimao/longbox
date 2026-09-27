@@ -2112,3 +2112,17 @@ of them when there are one or two; complete and untouched blocks stay closed, so
 Batman Vol 1 is not a wall of grey tiles. "Copiar faltantes" went from 12px to the sheet's 13px
 buttons. The Séries tab keeps opening folded: that was the user's own v49 request (6949px open
 against 1782px folded on the real library). `tests/test-mapa-serie.mjs` covers it.
+
+**v109 Hub colour and the light-theme hunt (critique 2, lote 2).** In the light theme the
+drifting cover backdrop's darkest stretch sat right behind "Falta pouco" and the cyan "faltam N"
+was nearly unreadable. The backdrop now lives in `.hub-topo` with the suggestion: in the light
+theme that block is its containing box, so it ends before the hunt; in the dark theme the block
+is `position: static`, so the backdrop still measures the whole hub and drifts behind the hunt
+as before. The first build cut it in both themes; the dark hub lost most of its atmosphere, and
+the user chose, from before/after screenshots, to change the light theme only. "faltam N" takes
+its bar's tier colour (`tierDaCaca` shared with `HuntProgress`), with `--warm-text` #8A5A0E for
+amber text in the light theme (6:1 where #B4791A read 3.4:1). A reading status with 0 items is
+left out of "Seu acervo". "Do seu acervo" is sentence case instead of an uppercase micro label.
+The volume sheet's big cover drops its 1px border and its shadow goes from 18/40px to 8/22px.
+Not changed: the first cover of a Coleções strip is flush with the strip's left edge on purpose,
+aligned with the collection title above it (detector false positive).
