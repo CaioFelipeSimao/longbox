@@ -80,7 +80,7 @@ const tecla = async (key, opcoes = {}, alvo = ativo() || doc.body) => {
 };
 
 console.log("=== formulário novo ===");
-const novo = m.botao("Novo");
+const novo = m.botao("Novo volume");
 novo.focus();
 novo.click();
 await sleep(200);

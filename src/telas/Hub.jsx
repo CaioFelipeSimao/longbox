@@ -3,7 +3,7 @@ import { Plus, Download, BookOpen, ChevronDown, Shuffle } from "lucide-react";
 import GridMotion from "../components/GridMotion/GridMotion";
 
 import {
-  BACKDROP_COLS, BACKDROP_ROWS, QUASE_FECHANDO, SESSION_SEED, SHELF_CAP, seededPick,
+  BACKDROP_COLS, BACKDROP_ROWS, QUASE_FECHANDO, QUASE_MORNO, QUASE_PRONTO, SESSION_SEED, SHELF_CAP, seededPick,
 } from "../lib/constantes";
 import { coverColors, useCores } from "../lib/cores";
 import { formatBytes } from "../lib/biblioteca";
@@ -161,6 +161,12 @@ export function Hub({
               </span>
             )}
           </div>
+          {/* v121: the three bar colours, said once (they were a code to remember). */}
+          <p className="prog-legenda t-small muted">
+            <i data-tier="baixo" /> a partir de {Math.round(QUASE_FECHANDO * 100)}%
+            <i data-tier="medio" /> {Math.round(QUASE_MORNO * 100)}%
+            <i data-tier="alto" /> {Math.round(QUASE_PRONTO * 100)}%, quase fechando
+          </p>
           <div className="prog">
             {stats.faltaPouco.map((p) => (
               <HuntRow

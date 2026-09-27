@@ -108,7 +108,7 @@ console.log("=== B: lidas até aqui ===");
 console.log("=== C: capa no Novo ===");
 {
   const m = await montar({ aba: "volumes" });
-  m.botao("Novo")?.click();
+  m.botao("Novo volume")?.click();
   await sleep(250);
   const modal = m.root.querySelector(".modal");
   const input = modal?.querySelector('.capa-nova input[type="file"]');

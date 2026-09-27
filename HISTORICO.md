@@ -2268,3 +2268,20 @@ in a before/after preview first:
 - Labels name the volume ("Mover X para cima", "Tirar X da coleção"), and taking one out shows
   "X saiu da coleção." with Desfazer (the removal-undo path), restoring its position.
 `tests/test-colecoes.mjs`: 12 new checks failed before and pass now (45).
+
+**v121 Copy and the critique's minor points.** The last batch of the third critique, seen by the
+user in a before/after preview:
+- Removal toasts name what went: "X saiu da biblioteca." for a volume ("saiu" because a title can
+  be either gender), "Série X removida, com N edições…", "Coleção X removida…".
+- "Novo" says what it makes: "Novo volume" / "Nova coleção" / "Nova série" by tab (the hub's makes
+  a volume), with the matching hint; still only "+" below 480px (560px on the hub).
+- Nova série: the name's example is "Título (Volume N)" (it was "Nightwing (Volume 2)", a série
+  the user owns, so it read as a filled value); "de/até" and the position field wait behind "Mais
+  opções" (open by themselves when the série already uses them), 8 visible fields down to 5; the
+  position field is "Posição entre as séries do personagem".
+- The série map's missing numbers were the faintest thing on the sheet although they are what is
+  hunted: now dashed empty slots with the number in the body colour, and a "tenho / falta" legend.
+- "Falta pouco" explains its three colours in one line (from 50%, 65%, 80% quase fechando).
+- The Seu acervo "Formatos" bars are muted grey; cyan keeps meaning interactive.
+- Not changed: the light theme's sheet scrim was already a neutral grey (rgba(20,22,26,.38)); the
+  teal the critique saw is the page's cyan top gradient showing through it.

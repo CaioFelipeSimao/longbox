@@ -216,6 +216,11 @@ toast) and on a focused cover anywhere (a toast "Título · status" with Desfaze
 v120: a collection's reading order shows one action per row ("Lidas até aqui", muted); ↑ ↓ ×
 live behind "Editar ordem" (Alt+↑/↓ moves), and taking a volume out can be undone.
 
+v121: a missing issue tile is a dashed slot with its number in `--text` (owned stays filled
+`--read`), with a "tenho / falta" legend; "Falta pouco" carries a one-line legend of its three
+tiers; the Seu acervo "Formatos" bars are `--text-muted`, not the accent. "Novo" is labelled by
+what it creates; Nova série keeps "de/até" and position behind "Mais opções".
+
 ## Data layer
 
 `claude.use("db")`. Hard limits from the contract: **256 KiB per document**, 5.000 documents

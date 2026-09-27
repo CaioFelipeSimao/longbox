@@ -152,7 +152,7 @@ export function RetratoAcervo({ lib, onRecorte }) {
                 nome={f.nome}
                 total={f.total}
                 doTotal={total}
-                cor="var(--accent)"
+                cor="var(--text-muted)"
                 rotuloAcao="Mostrar na aba HQs"
                 onClick={f.nome === "Sem formato" ? null : () => onRecorte({ tipo: f.nome })}
               />

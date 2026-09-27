@@ -1080,15 +1080,24 @@ export function App() {
   }
 
   // v113: the toast says how much went, and what stayed, where it is more than one thing.
+  // v121: and names it, so a slip on the tablet is recognisable. "saiu" for a volume,
+  // since a title can be either gender; "Série X removida" agrees with "Série".
   function avisoRemocao(type, id, antes) {
+    if (type === "volume") {
+      const v = antes.volumes.find((x) => x.id === id);
+      return v ? v.titulo + " saiu da biblioteca." : AVISO_REMOCAO.volume;
+    }
     if (type === "serie") {
+      const s = antes.series.find((x) => x.id === id);
+      const nome = s ? "Série " + s.nome + " removida" : "Série removida";
       const n = antes.edicoes.filter((e) => e.serieId === id).length;
-      return n ? "Série removida, com " + n + (n === 1 ? " edição" : " edições") + ". Os volumes continuam na biblioteca." : AVISO_REMOCAO.serie;
+      return n ? nome + ", com " + n + (n === 1 ? " edição" : " edições") + ". Os volumes continuam na biblioteca." : nome + ".";
     }
     if (type === "colecao") {
       const col = antes.colecoes.find((c) => c.id === id);
+      const nome = col ? "Coleção " + col.nome + " removida." : "Coleção removida.";
       const n = col ? col.membros.length : 0;
-      return n ? "Coleção removida. " + (n === 1 ? "O volume continua" : "Os " + n + " volumes continuam") + " na biblioteca." : AVISO_REMOCAO.colecao;
+      return n ? nome + " " + (n === 1 ? "O volume continua" : "Os " + n + " volumes continuam") + " na biblioteca." : nome;
     }
     return AVISO_REMOCAO[type];
   }
@@ -1424,6 +1433,8 @@ export function App() {
     }
   }
 
+  // v121: the button says what it makes; the hub's makes a volume.
+  const rotuloNovo = tab === "colecoes" ? "Nova coleção" : tab === "series" ? "Nova série" : "Novo volume";
   function novoNaAba() {
     if (tab === "colecoes") openNovaColecao();
     else if (tab === "series") openNovaSerie();
@@ -1582,8 +1593,8 @@ export function App() {
           )}
           {/* v118: on a narrow hub "Novo" folds to its icon so the primary button keeps
               its whole name; "Coleção" alone read as the Coleções tab below it. */}
-          <button className={isHub ? "btn btn-quiet novo-hub" : "btn btn-primary"} onClick={novoNaAba} data-dica="Novo · N" aria-label="Novo">
-            <Plus size={15} /> <span className="novo-rotulo">Novo</span>
+          <button className={isHub ? "btn btn-quiet novo-hub" : "btn btn-primary"} onClick={novoNaAba} data-dica={rotuloNovo + " · N"} aria-label={rotuloNovo}>
+            <Plus size={15} /> <span className="novo-rotulo">{rotuloNovo}</span>
           </button>
           {isHub && (
             <button className="btn btn-primary" onClick={entrarNaColecao}>

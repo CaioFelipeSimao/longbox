@@ -112,6 +112,16 @@ await m.fecharTudo();
 await m.tecla("3");
 await m.tecla("N", { shiftKey: false });
 check("N na aba Séries abre Nova série", m.tituloModal() === "Nova série", m.tituloModal());
+{
+  const modal = m.root.querySelector(".modal");
+  const nome = modal?.querySelector("input");
+  check("exemplo neutro no nome da série", nome?.getAttribute("placeholder") === "Título (Volume N)", nome?.getAttribute("placeholder"));
+  check("de e até começam guardados", !modal?.querySelector('input[placeholder="de"]'));
+  const mais = [...(modal?.querySelectorAll("button") || [])].find((b) => b.textContent.trim() === "Mais opções");
+  check("Mais opções oferecido", !!mais);
+  mais?.click(); await sleep(120);
+  check("Mais opções mostra de, até e a posição", !!modal.querySelector('input[placeholder="de"]') && /Posição entre as séries do personagem/.test(modal.textContent), modal.textContent.slice(0, 80));
+}
 await m.fecharTudo();
 await m.tecla("n", { ctrlKey: true });
 check("Ctrl+N fica para o navegador", m.tituloModal() === null, m.tituloModal());
@@ -155,8 +165,13 @@ check("Esc sem nada aberto também não sai do app", escSolto.defaultPrevented);
 
 console.log("=== dicas ===");
 const dica = (el) => (el && el.getAttribute("data-dica")) || "";
-check("Novo mostra N na dica", /· N$/.test(dica([...m.root.querySelectorAll("button")].find((b) => b.textContent.trim() === "Novo"))), dica([...m.root.querySelectorAll("button")].find((b) => b.textContent.trim() === "Novo")));
+check("Novo mostra N na dica", /· N$/.test(dica([...m.root.querySelectorAll("button")].find((b) => b.textContent.trim() === "Novo volume"))), dica([...m.root.querySelectorAll("button")].find((b) => b.textContent.trim() === "Novo volume")));
 const abas = [...m.root.querySelectorAll(".segmented button")];
+await m.tecla("3");
+check("na aba Séries o botão diz Nova série", [...m.root.querySelectorAll(".topbar button")].some((b) => b.textContent.trim() === "Nova série" && dica(b) === "Nova série · N"));
+await m.tecla("2");
+check("na aba Coleções diz Nova coleção", [...m.root.querySelectorAll(".topbar button")].some((b) => b.textContent.trim() === "Nova coleção"));
+await m.tecla("1");
 check("as abas mostram 1 2 3", abas.length === 3 && abas.every((b, i) => dica(b).endsWith("· " + (i + 1))), abas.map(dica).join(" | "));
 check("a marca mostra 0", /· 0$/.test(dica(m.root.querySelector(".brand"))), dica(m.root.querySelector(".brand")));
 check("a busca mostra /", /· \/$/.test(dica(m.root.querySelector(".search-field"))), dica(m.root.querySelector(".search-field")));

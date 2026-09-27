@@ -196,9 +196,15 @@ export function SerieSheet({
                   <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar número" aria-label="Buscar número na série" />
                 </div>
               )}
-              <p className="t-micro" style={{ margin: "0 0 8px" }}>
-                Escolha um número para ver se você tem e em qual volume
-              </p>
+              <div className="mapa-topo">
+                <p className="t-micro" style={{ margin: 0 }}>
+                  Escolha um número para ver se você tem e em qual volume
+                </p>
+                {/* v121: what the two tile looks mean, said once. */}
+                <p className="mapa-legenda t-small muted" aria-hidden="true">
+                  <i data-owned="true" /> tenho <i /> falta
+                </p>
+              </div>
 
               {useGroups ? (
                 grupos.map((g) => {

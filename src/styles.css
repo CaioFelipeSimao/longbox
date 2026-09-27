@@ -1618,6 +1618,11 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .prog-bar i[data-tier="baixo"] { background: var(--warm); }
 .prog-bar i[data-tier="medio"] { background: var(--accent); }
 .prog-faltam { color: var(--read); }
+.prog-legenda { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: -4px 0 14px; }
+.prog-legenda i { width: 10px; height: 6px; border-radius: 3px; background: var(--read); }
+.prog-legenda i[data-tier="baixo"] { background: var(--warm); }
+.prog-legenda i[data-tier="medio"] { background: var(--accent); }
+.prog-legenda i:not(:first-child) { margin-left: 8px; }
 .prog-faltam[data-tier="medio"] { color: var(--accent-text); }
 .prog-faltam[data-tier="baixo"] { color: var(--warm-text); }
 
@@ -1939,6 +1944,14 @@ button.retrato-linha { cursor: pointer; }
 .tile:active { transform: scale(0.94); }
 @media (pointer: coarse) { .tile { min-width: 44px; min-height: 44px; } }
 .tile[data-owned="true"] { background: var(--read); border-color: var(--read); color: var(--read-ink); }
+/* v121: a missing number is what the collector hunts, so it is no longer the faintest
+   thing on the sheet: a dashed empty slot with its number in the body colour. */
+.tile:not([data-owned="true"]) { border-style: dashed; border-color: var(--text-muted); color: var(--text); }
+.mapa-topo { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.mapa-legenda { display: flex; align-items: center; gap: 6px; margin: 0; }
+.mapa-legenda i { width: 12px; height: 12px; border-radius: 3px; border: 1px dashed var(--text-muted); }
+.mapa-legenda i[data-owned="true"] { background: var(--read); border: 1px solid var(--read); }
+.mapa-legenda i ~ i { margin-left: 8px; }
 .tile[data-sel="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 .bucket { border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 8px; overflow: hidden; }

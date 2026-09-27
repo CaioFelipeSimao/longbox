@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, X, ImagePlus } from "lucide-react";
+import { Plus, X, ImagePlus, ChevronDown } from "lucide-react";
 
 import { STATUS, STATUS_ORDER, tiposDaEditora } from "../lib/constantes";
 import { usePasteImage } from "../lib/hooks";
@@ -209,6 +209,12 @@ export function FormSerie({
   personagens, editoras, showSerieForm, setShowSerieForm, serieForm, setSerieForm, serieErrors,
   serieDupWarning, salvarSerie,
 }) {
+  // v121: "de/até" and the position are rarely needed, so they wait behind "Mais opções";
+  // a série that already uses them opens with them shown.
+  const [serieMaisAberto, setSerieMaisAberto] = useState(false);
+  useEffect(() => { if (showSerieForm) setSerieMaisAberto(false); }, [showSerieForm]);
+  const serieMais = serieMaisAberto || !!(serieForm && (String(serieForm.ordem ?? "").trim() ||
+    serieForm.personagensList.some((p) => String(p.de ?? "").trim() || String(p.ate ?? "").trim())));
   return (
     <>
       {serieForm && (
@@ -226,7 +232,7 @@ export function FormSerie({
           <Field label="Nome" error={serieErrors.nome}>
             <input
               className="input"
-              placeholder="Nightwing (Volume 2)"
+              placeholder="Título (Volume N)"
               data-invalid={serieErrors.nome ? "true" : "false"}
               value={serieForm.nome}
               onChange={(e) => setSerieForm((f) => ({ ...f, nome: e.target.value }))}
@@ -235,7 +241,7 @@ export function FormSerie({
           <Field
             label="Personagens"
             error={serieErrors.personagem}
-            hint='Deixe "de" e "até" em branco para o personagem valer na série toda. Preencha só quando o protagonista muda no meio da numeração.'
+            hint={serieMais ? 'Deixe "de" e "até" em branco para o personagem valer na série toda. Preencha só quando o protagonista muda no meio da numeração.' : undefined}
           >
             {serieForm.personagensList.map((p, idx) => (
               <div className="row" key={idx} style={{ marginBottom: 6, alignItems: "center" }}>
@@ -247,6 +253,7 @@ export function FormSerie({
                   value={p.nome}
                   onChange={(e) => setSerieForm((f) => ({ ...f, personagensList: f.personagensList.map((x, i) => (i === idx ? { ...x, nome: e.target.value } : x)) }))}
                 />
+                {serieMais && (<>
                 <input
                   className="input" type="number" placeholder="de" style={{ width: 68 }}
                   value={p.de}
@@ -257,6 +264,7 @@ export function FormSerie({
                   value={p.ate}
                   onChange={(e) => setSerieForm((f) => ({ ...f, personagensList: f.personagensList.map((x, i) => (i === idx ? { ...x, ate: e.target.value } : x)) }))}
                 />
+                </>)}
                 {serieForm.personagensList.length > 1 && (
                   <button
                     className="btn-icon"
@@ -289,12 +297,18 @@ export function FormSerie({
               <input className="input" type="number" min="0" value={serieForm.totalEdicoes} onChange={(e) => setSerieForm((f) => ({ ...f, totalEdicoes: e.target.value }))} />
             </Field>
           </div>
-          <Field
-            label="Ordem manual dentro do personagem"
-            hint="Em branco ordena pelo ano de início. Preenchendo, número menor aparece primeiro."
-          >
-            <input className="input" type="number" step="0.1" value={serieForm.ordem} onChange={(e) => setSerieForm((f) => ({ ...f, ordem: e.target.value }))} />
-          </Field>
+          {serieMais ? (
+            <Field
+              label="Posição entre as séries do personagem"
+              hint="Em branco, segue o ano de início. Número menor vem antes."
+            >
+              <input className="input" type="number" step="0.1" value={serieForm.ordem} onChange={(e) => setSerieForm((f) => ({ ...f, ordem: e.target.value }))} />
+            </Field>
+          ) : (
+            <button type="button" className="btn btn-ghost mais-opcoes" onClick={() => setSerieMaisAberto(true)}>
+              <ChevronDown size={14} /> Mais opções
+            </button>
+          )}
           {serieDupWarning && <p className="field-error">{serieDupWarning}</p>}
         </Modal>
       )}
