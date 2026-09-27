@@ -2253,3 +2253,18 @@ control's labels left without underlined letters:
 - The shortcuts panel gained "Numa estante de capas" (← →, ↑ ↓, Home/End, Enter, J K L), missing
   since v114, and J K L under the sheet keys.
 `tests/test-atalhos.mjs` failed on 9 new checks before the code and passes 55 now.
+
+**v120 The collection sheet reads instead of administering.** From the third critique: each row
+of a collection's reading order carried "Lidas até aqui", ↑, ↓ and a red × (56 controls and 14
+red marks for a 14-volume saga), the character repeated under every title, move buttons that
+never named the volume, and a × that took the volume out at once with no undo. Seen by the user
+in a before/after preview first:
+- Reading mode, the default: number, title, and "Lidas até aqui" in the muted text colour (the
+  accent on hover or focus). Read volumes keep their status select (v115). The character line
+  shows only when the collection mixes characters (the chips above already say it otherwise).
+- "Editar ordem" beside the heading (it becomes "Pronto") shows ↑ ↓ and ×, the × set 12px apart;
+  end arrows are disabled. Alt+↑ / Alt+↓ on a focused row moves the volume and focus follows to
+  the same button in its new row. The mode resets when another collection opens.
+- Labels name the volume ("Mover X para cima", "Tirar X da coleção"), and taking one out shows
+  "X saiu da coleção." with Desfazer (the removal-undo path), restoring its position.
+`tests/test-colecoes.mjs`: 12 new checks failed before and pass now (45).

@@ -87,12 +87,12 @@ await m1.gerenciar("Longa");
 const sheet = () => m1.root.querySelector(".sheet[data-in='true']") || m1.root.querySelector(".sheet");
 const head = () => m1.root.querySelector(".ordem-head");
 check("ordem de leitura tem cabeçalho dobrável", head() && head().getAttribute("aria-expanded") === "true");
-check("lista aberta mostra os 8", m1.root.querySelectorAll('.sheet [aria-label="Mover para cima"]').length === 8);
+check("lista aberta mostra os 8", m1.root.querySelectorAll('.sheet .ordem-linha').length === 8);
 check("cor da barra oferecida quando a barra existe", !!m1.root.querySelector(".cor-barra"));
 check("começa na cor da editora", /Usando a cor da editora/.test(m1.root.querySelector(".cor-barra").textContent));
 
 head().click(); await sleep(80);
-check("recolher esconde a lista", head().getAttribute("aria-expanded") === "false" && m1.root.querySelectorAll('.sheet [aria-label="Mover para cima"]').length === 0);
+check("recolher esconde a lista", head().getAttribute("aria-expanded") === "false" && m1.root.querySelectorAll('.sheet .ordem-linha').length === 0);
 check("recolhido mostra a contagem", head().textContent.includes("8"));
 const guardado = m1.window.sessionStorage.getItem("longbox:ordem-recolhida");
 check("recolhido gravado na sessão", guardado === JSON.stringify(["longa"]), guardado);
@@ -154,6 +154,44 @@ console.log("=== terceira montagem: visita nova ===");
 const m3 = await montar({ sessao: { "longbox:aba": "colecoes" } });
 await m3.gerenciar("Longa");
 check("visita nova abre a ordem", m3.root.querySelector(".ordem-head").getAttribute("aria-expanded") === "true");
+
+// v120: the reading order reads, it does not administer. Reorder and removal live in an
+// "Editar ordem" mode; labels name the volume; removal from the collection can be undone.
+console.log("=== quarta montagem: editar ordem ===");
+const m4 = await montar({ sessao: { "longbox:aba": "colecoes" } });
+await m4.gerenciar("Longa");
+const R = m4.root;
+const linhas = () => [...R.querySelectorAll(".sheet .ordem-linha")];
+const titulos = () => linhas().map((l) => l.querySelector(".ordem-titulo")?.textContent);
+const botao = (txt) => [...R.querySelectorAll(".sheet button")].find((b) => b.textContent.trim() === txt);
+check("leitura: nenhum mover nem tirar", R.querySelectorAll('.sheet [aria-label^="Mover"], .sheet [aria-label^="Tirar"]').length === 0);
+check("leitura: Lidas até aqui em cada linha", R.querySelectorAll(".sheet .ordem-ate").length === 8);
+check("um personagem só: sem o nome repetido na linha", R.querySelectorAll(".sheet .ordem-sub").length === 0);
+botao("Editar ordem")?.click(); await sleep(120);
+check("editar: mover e tirar com o nome do volume", !!(R.querySelector('.sheet [aria-label="Mover Batman b0 para baixo"]') && R.querySelector('.sheet [aria-label="Tirar Batman b0 da coleção"]')));
+check("editar: sem Lidas até aqui", R.querySelectorAll(".sheet .ordem-ate").length === 0);
+check("editar: botão Pronto", !!botao("Pronto"));
+const desce = R.querySelector('.sheet [aria-label="Mover Batman b0 para baixo"]');
+if (desce) {
+  desce.focus();
+  desce.dispatchEvent(new m4.window.KeyboardEvent("keydown", { key: "ArrowDown", altKey: true, bubbles: true, cancelable: true }));
+  await sleep(150);
+}
+check("Alt+↓ desce o volume", titulos()[0] === "Batman b1" && titulos()[1] === "Batman b0", titulos().slice(0, 2).join(","));
+check("o foco vai junto", m4.window.document.activeElement?.closest?.(".ordem-linha") === linhas()[1]);
+m4.window.document.activeElement.dispatchEvent(new m4.window.KeyboardEvent("keydown", { key: "ArrowUp", altKey: true, bubbles: true, cancelable: true }));
+await sleep(150);
+check("Alt+↑ sobe de volta", titulos()[0] === "Batman b0", titulos()[0]);
+R.querySelector('.sheet [aria-label="Tirar Batman b2 da coleção"]')?.click();
+await sleep(150);
+const t4 = R.querySelector(".toast")?.textContent || "";
+check("tirar mostra o nome e Desfazer", /Batman b2/.test(t4) && !!R.querySelector(".toast button"), t4);
+check("tirou", linhas().length === 7, linhas().length);
+R.querySelector(".toast button")?.click(); await sleep(150);
+check("Desfazer devolve na mesma posição", linhas().length === 8 && titulos()[2] === "Batman b2", titulos().join(","));
+botao("Pronto")?.click(); await sleep(120);
+check("Pronto volta à leitura", R.querySelectorAll('.sheet [aria-label^="Mover"]').length === 0 && R.querySelectorAll(".sheet .ordem-ate").length === 8);
+check("sem erros (4)", m4.erros.length === 0, m4.erros[0]);
 
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);

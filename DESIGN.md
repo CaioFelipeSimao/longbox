@@ -213,6 +213,9 @@ a missing number can be linked to a volume from its panel; a keyboard button bes
 v119: J / K / L set Não lida / Lendo / Lida in the open volume sheet (the control follows, no
 toast) and on a focused cover anywhere (a toast "Título · status" with Desfazer / Ctrl+Z).
 
+v120: a collection's reading order shows one action per row ("Lidas até aqui", muted); ↑ ↓ ×
+live behind "Editar ordem" (Alt+↑/↓ moves), and taking a volume out can be undone.
+
 ## Data layer
 
 `claude.use("db")`. Hard limits from the contract: **256 KiB per document**, 5.000 documents

@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { X, Pencil, Trash2, ArrowUp, ArrowDown, ChevronDown } from "lucide-react";
 
 import { STATUS, STATUS_ORDER } from "../lib/constantes";
@@ -10,6 +11,31 @@ export function ColecaoSheet({
   ordemRecolhida, alternarOrdem, definirCorBarra, openEditarColecao, adicionarMembro,
   removerMembro, moverMembro, personagensDaColecao, onLidasAte, onStatus,
 }) {
+  // v120: the reading order reads by default; reordering and taking volumes out
+  // live in an "Editar ordem" mode, left whenever another collection opens.
+  const [editando, setEditando] = useState(false);
+  const listaRef = useRef(null);
+  const colecaoId = openColecao ? openColecao.id : null;
+  useEffect(() => { setEditando(false); }, [colecaoId]);
+  const variosPersonagens = openColecao ? personagensDaColecao(openColecao).length > 1 : false;
+
+  // Alt+↑ / Alt+↓ on a focused row moves that volume; focus follows to the same
+  // button in the row it lands on.
+  function moverPeloTeclado(e, idx) {
+    if (!e.altKey || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+    const dir = e.key === "ArrowUp" ? -1 : 1;
+    const destino = idx + dir;
+    if (destino < 0 || destino >= openColecao.membros.length) return;
+    e.preventDefault();
+    const acao = e.target.dataset && e.target.dataset.acao;
+    moverMembro(openColecao.id, idx, dir);
+    requestAnimationFrame(() => {
+      const linha = listaRef.current && listaRef.current.querySelectorAll(".ordem-linha")[destino];
+      const alvo = linha && (linha.querySelector('[data-acao="' + acao + '"]:not(:disabled)') || linha.querySelector("button:not(:disabled)"));
+      if (alvo) alvo.focus();
+    });
+  }
+
   return (
     <Sheet
       open={!!openColecao}
@@ -32,7 +58,8 @@ export function ColecaoSheet({
               {personagensDaColecao(openColecao).map((p) => <span className="chip" key={p}>{p}</span>)}
             </div>
           )}
-          <div>
+          <div ref={listaRef}>
+            <div className="ordem-topo">
             <button
               type="button"
               className="ordem-head"
@@ -43,6 +70,12 @@ export function ColecaoSheet({
               <span className="t-small muted num">{openColecao.membros.length}</span>
               <ChevronDown size={16} data-rot={ordemRecolhida.has(openColecao.id) ? "true" : "false"} />
             </button>
+            {!ordemRecolhida.has(openColecao.id) && openColecao.membros.length > 0 && (
+              <button type="button" className="btn btn-ghost ordem-editar" data-on={editando ? "true" : "false"} onClick={() => setEditando((x) => !x)}>
+                {editando ? "Pronto" : "Editar ordem"}
+              </button>
+            )}
+            </div>
             {!ordemRecolhida.has(openColecao.id) && (<>
             {openColecao.membros.length === 0 && (
               <p className="t-small muted" style={{ margin: 0 }}>Nenhum volume nesta coleção ainda.</p>
@@ -51,15 +84,15 @@ export function ColecaoSheet({
               const v = lib.volumes.find((x) => x.id === vid);
               if (!v) return null;
               return (
-                <div key={vid + ":" + idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
-                  <span className="num t-small muted" style={{ width: 22, flexShrink: 0 }}>{idx + 1}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p className="t-small truncate" style={{ margin: 0, fontWeight: 500 }}>{v.titulo}</p>
-                    <p className="t-small muted truncate" style={{ margin: 0 }}>{v.personagem}</p>
+                <div key={vid + ":" + idx} className="ordem-linha" onKeyDown={editando ? (e) => moverPeloTeclado(e, idx) : undefined}>
+                  <span className="num t-small muted ordem-num">{idx + 1}</span>
+                  <div className="ordem-texto">
+                    <p className="t-small truncate ordem-titulo">{v.titulo}</p>
+                    {variosPersonagens && <p className="t-small muted truncate ordem-sub">{v.personagem}</p>}
                   </div>
-                  {/* v115: a volume already read can be set back (a "Lidas até aqui" pressed
-                      by mistake, or one being reread) right here. */}
-                  {v.status === "lida" && (
+                  {!editando && v.status === "lida" && (
+                    /* v115: a volume already read can be set back (a "Lidas até aqui" pressed
+                       by mistake, or one being reread) right here. */
                     <select
                       className="ordem-status"
                       value={v.status}
@@ -70,7 +103,7 @@ export function ColecaoSheet({
                     </select>
                   )}
                   {/* v114: reading a saga in order, mark this one and every one before it. */}
-                  {v.status !== "lida" && (
+                  {!editando && v.status !== "lida" && (
                     <button
                       type="button"
                       className="btn btn-ghost ordem-ate"
@@ -80,11 +113,15 @@ export function ColecaoSheet({
                       Lidas até aqui
                     </button>
                   )}
-                  <button className="btn-icon" onClick={() => moverMembro(openColecao.id, idx, -1)} aria-label="Mover para cima"><ArrowUp size={14} /></button>
-                  <button className="btn-icon" onClick={() => moverMembro(openColecao.id, idx, 1)} aria-label="Mover para baixo"><ArrowDown size={14} /></button>
-                  <button className="btn-icon" onClick={() => removerMembro(openColecao.id, vid)} aria-label="Remover da coleção">
-                    <X size={14} color="var(--danger-text)" />
-                  </button>
+                  {editando && (
+                    <span className="ordem-acoes">
+                      <button className="btn-icon" data-acao="subir" disabled={idx === 0} onClick={() => moverMembro(openColecao.id, idx, -1)} aria-label={"Mover " + v.titulo + " para cima"}><ArrowUp size={14} /></button>
+                      <button className="btn-icon" data-acao="descer" disabled={idx === openColecao.membros.length - 1} onClick={() => moverMembro(openColecao.id, idx, 1)} aria-label={"Mover " + v.titulo + " para baixo"}><ArrowDown size={14} /></button>
+                      <button className="btn-icon ordem-tirar" data-acao="tirar" onClick={() => removerMembro(openColecao.id, vid)} aria-label={"Tirar " + v.titulo + " da coleção"}>
+                        <X size={14} color="var(--danger-text)" />
+                      </button>
+                    </span>
+                  )}
                 </div>
               );
             })}

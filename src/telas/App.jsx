@@ -734,8 +734,13 @@ export function App() {
     persist({ ...lib, colecoes: lib.colecoes.map((c) => (c.id === colecaoId ? { ...c, membros: [...c.membros, volumeId] } : c)) });
     setAddMemberSel("");
   }
+  // v120: taking a volume out of a collection names it and can be undone (it used to
+  // vanish at once, one tap beside the move buttons).
   function removerMembro(colecaoId, volumeId) {
-    persist({ ...lib, colecoes: lib.colecoes.map((c) => (c.id === colecaoId ? { ...c, membros: c.membros.filter((v) => v !== volumeId) } : c)) });
+    const next = { ...lib, colecoes: lib.colecoes.map((c) => (c.id === colecaoId ? { ...c, membros: c.membros.filter((v) => v !== volumeId) } : c)) };
+    persist(next);
+    const v = lib.volumes.find((x) => x.id === volumeId);
+    showToast((v ? v.titulo : "Volume") + " saiu da coleção.", { antes: lib, depois: next, reabrir: null });
   }
   // v114: "Lidas até aqui" in a collection's reading order marks that volume and
   // every one before it as read, in one save, with the usual undo.
