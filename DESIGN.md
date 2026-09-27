@@ -218,7 +218,7 @@ live behind "Editar ordem" (Alt+↑/↓ moves), and taking a volume out can be u
 
 v121: a missing issue tile is a dashed slot with its number in `--text` (owned stays filled
 `--read`), with a "tenho / falta" legend; "Falta pouco" carries a one-line legend of its three
-tiers; the Seu acervo "Formatos" bars are `--text-muted`, not the accent. "Novo" is labelled by
+tiers under the bars (v122). "Novo" is labelled by
 what it creates; Nova série keeps "de/até" and position behind "Mais opções".
 
 ## Data layer

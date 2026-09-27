@@ -2285,3 +2285,14 @@ user in a before/after preview:
 - The Seu acervo "Formatos" bars are muted grey; cyan keeps meaning interactive.
 - Not changed: the light theme's sheet scrim was already a neutral grey (rgba(20,22,26,.38)); the
   teal the critique saw is the page's cyan top gradient showing through it.
+
+**v122 Three follow-ups from the user after v121.**
+- The "Falta pouco" legend moved under the bars, like a chart key: under the heading it floated
+  between title and first bar. Chosen from four placements rendered at 1280 and 390 (right, under
+  the count, broke the title in two on a phone; left, beside the title, pushed the count under it).
+- The Seu acervo "Formatos" bars are cyan again. The user found the v121 grey without identity
+  (grey bar, grey numbers, white names); amber was offered too but it means "needs attention" in
+  the hunt bars and is used nowhere else, and the rows are clickable, so cyan fits.
+- Character group headings (HQs and Séries) aligned on the text baseline on a fine pointer, so the
+  name sat 5px above the colour square and the fold arrow, which centre on the 36px row. They are
+  centred now, as they already were on touch; name, count, square and arrow share one centre.

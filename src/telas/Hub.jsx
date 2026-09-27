@@ -161,12 +161,6 @@ export function Hub({
               </span>
             )}
           </div>
-          {/* v121: the three bar colours, said once (they were a code to remember). */}
-          <p className="prog-legenda t-small muted">
-            <i data-tier="baixo" /> a partir de {Math.round(QUASE_FECHANDO * 100)}%
-            <i data-tier="medio" /> {Math.round(QUASE_MORNO * 100)}%
-            <i data-tier="alto" /> {Math.round(QUASE_PRONTO * 100)}%, quase fechando
-          </p>
           <div className="prog">
             {stats.faltaPouco.map((p) => (
               <HuntRow
@@ -176,6 +170,12 @@ export function Hub({
               />
             ))}
           </div>
+          {/* v121: the three bar colours, said once, under the bars like a chart key (v122). */}
+          <p className="prog-legenda t-small muted">
+            <i data-tier="baixo" /> a partir de {Math.round(QUASE_FECHANDO * 100)}%
+            <i data-tier="medio" /> {Math.round(QUASE_MORNO * 100)}%
+            <i data-tier="alto" /> {Math.round(QUASE_PRONTO * 100)}%, quase fechando
+          </p>
         </section>
       )}
 
