@@ -60,7 +60,7 @@ const ids = (l) => l.map((x) => x.id).join(",");
 
 /* ---------- the app with a db that can change under it ---------- */
 const bundle = fs.readFileSync("dist/app.js", "utf8");
-async function montar() {
+async function montar({ ecoAtraso = 5 } = {}) {
   const dom = new JSDOM(`<!doctype html><html><body><div id="root"></div></body></html>`, {
     runScripts: "outside-only", pretendToBeVisual: true, url: "https://example.test/",
   });
@@ -98,7 +98,16 @@ async function montar() {
   const makeDoc = (path) => ({
     path,
     get: async () => snapDe(path),
-    set: async (body) => { gravacoes++; docs.set(path, JSON.parse(JSON.stringify(body))); setTimeout(() => avisar(path), 5); },
+    // The echo carries what was written at that moment, and can arrive late (ecoAtraso),
+    // as the real server echo of an earlier write can land after a later write.
+    set: async (body) => {
+      gravacoes++;
+      const copia = JSON.parse(JSON.stringify(body));
+      docs.set(path, copia);
+      if (path.startsWith("library/")) {
+        setTimeout(() => (ouvintes.get(path) || new Set()).forEach((fn) => fn({ ...snapDe(path), exists: true, data: () => copia })), ecoAtraso);
+      } else setTimeout(() => avisar(path), 5);
+    },
     delete: async () => { gravacoes++; docs.delete(path); setTimeout(() => avisar(path), 5); },
     onSnapshot: (fn) => { if (!ouvintes.has(path)) ouvintes.set(path, new Set()); ouvintes.get(path).add(fn); setTimeout(() => fn(snapDe(path)), 1); return () => ouvintes.get(path).delete(fn); },
   });
@@ -135,6 +144,28 @@ async function montar() {
   // (it never got the snapshot), like the tab of 2026-09-24.
   const externo = (path, body, aoVivo) => { docs.set(path, JSON.parse(JSON.stringify(body))); if (aoVivo) avisar(path); };
   return { window, root, erros, docs, botao, toast, titulos, abrirHq, sheet, fecharSheet, externo, v, gravacoes: () => gravacoes };
+}
+
+// 2026-09-27, reported by the user with one PC open: several edits in a row, the
+// app showed "Biblioteca atualizada em outro aparelho", undid the latest edits and
+// then redid them. The server echo of the tab's own earlier write arrived after a
+// later write, and was taken for a change made elsewhere.
+console.log("=== eco atrasado da própria gravação ===");
+{
+  const m = await montar({ ecoAtraso: 900 });
+  await m.abrirHq("b0");
+  const status = () => m.sheet()?.querySelector('.seg3 [aria-pressed="true"]')?.textContent;
+  m.botao("Lida", m.sheet())?.click();
+  await sleep(650); // saved "lida"; its echo is still on the way
+  m.botao("Lendo", m.sheet())?.click();
+  const vistos = [];
+  const t0 = Date.now();
+  while (Date.now() - t0 < 2600) { vistos.push(status()); await sleep(40); }
+  const depoisDeLendo = vistos.slice(vistos.indexOf("Lendo"));
+  check("a tela nunca volta para a mudança anterior", !depoisDeLendo.includes("Lida"), [...new Set(vistos)].join(" > "));
+  check("sem aviso falso de outro aparelho", !/outro aparelho/.test(m.toast()?.textContent || ""), m.toast()?.textContent);
+  check("o banco termina com a última mudança", m.docs.get("library/volumes").items.find((x) => x.id === "b0").status === "lendo");
+  check("sem erros (eco atrasado)", m.erros.length === 0, m.erros[0]);
 }
 
 console.log("=== aba desatualizada: o caso de 2026-09-24 ===");

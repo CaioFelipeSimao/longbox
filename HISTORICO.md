@@ -2192,3 +2192,17 @@ I recommended against C (the user catalogues through the skill); the user asked 
 - The "Novo volume" cover field is a full-width strip like its neighbours (thumbnail slot,
   "Escolher imagem", the Ctrl+V hint inside, ✕ to remove), replacing v114's lone square with
   the hint underneath, which the user found unbalanced.
+
+**v116 A tab no longer mistakes its own late echo for another device.** Reported by the user
+with only the PC open: after several edits in a row the app said "Biblioteca atualizada em
+outro aparelho", undid the latest edits and redid them a moment later. Cause: the server echoes
+every write back to the tab's live listener, and the echo of an earlier write (edits 1-5) can
+arrive after a later one (1-8) has been saved; the listener compared it only with the last
+write, took it for a remote change, three-way merged it (which reverts 6-8), showed the toast,
+and scheduled a save of that reverted state; the next echo put 6-8 back. That scheduled save
+was a real, if narrow, risk of losing 6-8 if it went out before the later echo arrived. Now
+each write is recorded (before it goes out, since its echo can beat `set()` resolving) in a
+per-document list of the tab's own recent writes, and echoes equal to any of them are ignored;
+entries expire after 60 s. `tests/test-sincronia.mjs` reproduces the case with a mock server
+whose echo carries the written state and arrives 900 ms late: it failed before the fix (screen
+back to the older value, false toast) and passes now; changes from elsewhere still arrive.

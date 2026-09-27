@@ -51,6 +51,26 @@ function gravarLast(chave, json) {
 }
 const parseOu = (json, vazio) => { try { return json ? JSON.parse(json) : vazio; } catch (e) { return vazio; } };
 
+// v116: what this tab itself wrote lately, per document. The server echoes every
+// write back to the tab's listener, and an echo can arrive after a later write: the
+// echo of "edits 1-5" landing once "1-8" is saved looked like another device undoing
+// 6-8, so the screen reverted 6-8, showed "atualizada em outro aparelho", and put
+// them back when the next echo came. Comparing with the last write alone could not
+// tell. Echoes equal to any recent own write are ignored; entries expire after 60s
+// so a real later change elsewhere that happens to match an old state still lands.
+const PROPRIAS_MS = 60000;
+const proprias = new Map(); // chave -> [{ json, quando }]
+function registrarPropria(chave, json) {
+  const agora = Date.now();
+  const lista = (proprias.get(chave) || []).filter((p) => agora - p.quando < PROPRIAS_MS);
+  lista.push({ json, quando: agora });
+  proprias.set(chave, lista.slice(-12));
+}
+function ehPropria(chave, json) {
+  const agora = Date.now();
+  return (proprias.get(chave) || []).some((p) => p.json === json && agora - p.quando < PROPRIAS_MS);
+}
+
 export function shardEdicoes(edicoes) {
   const m = new Map();
   edicoes.forEach((e) => {
@@ -156,9 +176,12 @@ async function flushAgora(lib) {
           mescladas.push({ chave: w.chave, parte: final, local: w.local });
         }
         if (ed && Array.isArray(final) && !final.length) {
+          registrarPropria(w.chave, "[]");
           await w.ref.delete();
           gravarLast(w.chave, null);
         } else {
+          // Recorded before the write goes out: its echo can come back before set() resolves.
+          registrarPropria(w.chave, finalJson);
           await w.ref.set(ed ? { items: final } : cfg.corpo(final));
           gravarLast(w.chave, finalJson);
         }
@@ -195,7 +218,7 @@ export function ouvirMudancas(db) {
     const mudancas = [];
     pendentes.forEach((remoto, chave) => {
       const json = JSON.stringify(remoto);
-      if (json === lerLast(chave)) return;
+      if (json === lerLast(chave) || ehPropria(chave, json)) return;
       const ed = chave.startsWith("ed:");
       const local = ed ? lib.edicoes.filter((e) => e.serieId === chave.slice(3)) : DOCS[chave].daLib(lib);
       const vazio = ed ? [] : DOCS[chave].parte(null);
