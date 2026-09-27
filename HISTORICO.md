@@ -2094,3 +2094,11 @@ blurred version would have run a GPU filter on every frame of the slide, the ←
 recede. `tests/test-cor-capa.mjs` checks the colour picking; checked in headless Chrome at
 1467, 1280 (touch), 800 and in the light theme, including the sticky cover column and the
 recede under the série sheet.
+
+**v107 The cover stays at the top of its column.** Reported by the user with screenshots: on
+volumes with many linked séries (Justice League: Endless Winter) the cover sat halfway down,
+while on short ones (Doomsday Clock) it was at the top. The narrow layout centres the cover
+with `align-self: center`; in the two-column grid the same property centres it vertically in a
+row as tall as the edições list. The wide rule now sets `align-self: start` (which sticky needs
+anyway). Missed in v106 because the harness volumes had short lists; checked on a 72-issue
+volume: cover and info column both start at 135px.

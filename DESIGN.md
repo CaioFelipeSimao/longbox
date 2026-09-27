@@ -299,7 +299,7 @@ plain cover box waits; if the full file fails, the composed fallback shows.
 **The volume sheet (v106).** The cover is its content. Below 1024px the 440px sheet shows it
 centred on top, `min(240px, 62%)` wide, with the fields under it; from 1024px (PC, tablet on
 its side) the sheet is `min(680px, 92vw)` (`Sheet variante="volume"`) in two columns, a 250px
-cover column that stays put (`sticky`) while the rest scrolls. The top of the sheet is washed in
+cover column pinned to the top (`align-self: start`) that stays put (`sticky`) while the rest scrolls. The top of the sheet is washed in
 the cover's most prominent colour (`corDosPixels` in `lib/util.js` on the 16x24 thumbnail,
 `useCorDaCapa` in `lib/capas.js`), or in the character's hue when the cover is mostly black,
 white or grey or has no thumbnail yet: one `linear-gradient` from `color-mix(tint 34%, surface)`

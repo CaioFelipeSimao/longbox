@@ -2054,7 +2054,9 @@ button.retrato-linha { cursor: pointer; }
 @media (min-width: 1024px) {
   .sheet[data-variante="volume"] { width: min(680px, 92vw); }
   .sheet[data-variante="volume"] .vol-nav { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 22px; align-items: start; }
-  .sheet[data-variante="volume"] .detail-cover { width: 100%; position: sticky; top: 0; }
+  /* align-self: start, not the narrow layout's center: in a grid row that means vertical,
+     and a long list of edições pushed the cover down to its middle (v107). */
+  .sheet[data-variante="volume"] .detail-cover { width: 100%; align-self: start; position: sticky; top: 0; }
 }
 
 /* v106: the cover's colour washes down from the top of the sheet and fades into it.
