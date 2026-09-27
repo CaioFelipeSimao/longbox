@@ -1370,21 +1370,12 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 /* Every hub section rides above the backdrop, which is the one out-of-flow child. */
 .hub > * { position: relative; z-index: 1; }
-/* v109: the backdrop sits in this block with the suggestion. In the dark theme the
-   block is static, so the backdrop still measures the whole hub and drifts behind
-   "Falta pouco" as before. In the light theme the block is its containing box and
-   the backdrop ends before the hunt: there its darkest stretch sat right behind
-   the bars and made "faltam N" unreadable. The user chose to change the light only. */
+/* The backdrop sits in this block with the suggestion. The block is static, so the
+   backdrop measures the whole hub and drifts behind "Falta pouco" in both themes.
+   (v109 cut it before the hunt in the light theme; the user saw it live and asked
+   for it back in v110. The light-theme legibility of the hunt is still open.) */
 .hub > .hub-topo { position: static; }
 .hub-topo > .suggest { position: relative; z-index: 1; }
-@media (prefers-color-scheme: light) {
-  .hub > .hub-topo { position: relative; }
-  .hub-topo > .gm {
-    height: calc(100% + var(--topbar-h) + var(--hub-gap) / 2);
-    mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
-  }
-}
 .suggest-rotulo { margin: 0; }
 
 /* ---- the hub backdrop: GridMotion, from React Bits ----

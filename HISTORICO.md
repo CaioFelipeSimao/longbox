@@ -2126,3 +2126,10 @@ left out of "Seu acervo". "Do seu acervo" is sentence case instead of an upperca
 The volume sheet's big cover drops its 1px border and its shadow goes from 18/40px to 8/22px.
 Not changed: the first cover of a Coleções strip is flush with the strip's left edge on purpose,
 aligned with the collection title above it (detector false positive).
+
+**v110 Light-theme hub backdrop reverted.** The user reviewed v109 live and did not like the
+light hub with the backdrop cut short before "Falta pouco"; it is back to measuring the whole
+hub in both themes (`.hub-topo` stays, always `position: static`). The rest of v109 stays. The
+light-theme legibility of the hunt is reopened: the cause is that `.gm::after`, the veil over
+the backdrop covers, is a near-black gradient in both themes, so on the light page it paints a
+dark smear under dark text.
