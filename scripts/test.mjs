@@ -22,6 +22,7 @@ const SUITES = [
   { args: ["tests/test-colecoes.mjs"], minimo: 31 },
   { args: ["tests/test-desfazer.mjs"], minimo: 41 },
   { args: ["tests/test-foco.mjs"], minimo: 29 },
+  { args: ["tests/test-capa-grande.mjs"], minimo: 5 },
   { args: ["tests/test-faltantes.mjs"], minimo: 12 },
   { args: ["tests/test-backup.mjs"], minimo: 18 },
   { args: ["tests/test-navegar.mjs"], minimo: 27 },

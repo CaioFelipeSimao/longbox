@@ -4,15 +4,68 @@ import { STATUS } from "../lib/constantes";
 import { coverColors, useCores } from "../lib/cores";
 import { coverUrl, useMiniCapa } from "../lib/capas";
 
+// v105: the full-size cover (volume sheet, hub suggestion). It used to be a plain
+// lazy <img> with the full URL: the sheet slides in from off screen, so "lazy"
+// held the download until the animation ended (a grey box for most of a second),
+// and swapping volumes kept painting the previous picture until the new one had
+// downloaded, so the hub's "Outro" could show one book's name over another's
+// cover. Now the shelf thumbnail, already on this device, shows at once; the full
+// cover downloads and decodes off screen and replaces it only when ready. The
+// ready state is keyed by volume, so a stale picture is never shown for another.
+function CapaGrande({ volume, c }) {
+  const id = volume.capaAssetId;
+  const mini = useMiniCapa(id);
+  const [pronta, setPronta] = useState(null); // { id, url } once decoded, or { id, falhou }
+  useEffect(() => {
+    const url = coverUrl(volume);
+    if (!url) return undefined;
+    let vivo = true;
+    const img = new Image();
+    // decode() where there is one; plain load events otherwise (older engines, JSDOM).
+    const pronto = new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+    img.src = url;
+    (img.decode ? img.decode() : pronto)
+      .then(() => { if (vivo) setPronta({ id, url }); })
+      .catch(() => { if (vivo) setPronta({ id, falhou: true }); });
+    return () => { vivo = false; };
+  }, [id]);
+  const desta = pronta && pronta.id === id ? pronta : null;
+  const src = desta && desta.url ? desta.url : mini;
+  if (src) return <img key={id} data-capa={id} src={src} alt={"Capa de " + volume.titulo} draggable={false} />;
+  // Nothing on this device yet: the plain cover box waits (as before) unless the
+  // full cover failed, in which case the drawn fallback takes over.
+  if (!desta || !desta.falhou) return null;
+  return <CapaDesenhada volume={volume} c={c} />;
+}
+
+function CapaDesenhada({ volume, c }) {
+  return (
+    <div
+      className="cover-fb"
+      style={{ "--fb-a": c.a, "--fb-b": c.b, "--fb-ink": c.ink, "--fb-ink-soft": c.inkSoft, "--fb-rule": c.rule }}
+    >
+      <div>
+        <div className="cover-rule" />
+        <div className="cover-fb-title">{volume.titulo}</div>
+      </div>
+      <div className="cover-fb-foot">{volume.personagem || ""}</div>
+    </div>
+  );
+}
+
 export function CoverArt({ volume, grande }) {
-  const mini = useMiniCapa(grande ? null : volume && volume.capaAssetId);
+  const cores = useCores();
+  if (grande && volume && volume.capaAssetId) return <CapaGrande volume={volume} c={coverColors(volume, cores)} />;
+  return <CoverArtEstante volume={volume} cores={cores} />;
+}
+
+function CoverArtEstante({ volume, cores }) {
+  const mini = useMiniCapa(volume && volume.capaAssetId);
   const [miniFalhou, setMiniFalhou] = useState(false);
   const usandoMini = !!mini && !miniFalhou;
   const url = usandoMini ? mini : coverUrl(volume);
   const [failed, setFailed] = useState(false);
   useEffect(() => { setFailed(false); setMiniFalhou(false); }, [volume && volume.capaAssetId]);
-  const c = coverColors(volume, useCores());
-
   if (url && !failed) {
     return (
       <img
@@ -29,18 +82,7 @@ export function CoverArt({ volume, grande }) {
       />
     );
   }
-  return (
-    <div
-      className="cover-fb"
-      style={{ "--fb-a": c.a, "--fb-b": c.b, "--fb-ink": c.ink, "--fb-ink-soft": c.inkSoft, "--fb-rule": c.rule }}
-    >
-      <div>
-        <div className="cover-rule" />
-        <div className="cover-fb-title">{volume.titulo}</div>
-      </div>
-      <div className="cover-fb-foot">{volume.personagem || ""}</div>
-    </div>
-  );
+  return <CapaDesenhada volume={volume} c={coverColors(volume, cores)} />;
 }
 
 // Volumes carry an optional `ordem`: absent until the user drags one for the

@@ -2067,3 +2067,17 @@ preferred the tiers: across a list of séries the colour tells at a glance which
 close, which a single colour loses; if it had to be one colour, cyan over green. Restored
 exactly as v102 (amber 50-65%, cyan 65-80%, green 80%+). DESIGN.md now records the tiers as an
 approved exception, so a future critique does not flag the amber as off-palette again.
+
+**v105 Large covers load progressively; the hub suggestion never shows the wrong cover.**
+The user reported the volume sheet's cover staying grey for ~800ms and the hub's random
+suggestion being slow, sometimes stalling, and showing one book's cover under another's
+title after "Outro". One cause for all of it: `CoverArt grande` was a plain `<img>` with the
+full URL and `loading="lazy"`. Lazy held the download until the sliding sheet was on screen;
+changing `src` keeps painting the old bitmap until the new file arrives, so fast rerolls
+showed stale covers; the full decode landed on screen at paint time. Now `CapaGrande` shows
+the device's 360px thumbnail at once, fetches and `decode()`s the full cover off screen,
+swaps it in when ready, and keys both the ready state and the `<img>` by volume id. Measured
+in headless Chrome with 800ms of simulated network: hub, five fast rerolls, v104 painted a
+stale or grey cover for about 1.65s in total, v105 never; sheet, first picture at 840ms on
+v104, 7ms (thumbnail) on v105, full cover at ~817ms. `tests/test-capa-grande.mjs` guards it.
+This is step 1 of the big-cover sheet redesign (the critique's first open question).

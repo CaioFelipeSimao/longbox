@@ -289,6 +289,13 @@ where a cover is large (`CoverArt grande`: the volume sheet and the hub's sugges
 Decoding full-size covers on every tab switch was the 475ms stall of v80-v84. Code in
 `src/lib/capas.js`.
 
+A large cover loads progressively (v105, `CapaGrande` in `ui/VolumeCard.jsx`): the shelf
+thumbnail shows at once, the full file is fetched eagerly (never `loading="lazy"`: the sheet
+starts off screen) and decoded off screen with `img.decode()`, and replaces the thumbnail
+only then. The ready state carries the volume id and the `<img>` is keyed by it, so a picture
+is never painted under another volume's title. With neither thumbnail nor full cover yet, the
+plain cover box waits; if the full file fails, the composed fallback shows.
+
 ## Migration
 
 "Importar backup" accepts the v2 `longbox.json` export as-is. The user exports from the old
