@@ -954,9 +954,11 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
               border-color 120ms var(--ease-out), color 120ms var(--ease-out);
 }
 .seg3 button:active { transform: scale(0.97); }
-.seg3 button[data-on="true"] { color: var(--text); border-color: var(--border-strong); background: var(--surface); }
-.seg3 button[data-on="true"][data-kind="lendo"] { border-color: var(--accent); color: var(--accent-text); }
-.seg3 button[data-on="true"][data-kind="lida"] { border-color: var(--read); color: var(--read); }
+/* v100: the picked option reads at a glance, "Não lida" included: a 2px ring in its
+   own text colour and a heavier weight, not just a slightly lighter border. */
+.seg3 button[data-on="true"] { color: var(--text); border-color: currentColor; box-shadow: inset 0 0 0 1px currentColor; background: var(--surface); font-weight: 600; }
+.seg3 button[data-on="true"][data-kind="lendo"] { color: var(--accent-text); }
+.seg3 button[data-on="true"][data-kind="lida"] { color: var(--read); }
 
 .chip {
   display: inline-flex;
@@ -1931,6 +1933,10 @@ button.retrato-linha { cursor: pointer; }
   border-bottom: 1px solid var(--border);
 }
 .sheet-body { padding: 16px; overflow-y: auto; overflow-x: hidden; flex: 1; display: flex; flex-direction: column; gap: 18px; }
+/* v100: dialog titles are headings now (h2), sized by .t-display as before; the
+   body and the modal take focus on open only to route keys, so no ring there. */
+.dialog-titulo { margin: 0; }
+.sheet-body:focus, .modal:focus { outline: none; }
 
 /* Inner scrollbars, drawn as a 4px line with no arrows and no track: 10px to grab,
    the border colour at rest, the accent while the pointer is over the area. Only

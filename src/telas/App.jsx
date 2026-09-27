@@ -1746,7 +1746,7 @@ export function App() {
         {TABS.map((t) => {
           const Icon = t.icon;
           return (
-            <button key={t.key} data-active={tab === t.key ? "true" : "false"} onClick={() => switchTab(t.key)}>
+            <button key={t.key} data-active={tab === t.key ? "true" : "false"} aria-current={tab === t.key ? "page" : undefined} onClick={() => switchTab(t.key)}>
               <Icon size={18} />
               {t.label}
             </button>

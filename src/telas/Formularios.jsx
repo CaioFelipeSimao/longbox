@@ -110,6 +110,7 @@ export function FormVolume({
                   key={k}
                   data-kind={k}
                   data-on={volumeForm.status === k ? "true" : "false"}
+                  aria-pressed={volumeForm.status === k}
                   onClick={() => setVolumeForm((f) => ({ ...f, status: k }))}
                 >
                   {STATUS[k].label}

@@ -86,6 +86,8 @@ export function SerieSheet({
       className="tile"
       data-owned={ownedIds.has(e.id) ? "true" : "false"}
       data-sel={e.id === selectedId ? "true" : "false"}
+      aria-label={"Nº " + e.numero + (ownedIds.has(e.id) ? ", possuída" : ", falta")}
+      aria-pressed={e.id === selectedId}
       onClick={() => setSelectedId(e.id === selectedId ? null : e.id)}
     >
       {e.numero}
@@ -166,7 +168,7 @@ export function SerieSheet({
               {eds.length > 20 && (
                 <div className="search" style={{ marginBottom: 12 }}>
                   <Search size={14} />
-                  <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar número" />
+                  <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar número" aria-label="Buscar número na série" />
                 </div>
               )}
               <p className="t-micro" style={{ margin: "0 0 8px" }}>

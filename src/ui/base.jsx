@@ -1,17 +1,57 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useId } from "react";
 import { X } from "lucide-react";
 
 import { useEscape, useTransitionMount } from "../lib/hooks";
 
+// v100: the label and the error/hint are tied to the control, so a screen reader
+// reads "Título, obrigatório" on the field and clicking the label focuses it. A
+// single native control gets the id; a composite (status buttons, publisher
+// picker, a row of inputs) becomes a group named by the label instead.
+const NATIVOS = new Set(["input", "select", "textarea"]);
+
 export function Field({ label, error, hint, children }) {
+  const id = useId();
+  const nota = error || hint ? id + "-nota" : undefined;
+  const unico = React.isValidElement(children) && NATIVOS.has(children.type);
+  const controle = unico
+    ? React.cloneElement(children, { id, "aria-describedby": nota, "aria-invalid": error ? true : undefined })
+    : children;
   return (
-    <div className="field">
-      <label>{label}</label>
-      {children}
-      {error && <p className="field-error">{error}</p>}
-      {hint && !error && <p className="field-hint">{hint}</p>}
+    <div className="field" role={unico ? undefined : "group"} aria-labelledby={unico ? undefined : id + "-rotulo"} aria-describedby={unico ? undefined : nota}>
+      <label id={id + "-rotulo"} htmlFor={unico ? id : undefined}>{label}</label>
+      {controle}
+      {error && <p className="field-error" id={nota}>{error}</p>}
+      {hint && !error && <p className="field-hint" id={nota}>{hint}</p>}
     </div>
   );
+}
+
+// v100: a dialog takes focus when it opens (the first field of a form, otherwise
+// the dialog's scrolling body, so ↑ ↓ scroll it), keeps Tab inside itself, and
+// hands focus back to whatever opened it when it closes. Only while `ativo`: a
+// sheet receding behind another keeps its place without fighting for focus.
+const FOCAVEIS = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function useFocoDialogo(ref, aberto, alvoInicial) {
+  useEffect(() => {
+    if (!aberto || !ref.current) return undefined;
+    const antes = document.activeElement;
+    const alvo = alvoInicial(ref.current);
+    if (alvo) alvo.focus({ preventScroll: true });
+    return () => {
+      if (antes && antes !== document.body && antes.isConnected && typeof antes.focus === "function") antes.focus({ preventScroll: true });
+    };
+  }, [aberto]);
+}
+
+function prenderTab(e) {
+  if (e.key !== "Tab") return;
+  const lista = [...e.currentTarget.querySelectorAll(FOCAVEIS)].filter((el) => !el.closest("[inert], [hidden]"));
+  if (!lista.length) return;
+  const primeiro = lista[0], ultimo = lista[lista.length - 1];
+  const dentro = e.currentTarget.contains(document.activeElement) && lista.includes(document.activeElement);
+  if (e.shiftKey && (document.activeElement === primeiro || !dentro)) { e.preventDefault(); ultimo.focus(); }
+  else if (!e.shiftKey && (document.activeElement === ultimo || !dentro)) { e.preventDefault(); primeiro.focus(); }
 }
 
 // nav (v88) is an optional row under the subtitle, used by the volume sheet for
@@ -25,17 +65,23 @@ export function Sheet({ open, onClose, title, subtitle, actions, nav, children, 
   // pointer events (its controls sit under the front sheet visually, but
   // without this they would still be clickable through the gap).
   useEscape(mounted && !recede, onClose);
+  const ref = useRef(null);
+  const id = useId();
+  useFocoDialogo(ref, mounted && open, (el) => el.querySelector(".sheet-body"));
   if (!mounted) return null;
   return (
     <>
       {!recede && <div className="scrim" data-in={shown ? "true" : "false"} onClick={onClose} />}
       <div
+        ref={ref}
         className="sheet"
         data-in={shown ? "true" : "false"}
         data-out={shown ? "false" : "true"}
         data-behind={recede ? "true" : "false"}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={id}
+        onKeyDown={recede ? undefined : prenderTab}
         // pointer-events:none (in CSS) keeps the mouse out, but a receded
         // sheet's inputs and buttons would still be reachable by Tab and
         // still announced to screen readers without this: inert removes it
@@ -47,7 +93,7 @@ export function Sheet({ open, onClose, title, subtitle, actions, nav, children, 
         <div className="sheet-grab"><i /></div>
         <div className="sheet-head">
           <div style={{ minWidth: 0 }}>
-            <p className="t-display" style={{ margin: 0 }}>{title}</p>
+            <h2 className="t-display dialog-titulo" id={id}>{title}</h2>
             {subtitle && <p className="t-small muted" style={{ margin: "3px 0 0" }}>{subtitle}</p>}
             {nav}
           </div>
@@ -56,7 +102,7 @@ export function Sheet({ open, onClose, title, subtitle, actions, nav, children, 
             <button className="btn-icon" onClick={onClose} aria-label="Fechar"><X size={18} /></button>
           </div>
         </div>
-        <div className="sheet-body">{children}</div>
+        <div className="sheet-body" tabIndex={-1}>{children}</div>
       </div>
     </>
   );
@@ -65,14 +111,29 @@ export function Sheet({ open, onClose, title, subtitle, actions, nav, children, 
 export function Modal({ open, onClose, title, children, footer }) {
   const [mounted, shown] = useTransitionMount(open, 220);
   useEscape(mounted, onClose);
+  const ref = useRef(null);
+  const id = useId();
+  // On touch the first field is not focused: it would pop the on-screen keyboard over
+  // the form every time one opens, before the person has decided to type.
+  useFocoDialogo(ref, mounted && open, (el) => (!window.matchMedia("(pointer: coarse)").matches && el.querySelector(".modal-body :is(input, select, textarea):not([disabled])")) || el);
   if (!mounted) return null;
   return (
     <>
       <div className="scrim" data-in={shown ? "true" : "false"} onClick={onClose} />
       <div className="modal-wrap">
-        <div className="modal" data-in={shown ? "true" : "false"} data-out={shown ? "false" : "true"} role="dialog" aria-modal="true">
+        <div
+          ref={ref}
+          className="modal"
+          data-in={shown ? "true" : "false"}
+          data-out={shown ? "false" : "true"}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={id}
+          tabIndex={-1}
+          onKeyDown={prenderTab}
+        >
           <div className="modal-head">
-            <p className="t-display" style={{ margin: 0 }}>{title}</p>
+            <h2 className="t-display dialog-titulo" id={id}>{title}</h2>
             <button className="btn-icon" onClick={onClose} aria-label="Fechar"><X size={18} /></button>
           </div>
           <div className="modal-body">{children}</div>

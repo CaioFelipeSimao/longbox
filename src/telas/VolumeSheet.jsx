@@ -144,7 +144,7 @@ export function VolumeSheet({
             <p className="t-micro" style={{ margin: "0 0 8px" }}>Status de leitura</p>
             <div className="seg3">
               {STATUS_ORDER.map((k) => (
-                <button key={k} data-kind={k} data-on={v.status === k ? "true" : "false"} onClick={() => onStatus(k)}>
+                <button key={k} data-kind={k} data-on={v.status === k ? "true" : "false"} aria-pressed={v.status === k} onClick={() => onStatus(k)}>
                   {STATUS[k].label}
                 </button>
               ))}

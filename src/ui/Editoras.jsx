@@ -154,7 +154,7 @@ export function EditorasSheet({ open, editoras, onClose, onChange, onLogo, canUp
           {!ed.customOculta && ed.logoAssetId && (
             <div className="seg3">
               {[["nenhum", "Sem fundo"], ["escuro", "Fundo escuro"], ["claro", "Fundo claro"]].map(([v, l]) => (
-                <button key={v} data-on={(ed.logoFundo || "nenhum") === v ? "true" : "false"} onClick={() => onChange(ed.id, { logoFundo: v })}>
+                <button key={v} data-on={(ed.logoFundo || "nenhum") === v ? "true" : "false"} aria-pressed={(ed.logoFundo || "nenhum") === v} onClick={() => onChange(ed.id, { logoFundo: v })}>
                   {l}
                 </button>
               ))}

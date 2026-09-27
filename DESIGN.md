@@ -181,6 +181,17 @@ upload affordance, title in display, metadata as a label/value grid (no chained 
 
 Empty, loading and error states are composed for each tab, not generic.
 
+### Dialogs, fields and states (v100)
+
+`Sheet` and `Modal` (ui/base.jsx) are named by their title, an `h2` sized by `.t-display`. On
+open they take focus: a modal its first field (mouse/pen with a fine pointer only; on touch the
+modal itself, so the keyboard does not pop up), a sheet its scrolling body so ↑ ↓ scroll it. Tab
+wraps inside the dialog; closing hands focus back to what opened it. `Field` ties its label and
+its error/hint to the control with `useId` (one native input/select/textarea), or names a
+composite child as a group. Section tabs are a `tablist` with `aria-selected`; issue tiles say
+"Nº 46, possuída" / "falta"; `.seg3` options carry `aria-pressed`, and the picked one is a 2px
+ring in its own text colour at weight 600.
+
 ## Data layer
 
 `claude.use("db")`. Hard limits from the contract: **256 KiB per document**, 5.000 documents

@@ -2022,3 +2022,15 @@ sorts use `localeCompare(…, "pt-BR", { numeric: true })`, so "vol. 2" precedes
 unordered groups, search results and the sheet's ← → sequence. Character and publisher lists
 keep plain order. `tests/test-desfazer.mjs` covers cancel, replace, undo, the invalid file and
 the numeric order.
+
+**v100 Keyboard and screen reader pass (critique P1/P2, lote 2).** Opening "Novo" left focus on
+the page body, so the first Tab never reached the form, and no dialog had an accessible name.
+Now `useFocoDialogo` in ui/base.jsx focuses the first field of a modal (not on touch, where it
+would raise the on-screen keyboard every time), or the body of a sheet, traps Tab inside, and
+returns focus on close (a removed volume's card is gone, so focus is simply dropped). Titles are
+`h2` with `aria-labelledby`. `Field` links label and error/hint via `useId` and marks
+`aria-invalid`; composites become a named group. Tabs get `role="tab"`/`aria-selected`, the
+bottom tab bar `aria-current`, issue tiles an owned/missing label, "Buscar número" a label, and
+the reading status `aria-pressed` plus a visible 2px ring at weight 600, since "Não lida" picked
+looked almost like the others. `tests/test-foco.mjs` (20 checks) covers it. Shortcuts and ← →
+are unaffected: they already ignored focus on non-field elements.

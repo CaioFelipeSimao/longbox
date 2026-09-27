@@ -297,6 +297,8 @@ export function SegmentedTabs({ tabs, tab, onTab }) {
   return (
     <div
       className="segmented ed-segmented"
+      role="tablist"
+      aria-label="Seções da coleção"
       ref={trackRef}
       onPointerLeave={sairDaFaixa}
     >
@@ -309,6 +311,8 @@ export function SegmentedTabs({ tabs, tab, onTab }) {
             key={t.key}
             ref={(el) => registrarBtn(t.key, el)}
             className="press"
+            role="tab"
+            aria-selected={tab === t.key}
             data-active={tab === t.key ? "true" : "false"}
             data-dica={t.label + " · " + (i + 1)}
             onClick={() => onTab(t.key)}
