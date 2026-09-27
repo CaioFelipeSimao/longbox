@@ -17,7 +17,7 @@ export function SerieSheet({
   const edsTotal = useMemo(() => (
     edicoes.slice().sort((a, b) => {
       const na = sortKey(a), nb = sortKey(b);
-      if (na === null && nb === null) return a.numero.localeCompare(b.numero, "pt-BR");
+      if (na === null && nb === null) return a.numero.localeCompare(b.numero, "pt-BR", { numeric: true });
       if (na === null) return 1;
       if (nb === null) return -1;
       return na - nb;

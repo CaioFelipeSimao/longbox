@@ -2006,3 +2006,19 @@ suggestion, by a light behind the toast that fades out: two colour `box-shadow`s
 `hsl(var(--ed-hue) 100% 50%)` when a publisher is picked. A `::before` layer was rejected:
 inside the toast's own stacking context (fixed + z-index) a negative z-index child paints
 over the toast's background. Checked in the harness: cyan with no publisher, red on Marvel.
+
+**v99 Import asks before replacing, and undoes (critique P0, lote 1).** Picking a backup file
+used to `persist` it at once: an old or wrong file wiped the library with no question and no
+way back. Now the file is parsed and held in `importPendente`; a modal "Substituir a
+biblioteca?" shows Volumes, Coleções, Séries and Edições as "Agora" vs "No arquivo" (counts
+that would drop in red), and only "Substituir" writes. The toast then offers "Desfazer" through
+the v88 mechanism (`{ antes, depois }`, valid while the library is still the imported one). The
+hub footer gets a hairline between "Exportar backup" and the two actions that replace the
+library. The save path needed no change: with no concurrent writer it overwrites each document
+from the local library and deletes emptied edição shards, the same as "Zerar tudo".
+
+**v99 Numeric title order (critique P1).** Title, série-name, collection-name and issue-number
+sorts use `localeCompare(…, "pt-BR", { numeric: true })`, so "vol. 2" precedes "vol. 10" in
+unordered groups, search results and the sheet's ← → sequence. Character and publisher lists
+keep plain order. `tests/test-desfazer.mjs` covers cancel, replace, undo, the invalid file and
+the numeric order.

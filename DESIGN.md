@@ -267,7 +267,8 @@ Decoding full-size covers on every tab switch was the 475ms stall of v80-v84. Co
 ## Migration
 
 "Importar backup" accepts the v2 `longbox.json` export as-is. The user exports from the old
-artifact and imports here. Import validates the four top-level arrays and reports what it read.
+artifact and imports here. Import validates the four top-level arrays, shows current vs file
+counts in a confirmation modal, and only replaces on "Substituir"; the toast offers Desfazer.
 
 ## Build
 

@@ -25,7 +25,7 @@ export function buildShelf(volumes, cap, seed) {
     (byChar[k] = byChar[k] || []).push(v);
   });
   const chars = Object.keys(byChar).sort((a, b) => a.localeCompare(b, "pt-BR"));
-  chars.forEach((k) => byChar[k].sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR")));
+  chars.forEach((k) => byChar[k].sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR", { numeric: true })));
   if (volumes.length <= cap) return chars.flatMap((k) => byChar[k]);
 
   const windowOf = (list, n, offset) => {

@@ -53,6 +53,7 @@ export function App() {
   const [toast, setToast] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [exportText, setExportText] = useState(null);
+  const [importPendente, setImportPendente] = useState(null);
   const [ultimoBackup, setUltimoBackup] = useState(null);
   const [corPersonagem, setCorPersonagem] = useState(null);
   const [scrolled, setScrolled] = useState(false);
@@ -598,7 +599,7 @@ export function App() {
       const q = query.toLowerCase();
       cs = cs.filter((c) => c.nome.toLowerCase().includes(q));
     }
-    return cs.slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    return cs.slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR", { numeric: true }));
   }, [lib.colecoes, lib.volumes, query, buscando, lib.editoraSel, casaEditora]);
 
   const openColecao = lib.colecoes.find((c) => c.id === openColecaoId) || null;
@@ -1088,18 +1089,29 @@ export function App() {
           showToast("Esse arquivo não parece um backup do Longbox.");
           return;
         }
-        const incoming = normalizeLib(raw);
-        persist(incoming);
-        setOpenVolumeId(null); setOpenColecaoId(null); setOpenSerieId(null);
-        showToast(
-          incoming.volumes.length + " volumes, " + incoming.series.length +
-          " séries e " + incoming.edicoes.length + " edições importadas."
-        );
+        // v99: the file only replaces the library after the person has seen both
+        // counts side by side; a wrong or old backup used to wipe everything at once.
+        setImportPendente(normalizeLib(raw));
       } catch (e) {
         showToast("Não consegui ler esse arquivo JSON.");
       }
     };
     reader.readAsText(file);
+  }
+
+  function confirmarImport() {
+    const incoming = importPendente;
+    if (!incoming) return;
+    const antes = libRef.current;
+    setImportPendente(null);
+    persist(incoming);
+    setOpenVolumeId(null); setOpenColecaoId(null); setOpenSerieId(null);
+    // Same undo as a removal: the whole library as it was just before.
+    showToast(
+      incoming.volumes.length + " volumes, " + incoming.series.length +
+      " séries e " + incoming.edicoes.length + " edições importadas.",
+      { antes, depois: incoming, reabrir: null }
+    );
   }
 
   /* ---------- stats ---------- */
@@ -1134,7 +1146,7 @@ export function App() {
       faltaPouco: seededPick(quase, 3, SESSION_SEED).sort((a, b) => {
         const porCompletude = b.owned * a.total - a.owned * b.total;
         if (porCompletude !== 0) return porCompletude;
-        return a.serie.nome.localeCompare(b.serie.nome, "pt-BR");
+        return a.serie.nome.localeCompare(b.serie.nome, "pt-BR", { numeric: true });
       }),
       quaseFechando: quase.length,
       temMetas: comMeta.length > 0,
@@ -1709,6 +1721,8 @@ export function App() {
             <button className="btn btn-ghost" onClick={exportJson}>
               <Download size={14} /> Exportar backup
             </button>
+            {/* v99: the two actions that replace the library sit apart from the safe one. */}
+            <span className="footer-sep" aria-hidden="true" />
             <button className="btn btn-ghost" onClick={() => fileInputRef.current && fileInputRef.current.click()}>
               <Upload size={14} /> Importar backup
             </button>
@@ -1884,6 +1898,40 @@ export function App() {
           Apaga volumes, coleções, séries e edições. Dá para desfazer logo em seguida, mas
           exporte um backup antes se quiser uma cópia guardada.
         </p>
+      </Modal>
+
+      <Modal
+        open={!!importPendente}
+        onClose={() => setImportPendente(null)}
+        title="Substituir a biblioteca?"
+        footer={
+          <div className="row">
+            <button className="btn btn-quiet" style={{ flex: 1 }} onClick={() => setImportPendente(null)}>Cancelar</button>
+            <button className="btn btn-danger" style={{ flex: 1 }} onClick={confirmarImport}>Substituir</button>
+          </div>
+        }
+      >
+        {importPendente && (
+          <>
+            <table className="import-compara">
+              <thead>
+                <tr><th /><th>Agora</th><th>No arquivo</th></tr>
+              </thead>
+              <tbody>
+                {[["Volumes", "volumes"], ["Coleções", "colecoes"], ["Séries", "series"], ["Edições", "edicoes"]].map(([rotulo, k]) => (
+                  <tr key={k}>
+                    <th scope="row">{rotulo}</th>
+                    <td>{lib[k].length}</td>
+                    <td data-menos={importPendente[k].length < lib[k].length ? "true" : "false"}>{importPendente[k].length}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="t-body" style={{ margin: "12px 0 0" }}>
+              Tudo o que está agora na biblioteca é trocado pelo conteúdo do arquivo. Dá para desfazer logo em seguida.
+            </p>
+          </>
+        )}
       </Modal>
 
       <Modal

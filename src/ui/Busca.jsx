@@ -23,7 +23,7 @@ export function ordenarSugestoes(volumes, textoBusca, q) {
       : 3;
     achados.push({ v, peso });
   });
-  achados.sort((a, b) => a.peso - b.peso || a.v.titulo.localeCompare(b.v.titulo, "pt-BR"));
+  achados.sort((a, b) => a.peso - b.peso || a.v.titulo.localeCompare(b.v.titulo, "pt-BR", { numeric: true }));
   return achados.slice(0, MAX_SUGESTOES).map((a) => a.v);
 }
 
@@ -41,7 +41,7 @@ export function ordenarPorNome(itens, termoBruto, secundario) {
     const peso = nome.startsWith(termo) ? 0 : nome.includes(termo) ? 1 : extra.includes(termo) ? 2 : -1;
     if (peso >= 0) achados.push({ it, peso });
   });
-  achados.sort((x, y) => x.peso - y.peso || x.it.nome.localeCompare(y.it.nome, "pt-BR"));
+  achados.sort((x, y) => x.peso - y.peso || x.it.nome.localeCompare(y.it.nome, "pt-BR", { numeric: true }));
   return achados.map((x) => x.it);
 }
 

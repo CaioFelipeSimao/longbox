@@ -50,11 +50,11 @@ export function CoverArt({ volume, grande }) {
 // which is what keeps a freshly catalogued volume from jumping to a random spot.
 export function ordenarGrupoVolumes(itens) {
   const temOrdem = itens.some((v) => typeof v.ordem === "number");
-  if (!temOrdem) return itens.slice().sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR"));
+  if (!temOrdem) return itens.slice().sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR", { numeric: true }));
   return itens.slice().sort((a, b) => {
     const oa = typeof a.ordem === "number" ? a.ordem : Infinity;
     const ob = typeof b.ordem === "number" ? b.ordem : Infinity;
-    return oa !== ob ? oa - ob : a.titulo.localeCompare(b.titulo, "pt-BR");
+    return oa !== ob ? oa - ob : a.titulo.localeCompare(b.titulo, "pt-BR", { numeric: true });
   });
 }
 

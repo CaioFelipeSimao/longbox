@@ -2266,6 +2266,15 @@ button.retrato-linha { cursor: pointer; }
   padding-top: var(--hub-rule-pad);
   border-top: 1px solid var(--border);
 }
+.footer-sep { width: 1px; align-self: stretch; margin: 6px 0; background: var(--border); }
+
+/* v99: import preview, current library vs the file, before anything is replaced. */
+.import-compara { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.import-compara th, .import-compara td { padding: 6px 0; text-align: right; border-bottom: 1px solid var(--border); }
+.import-compara th:first-child { text-align: left; font-weight: 500; }
+.import-compara thead th { color: var(--text-muted); font-weight: 500; font-size: 0.75rem; }
+.import-compara td { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.import-compara td[data-menos="true"] { color: var(--danger-text); }
 
 .cover-paste-hint {
   margin: 6px 0 0;

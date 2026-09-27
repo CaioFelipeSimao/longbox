@@ -144,5 +144,39 @@ await sleep(700);
 check("desfazer devolve tudo", z.docs.get("library/volumes").items.length === 4 && (z.docs.get("edicoes/s1")?.items || []).length === 3);
 check("sem erros (zerar)", z.erros.length === 0, z.erros[0]);
 
+// v99: importing a backup used to replace the library the moment the file was
+// picked. Now it shows both counts, only replaces on "Substituir", and undoes.
+console.log("=== importar backup pergunta e desfaz ===");
+const im = await montar({ aba: "hub" });
+const nv = (n) => ({ id: "n" + n, titulo: "Nightwing vol. " + n, personagem: "Nightwing", tipo: "Trade Paperback", editora: "DC Comics", ano: "2020", status: "nao_lida", notas: "", edicoesColetadasIds: [] });
+const arquivo = { volumes: [nv(10), nv(2), nv(1)], colecoes: [], series: [], edicoes: [] };
+const escolher = async (conteudo) => {
+  const input = im.root.querySelector('input[type="file"]');
+  Object.defineProperty(input, "files", { configurable: true, value: [new im.window.File([conteudo], "backup.json")] });
+  input.dispatchEvent(new im.window.Event("change", { bubbles: true }));
+  await sleep(200);
+};
+await escolher(JSON.stringify(arquivo));
+check("pergunta antes de substituir", im.root.textContent.includes("Substituir a biblioteca?"));
+const tabela = im.root.querySelector(".import-compara");
+check("mostra agora e no arquivo", /Volumes\s*4\s*3/.test(tabela?.textContent.replace(/\s+/g, " ") || ""), tabela?.textContent);
+im.botao("Cancelar", im.modalAberto())?.click();
+await sleep(700);
+check("cancelar não mexe no banco", im.docs.get("library/volumes").items.length === 4);
+await escolher(JSON.stringify(arquivo));
+im.botao("Substituir")?.click();
+await sleep(700);
+check("substituir grava o arquivo", im.docs.get("library/volumes").items.length === 3 && !im.docs.has("edicoes/s1"));
+check("o aviso oferece desfazer", !!im.desfazer(), im.toast()?.textContent);
+im.botao("HQs")?.click();
+await sleep(200);
+check("títulos em ordem numérica", im.titulosHqs().join(",") === "Nightwing vol. 1,Nightwing vol. 2,Nightwing vol. 10", im.titulosHqs().join(", "));
+im.desfazer()?.click();
+await sleep(700);
+check("desfazer devolve a biblioteca de antes", im.docs.get("library/volumes").items.length === 4 && (im.docs.get("edicoes/s1")?.items || []).length === 3);
+await escolher("{ isto não é json");
+check("arquivo inválido não pergunta nada", !im.root.textContent.includes("Substituir a biblioteca?") && /Não consegui ler/.test(im.toast()?.textContent || ""));
+check("sem erros (importar)", im.erros.length === 0, im.erros[0]);
+
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);
