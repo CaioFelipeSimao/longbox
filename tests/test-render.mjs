@@ -209,7 +209,7 @@ if (scenario === "seeded") {
     "search hidden on hub": !html.includes('aria-label="Buscar na biblioteca"'),
     "export and import offered": html.includes("Exportar backup") && html.includes("Importar backup"),
     "hub enter row present": html.includes("hub-enter"),
-    "minha colecao button on hub": html.includes("Coleção"),
+    "minha colecao button on hub": html.includes("Minha coleção"),
     "novo is secondary on hub": html.includes("btn btn-quiet"),
   });
 } else {

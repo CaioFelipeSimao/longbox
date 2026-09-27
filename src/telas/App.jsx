@@ -1510,7 +1510,9 @@ export function App() {
             {salvamento === "salvando" ? "Salvando…" : salvamento === "salvo" ? "Salvo" : ""}
           </span>
 
-          <div style={{ flex: 1 }} />
+          {/* v118: only the hub needs the spacer; elsewhere the search is the flexible
+              item, and sharing the free width with a spacer squeezed it to 0px at 390. */}
+          {isHub && <div style={{ flex: 1 }} />}
 
           {!isHub && (
             <SearchBox
@@ -1554,13 +1556,15 @@ export function App() {
               {filtrosAtivosAba > 0 && <span className="btn-badge" aria-hidden="true">{filtrosAtivosAba}</span>}
             </button>
           )}
-          <button className={isHub ? "btn btn-quiet" : "btn btn-primary"} onClick={novoNaAba} data-dica="Novo · N">
-            <Plus size={15} /> Novo
+          {/* v118: on a narrow hub "Novo" folds to its icon so the primary button keeps
+              its whole name; "Coleção" alone read as the Coleções tab below it. */}
+          <button className={isHub ? "btn btn-quiet novo-hub" : "btn btn-primary"} onClick={novoNaAba} data-dica="Novo · N" aria-label="Novo">
+            <Plus size={15} /> <span className="novo-rotulo">Novo</span>
           </button>
           {isHub && (
             <button className="btn btn-primary" onClick={entrarNaColecao}>
               <Library size={15} />
-              <span><span className="label-wide">Minha </span>Coleção</span>
+              <span>Minha coleção</span>
             </button>
           )}
         </div>

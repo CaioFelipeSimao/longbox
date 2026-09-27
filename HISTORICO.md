@@ -2217,3 +2217,23 @@ normal echo delay but a third of the exposure, and each recent write is kept as 
 volumes document before). Considered and not done: stamping each write with a tab id and a
 sequence number, which removes the window entirely but adds a field to every stored document;
 worth it only if the stale-screen case is ever actually seen.
+
+**v118 Phone width and hub touch targets (third critique, 29/40).** The third `/impeccable
+critique` (2026-09-27, snapshot in `.impeccable/critique/`) found the top bar and the hub footer
+broken at phone width, re-measured with touch emulated in headless Chrome:
+- The search was 14px wide at 390 (0px with a fine pointer) and 139px beside 139px of nothing at
+  768: a `flex: 1` spacer shared the free width with the `flex: 1` search. The spacer now renders
+  only on the hub; the search has `min-width: 44px` (tapping it opens the full-screen phone
+  search), `max-width: 456px` and `margin-left: auto`, which is exactly the width it had at 1440,
+  so the PC header is pixel-identical. Result: 80px at 390, 287px at 768.
+- To make room, "Novo" folds to its "+" below 480px on the tabs and below 560px on the hub (where
+  it frees "Minha coleção", which had shrunk to "Coleção" right above the Coleções tab); the
+  narrow search pads its text 30px/4px so "Buscar" is not clipped.
+- "Salvando…/Salvo" was hidden below 520px. There it is now an 8px dot (accent while saving,
+  green once saved, words kept for screen readers) and takes no room at all while idle.
+- The hub footer ran off both edges at 390 (Exportar from x=-43, Zerar to x=433; a document
+  `scrollWidth` check misses it, since overflow to the left does not scroll). Below 480px the
+  separator becomes the line break: Exportar alone, Importar and Zerar together under it.
+- Touch (`pointer: coarse`): the hub's Seu acervo rows (32px), status rows (30), Falta pouco rows
+  (31), ghost buttons (38) and the wordmark (32-36) now reach 44px.
+`test-render` looked for "Coleção"; it now looks for "Minha coleção".

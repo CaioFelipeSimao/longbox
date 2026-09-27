@@ -161,6 +161,10 @@ Shell: translucent sticky top bar (`backdrop-filter`), 56px mobile / 64px deskto
 the wordmark, search, and the stats toggle. Content capped at 1200px.
 Tabs sit in a bottom bar under 768px (thumb reach on the tablet) and as a top segmented
 control above it.
+The search is the bar's flexible item (44px to 456px, pushed right); only the hub keeps a
+spacer. Below 480px (tabs) and 560px (hub) "Novo" shows only its "+", and below 520px the save
+signal is a dot that disappears while idle (v118). Below 480px the hub footer breaks after
+Exportar, keeping Importar and Zerar together.
 
 Each tab gets a **different layout family**, which is what actually fixes the sameness:
 

@@ -317,7 +317,15 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   opacity: 0; transition: opacity 200ms var(--ease-out);
 }
 .salvamento[data-estado="salvando"], .salvamento[data-estado="salvo"] { opacity: 1; }
-@media (max-width: 520px) { .salvamento { display: none; } }
+/* v118: on a phone the words would take the search's room, so the signal shrinks to a
+   dot (accent while saving, green once saved); the words stay for screen readers. */
+@media (max-width: 520px) {
+  .salvamento { width: 8px; height: 8px; margin-left: 2px; border-radius: 50%; font-size: 0; overflow: hidden; }
+  .salvamento[data-estado="salvando"] { background: var(--accent); }
+  .salvamento[data-estado="salvo"] { background: var(--read); }
+  /* Idle, it leaves the row entirely, so its gap is not spent either. */
+  .salvamento[data-estado="nada"] { display: none; }
+}
 
 /* Publisher strip: only in the collection view, never on the hub. It carries the
    publisher tint so the accent keeps meaning what it means everywhere else. */
@@ -721,6 +729,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   /* v112: the boxed text controls reach 44px on touch too (v101 only raised icons
      and tiles). Inline ghost links stay the height of their text. */
   .btn-primary, .btn-quiet, .btn-danger, .seg3 button, .cover-upload { min-height: 44px; }
+  /* v118: the hub's remaining small targets (30-38px, measured) and the wordmark. */
+  .btn-ghost, .brand, .prog-row { min-height: 44px; }
 }
 /* Always in the accent, open or closed, with or without filters (the user's
    call). What changes is the count on its corner, which says filters are on. */
@@ -754,7 +764,13 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .search {
   position: relative;
   flex: 1;
-  min-width: 0;
+  /* v118: never narrower than the magnifier; tapping it opens the full-screen
+     search on a phone, so a narrow box is enough there. */
+  min-width: 44px;
+  /* Capped near the width it had beside the spacer on a desktop (456px at
+     1440), and pushed right by its auto margin, so the PC header is unchanged. */
+  max-width: 456px;
+  margin-left: auto;
 }
 .search-field { position: relative; display: flex; align-items: center; gap: 8px; }
 /* The magnifier only (v73 put icons in the suggestion list too). The sheet's
@@ -1632,6 +1648,13 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 
 .label-wide { display: none; }
+@media (max-width: 559px) { .novo-hub { padding-inline: 12px; } .novo-hub .novo-rotulo { display: none; } }
+/* On the tabs "Novo" keeps its word down to 480px; below that the search needs the room. */
+@media (max-width: 479px) {
+  .topbar-inner .btn-primary:has(.novo-rotulo) { padding-inline: 12px; }
+  .novo-rotulo { display: none; }
+  .search input { padding: 0 4px 0 30px; }
+}
 @media (min-width: 560px) { .label-wide { display: inline; } }
 
 .hub-foot {
@@ -1725,6 +1748,9 @@ button.retrato-linha { cursor: pointer; }
 @media (hover: hover) and (pointer: fine) {
   .retrato-status:not(:disabled):hover { background: var(--surface-2); }
 }
+
+/* v118: finger-sized on touch; here, after their own min-height, so it wins. */
+@media (pointer: coarse) { .retrato-linha, .retrato-status { min-height: 44px; } }
 
 /* Capped, because a readout this quiet should not be the widest thing on the hub. */
 .hub-storage { max-width: 420px; }
@@ -2363,6 +2389,12 @@ button.retrato-linha { cursor: pointer; }
   border-top: 1px solid var(--border);
 }
 .footer-sep { width: 1px; align-self: stretch; margin: 6px 0; background: var(--border); }
+/* v118: at 390px the row ran off both edges. The rule turns into the line break, so
+   Exportar sits alone and the two that replace the library stay together below it. */
+@media (max-width: 480px) {
+  .footer-actions { flex-wrap: wrap; row-gap: 4px; }
+  .footer-sep { flex-basis: 100%; height: 0; margin: 0; background: none; }
+}
 
 /* v99: import preview, current library vs the file, before anything is replaced. */
 .import-compara { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
