@@ -65,8 +65,6 @@ export const TABS = [
 export const ACCENT_HUE = 187; // the cyan the UI owns; character hues steer clear of it
 export const ACCENT_HEX = "#00B8D4"; // mirrors --accent; the lattice paints on canvas and cannot read a var
 export const QUASE_FECHANDO = 0.5; // a series only counts as "almost there" past this
-export const QUASE_MORNO = 0.65; // past this the hunt bar leaves its warm, needs-attention tier
-export const QUASE_PRONTO = 0.8; // past this the hunt bar reads as nearly closed, not just started
 export const SHELF_CAP = 60;
 // Rotating the wall fifteen degrees means it has to overhang the box it fills in
 // both directions and stay covered once the rows drift: it needs to be

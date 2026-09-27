@@ -21,7 +21,6 @@
      too close to --read for full colour vision (validator: OKLab dE 14.1 dark,
      12.4 light, floor 15), so the meter takes its own step: 16.8 and 16.9. */
   --retrato-lendo: #22C8E0;
-  --warm: #E2A83B; /* the hunt bar's lowest tier: still needs attention, not a warning */
 
   --scrim: rgba(0, 0, 0, 0.62);
   --topbar-bg: rgba(14, 15, 17, 0.5);
@@ -90,7 +89,6 @@
     --read: #3F7D52;
     --read-ink: #FFFFFF;
     --retrato-lendo: #00A5BF;
-    --warm: #B4791A;
 
     --scrim: rgba(20, 22, 26, 0.38);
     --topbar-bg: rgba(251, 251, 252, 0.6);
@@ -1549,10 +1547,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   transform-origin: left;
   transition: transform 200ms var(--ease-out);
 }
-/* Three tiers: warm while it still needs attention, the interface's own accent
-   while it's simply moving along, read's green once it's genuinely close. */
-.prog-bar i[data-tier="baixo"] { background: var(--warm); }
-.prog-bar i[data-tier="medio"] { background: var(--accent); }
+/* v103: one colour. The filled part is the issues owned, green like owned issues
+   everywhere else; length and "45/50" already say how close it is. The old amber
+   and cyan tiers repeated that a third time with a colour outside the palette. */
 
 /* Both the hint that the scroll gesture exists and a button doing the same thing. */
 .hub-enter {

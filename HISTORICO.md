@@ -2052,3 +2052,12 @@ the backup line stays. A missing number's panel in the série sheet now has "Vin
 volume…" (the série's characters first, then "Outros volumes"), which adds the edição to that
 volume through `toggleLigacaoEdicao`. A keyboard button beside the search opens the shortcuts
 panel (hidden on touch). `tests/test-foco.mjs` grew to 29 checks.
+
+**v103 One colour for the hunt bar; green means done.** "Falta pouco" bars changed colour by
+share owned: amber (`--warm`, outside the locked palette) under 65%, cyan to 80%, green past
+it. The length and "45/50" already say that, amber read as a warning on a list of series doing
+well, and green there was a progress tier while everywhere else it is a state (read, owned).
+Now the bar is always `--read`, since its filled part is owned issues, like the séries sequence
+bars. Removed: `--warm` in both themes, `QUASE_MORNO`, `QUASE_PRONTO`, the `data-tier`
+attribute. Read and owned keep sharing green, both "done"; DESIGN.md states the rule. Chosen
+over a cyan hunt bar, which would have shown the same série in two colours on hub and Séries.

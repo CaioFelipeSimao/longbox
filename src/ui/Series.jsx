@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
 
-import { QUASE_MORNO, QUASE_PRONTO } from "../lib/constantes";
 import { sortKey } from "../lib/util";
 import { anoRange } from "../lib/biblioteca";
 
@@ -65,11 +64,10 @@ export function RunBar({ edicoes, ownedIds }) {
 export function HuntProgress({ owned, total }) {
   const pct = total > 0 ? Math.min(100, (owned / total) * 100) : 0;
   const fracao = pct / 100;
-  const tier = fracao < QUASE_MORNO ? "baixo" : fracao < QUASE_PRONTO ? "medio" : "alto";
   return (
     <div className="prog-bar" aria-hidden="true">
       {/* transform, not width: width is a layout property and would thrash on animate */}
-      <i style={{ transform: "scaleX(" + fracao + ")" }} data-tier={tier} />
+      <i style={{ transform: "scaleX(" + fracao + ")" }} />
     </div>
   );
 }
