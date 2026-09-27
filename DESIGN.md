@@ -517,6 +517,16 @@ picker, cataloguing shortcuts, publisher filtering, and the search suggestions
 (ranking, the cap at 8, the publisher-filter bypass, arrow and Enter and Escape, and
 the nothing-found state).
 
+## Decided not to build
+
+**A batch cataloguing mode in the app** (critique 2026-09-26, question 2: "three trips per
+book: form, cover, link edições"). Answered 2026-09-27: the user catalogues almost every book
+through the `longbox-cadastrar` Claude Code skill, which writes volume, collection, séries,
+edições and cover in one pass after a per-book dossier the user checks against the shelf and
+reviews; the app form is used for adjustments. A batch mode here would duplicate that path.
+Improvements go to the skill instead (2026-09-27: parser gaps fixed, the "reload every tab
+after a write" step retired since v96 merges and syncs live).
+
 ## Pre-flight, scoped to this project
 
 Run before publishing:
