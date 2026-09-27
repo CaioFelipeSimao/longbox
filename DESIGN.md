@@ -72,11 +72,11 @@ normal-vision floor (OKLab dE 14.1 dark, 12.4 light, floor 15); this step gives 
 as is, since it is the app-wide status colour, and noted for D2's theme pass.
 Status uses (since v76, words in the shelf caption, not a cover bar): unread = nothing (absence is the default), reading = `--accent-text`, read = `--read`.
 
-**Green means done (v103).** `--read` marks a finished state and nothing else: a volume read,
-or an issue owned (série tiles, sequence bars, and the filled part of the hub's "Falta pouco"
-bar, which is owned issues). It is never a progress tier: the hunt bar is one colour, its
-length and count say how close it is. The amber `--warm` tier was removed with it; there is no
-colour outside this table.
+**Hunt bar tiers, an approved exception (v104).** The hub's "Falta pouco" bar is the one place
+colour encodes a level: `--warm` (amber, #E2A83B dark / #B4791A light) from 50% to 65%, the accent
+to 80%, `--read` from 80% (`QUASE_MORNO`, `QUASE_PRONTO`). The user chose it over a single colour
+(v103 tried `--read` only) because the tiers show at a glance which série is about to close.
+`--warm` is used nowhere else. Elsewhere `--read` means done: a volume read or an issue owned.
 
 No pure `#000` or `#fff` anywhere.
 

@@ -2061,3 +2061,9 @@ Now the bar is always `--read`, since its filled part is owned issues, like the 
 bars. Removed: `--warm` in both themes, `QUASE_MORNO`, `QUASE_PRONTO`, the `data-tier`
 attribute. Read and owned keep sharing green, both "done"; DESIGN.md states the rule. Chosen
 over a cyan hunt bar, which would have shown the same série in two colours on hub and Séries.
+
+**v104 The three hunt tiers come back, by the user's choice.** After seeing v103 the user
+preferred the tiers: across a list of séries the colour tells at a glance which one is about to
+close, which a single colour loses; if it had to be one colour, cyan over green. Restored
+exactly as v102 (amber 50-65%, cyan 65-80%, green 80%+). DESIGN.md now records the tiers as an
+approved exception, so a future critique does not flag the amber as off-palette again.
