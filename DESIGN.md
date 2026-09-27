@@ -210,6 +210,9 @@ v102: nothing outside the hub wall renders below 11px; the storage meter shows o
 a missing number can be linked to a volume from its panel; a keyboard button beside the search
 (fine pointer only) opens the shortcuts panel.
 
+v119: J / K / L set Não lida / Lendo / Lida in the open volume sheet (the control follows, no
+toast) and on a focused cover anywhere (a toast "Título · status" with Desfazer / Ctrl+Z).
+
 ## Data layer
 
 `claude.use("db")`. Hard limits from the contract: **256 KiB per document**, 5.000 documents

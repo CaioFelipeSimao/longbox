@@ -4,8 +4,7 @@ import CursorGrid from "../components/CursorGrid/CursorGrid";
 
 import {
   ACCENT_HEX, DOC_LIMIT, ED_SEM, ED_TODAS, EMPTY_LIB, QUASE_FECHANDO, SESSION_SEED, TABS,
-  TIPOS, editoraDe, seededPick, slugify, tiposDaEditora, TIPOS_COMUNS,
-} from "../lib/constantes";
+  TIPOS, editoraDe, seededPick, slugify, tiposDaEditora, TIPOS_COMUNS, STATUS } from "../lib/constantes";
 import { parseNum, uid } from "../lib/util";
 import { COR_LONGBOX, CoresContext, swatchColors, tintaSobre } from "../lib/cores";
 import {
@@ -568,6 +567,25 @@ export function App() {
     }));
     setVolumeErrors({});
     setVolumeDupWarning(null);
+  }
+
+  // v119: J K L. In the volume sheet the segmented control shows the change, so no
+  // toast; on a focused cover nothing else would, so the toast names the volume and
+  // offers Desfazer (and Ctrl+Z), like a removal. Nothing under the série, colour or
+  // publisher sheets, or a collection sheet alone (its rows are not covers).
+  function marcarStatusTecla(status, alvo) {
+    if (openSerieId || corPersonagem || showEditoras) return false;
+    if (openVolumeId) { setStatusVolume(openVolumeId, status); return true; }
+    if (openColecaoId) return false;
+    const card = alvo && alvo.closest ? alvo.closest(".vol[data-vid]") : null;
+    const v = card && lib.volumes.find((x) => x.id === card.dataset.vid);
+    if (!v) return false;
+    const rotulo = v.titulo + " · " + STATUS[status].label.toLowerCase();
+    if (v.status === status) { showToast(rotulo); return true; }
+    const next = { ...lib, volumes: lib.volumes.map((x) => (x.id === v.id ? { ...x, status } : x)) };
+    persist(next);
+    showToast(rotulo, { antes: lib, depois: next, reabrir: null });
+    return true;
   }
 
   function setStatusVolume(volumeId, status) {
@@ -1458,6 +1476,7 @@ export function App() {
     focarBusca,
     abrirAba: switchTab,
     novo: novoNaAba,
+    marcarStatus: marcarStatusTecla,
   });
 
   /* ============================ render ============================ */

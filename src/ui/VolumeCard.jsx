@@ -141,6 +141,7 @@ export function VolumeCard({
       className="vol press"
       data-open={open ? "true" : "false"}
       data-vol-id={reordenavel ? volume.id : undefined}
+      data-vid={volume.id}
       data-personagem={reordenavel ? personagem : undefined}
       data-dragging={dragging ? "true" : undefined}
       style={{ "--i": Math.min(index, 11), "--hold-color": holdColor || undefined }}

@@ -11,8 +11,16 @@ const GRUPOS = [
     [["Q"], "Esconder ou mostrar todos os grupos (HQs e Séries)"],
     [["?"], "Esta lista"],
   ]],
+  ["Numa estante de capas", [
+    [["←", "→"], "Capa anterior e próxima"],
+    [["↑", "↓"], "Capa de cima e de baixo"],
+    [["Home", "End"], "Primeira e última capa"],
+    [["Enter"], "Abrir o volume"],
+    [["J", "K", "L"], "Marcar não lida, lendo ou lida"],
+  ]],
   ["Com uma ficha aberta", [
     [["E"], "Editar o que ela mostra"],
+    [["J", "K", "L"], "Não lida, lendo ou lida (ficha de volume)"],
     [["←", "→"], "Volume anterior e próximo"],
     [["Ctrl+V"], "Colar uma capa (ficha de volume)"],
     [["Esc"], "Fechar"],

@@ -5,11 +5,12 @@ import { useEffect, useRef } from "react";
 //   N        new, as the tab's "Novo"  E       edit what the open sheet shows
 //   Ctrl+Z   undo the last removal     ?       the list of shortcuts
 //   Q        fold or unfold every group on HQs and Séries (v94)
+//   J K L    Não lida / Lendo / Lida: the open volume sheet, or the focused cover (v119)
 // Esc and ← → live with the sheets that own them (useEscape, VolumeSheet).
 // Rules: nothing fires while typing in a field or under a modal; letters and digits
 // never with Ctrl, Alt or Cmd, since Ctrl+1 and Ctrl+N are the browser's; Ctrl+Z is
 // taken only while a removal can be undone, otherwise it stays the browser's (and in
-// a field it is always the field's own undo). With a sheet open only E works, so a
+// a field it is always the field's own undo). With a sheet open only E and J K L work, so a
 // stray digit cannot switch the tab out from under it.
 export function useAtalhos(acoes) {
   const atual = useRef(acoes);
@@ -35,6 +36,10 @@ export function useAtalhos(acoes) {
       if (k === "?") { e.preventDefault(); a.mostrarAtalhos(); return; }
       if (k === "e" || k === "E") {
         if (a.editarAberto()) e.preventDefault();
+        return;
+      }
+      if (k === "j" || k === "J" || k === "k" || k === "K" || k === "l" || k === "L") {
+        if (a.marcarStatus({ j: "nao_lida", k: "lendo", l: "lida" }[k.toLowerCase()], alvo)) e.preventDefault();
         return;
       }
       if (a.fichaAberta) return;

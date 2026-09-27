@@ -2237,3 +2237,19 @@ broken at phone width, re-measured with touch emulated in headless Chrome:
 - Touch (`pointer: coarse`): the hub's Seu acervo rows (32px), status rows (30), Falta pouco rows
   (31), ghost buttons (38) and the wordmark (32-36) now reach 44px.
 `test-render` looked for "Coleção"; it now looks for "Minha coleção".
+
+**v119 Reading status from the keyboard: J / K / L.** From the third critique (the most frequent
+edit had no key). The user saw both options in a throwaway preview and chose both, with J K L
+(Não lida, Lendo, Lida, the segmented control's order) instead of the U L R I proposed, and the
+control's labels left without underlined letters:
+- In the volume sheet the keys set the status and the control follows; the sheet stays open, so
+  with ← → a run of volumes can be marked without closing it.
+- On a focused cover (HQs shelves, Coleções strips, the hub wall) the key sets that volume's
+  status without opening anything; every `VolumeCard` now carries `data-vid`. The caption
+  follows and a toast names the volume ("Batman: Ano Um · lida", a `·` because titles have
+  colons) with Desfazer and Ctrl+Z, the removal-undo path (v88). Same status again: a plain toast.
+- Nothing under a série, colour or publisher sheet, or a collection sheet alone; never while
+  typing, under a modal, or with Ctrl/Alt/Cmd (`useAtalhos`).
+- The shortcuts panel gained "Numa estante de capas" (← →, ↑ ↓, Home/End, Enter, J K L), missing
+  since v114, and J K L under the sheet keys.
+`tests/test-atalhos.mjs` failed on 9 new checks before the code and passes 55 now.

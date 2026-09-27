@@ -169,6 +169,50 @@ check("Desfazer mostra Ctrl+Z", /Ctrl\+Z/.test(dica(m.root.querySelector(".toast
 await m.tecla("z", { ctrlKey: true });
 await m.fecharTudo();
 
+// v119: J / K / L set Não lida / Lendo / Lida, in the volume sheet (the segmented
+// control follows, the sheet stays open) and on a cover focused on a shelf (the
+// caption follows, a toast names the volume and offers Desfazer).
+console.log("=== status pelo teclado ===");
+const s = await montar("volumes");
+const capas = () => [...s.root.querySelectorAll('.aba[data-ativa="true"] .vol')];
+const segAtivo = () => s.root.querySelector('.sheet[data-in="true"] .seg3 button[data-on="true"]')?.textContent.trim() || null;
+const legenda = (i) => capas()[i]?.querySelector(".vol-status")?.textContent.trim() || "";
+capas()[0].click();
+await sleep(200);
+const evL = await s.tecla("l");
+check("L na ficha marca Lida", segAtivo() === "Lida" && evL.defaultPrevented, segAtivo());
+await s.tecla("k");
+check("K na ficha marca Lendo", segAtivo() === "Lendo", segAtivo());
+await s.tecla("j");
+check("J na ficha marca Não lida", segAtivo() === "Não lida", segAtivo());
+check("a ficha continua aberta", s.tituloSheet() === "Batman a", s.tituloSheet());
+await s.tecla("l", { ctrlKey: true });
+check("Ctrl+L fica para o navegador", segAtivo() === "Não lida", segAtivo());
+await s.fecharTudo();
+capas()[1].focus();
+const evCapa = await s.tecla("l", {}, capas()[1]);
+check("L na capa focada marca Lida sem abrir a ficha", legenda(1) === "Lida" && evCapa.defaultPrevented && s.tituloSheet() === null, legenda(1));
+const toastTxt = s.root.querySelector(".toast")?.textContent || "";
+check("o toast diz qual volume e o novo status", /Batman b/.test(toastTxt) && /lida/i.test(toastTxt), toastTxt);
+check("o toast oferece Desfazer", !!s.root.querySelector(".toast button"));
+await s.tecla("z", { ctrlKey: true });
+check("Ctrl+Z desfaz o status", legenda(1) === "", legenda(1));
+await s.tecla("k", {}, capas()[0]);
+check("K numa capa marca Lendo", legenda(0) === "Lendo", legenda(0));
+const buscaS = s.root.querySelector(".search input");
+buscaS.focus();
+await s.tecla("l", {}, buscaS);
+check("digitando na busca, L não muda nada", legenda(0) === "Lendo", legenda(0));
+buscaS.blur();
+s.window.document.body.focus();
+await s.tecla("l");
+check("sem capa focada, L não faz nada", legenda(0) === "Lendo" && legenda(1) === "");
+await s.tecla("?", { shiftKey: true });
+const teclasS = [...(s.root.querySelector(".modal")?.querySelectorAll("kbd") || [])].map((k) => k.textContent);
+check("a lista traz J K L e a navegação das estantes", ["J", "K", "L", "↑", "↓", "Home", "End", "Enter"].every((t) => teclasS.includes(t)), teclasS.join(" "));
+await s.fecharTudo();
+check("sem erros no status", s.erros.length === 0, s.erros[0]);
+
 console.log("=== hub ===");
 const h = await montar("hub");
 await h.tecla("/");
