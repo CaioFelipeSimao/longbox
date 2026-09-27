@@ -86,7 +86,23 @@ export function SerieSheet({
       }
       g[key].itens.push(e);
     });
-    return g;
+    // v108: a hundred-block with only a handful of issues (a lone #100 after
+    // #1-99) joins the block before it, "Nº 0-100", instead of standing as its
+    // own nearly empty row.
+    const lista = [];
+    Object.keys(g)
+      .sort((a, b) => (a === "outras" ? 1 : b === "outras" ? -1 : parseFloat(a) - parseFloat(b)))
+      .forEach((key) => {
+        const b = g[key];
+        const ant = lista[lista.length - 1];
+        if (key !== "outras" && ant && ant.key !== "outras" && b.itens.length < 6) {
+          ant.itens.push(...b.itens);
+          ant.label = ant.label.replace(/-\d+$/, "-" + b.itens[b.itens.length - 1].numero);
+          return;
+        }
+        lista.push({ key, label: b.label, itens: b.itens });
+      });
+    return lista;
   }, [useGroups, edsFiltradas]);
 
   const renderTile = (e) => (
@@ -145,10 +161,10 @@ export function SerieSheet({
               {faltantes && (
                 <button
                   className="btn btn-ghost"
-                  style={{ padding: 0, fontSize: "0.75rem", color: "var(--accent-text)" }}
+                  style={{ padding: 0, fontSize: "0.8125rem", color: "var(--accent-text)" }}
                   onClick={copiarFaltantes}
                 >
-                  <Copy size={12} /> Copiar faltantes
+                  <Copy size={14} /> Copiar faltantes
                 </button>
               )}
             </div>
@@ -185,13 +201,15 @@ export function SerieSheet({
               </p>
 
               {useGroups ? (
-                Object.keys(grupos)
-                  .sort((a, b) => (a === "outras" ? 1 : b === "outras" ? -1 : parseFloat(a) - parseFloat(b)))
-                  .map((key) => {
-                    const g = grupos[key];
+                grupos.map((g) => {
                     const owned = g.itens.filter((e) => ownedIds.has(e.id)).length;
+                    // v108: blocks where the hunt is (some owned, some missing) open by
+                    // themselves, and so do all of them when there are only one or two.
+                    // Complete and untouched blocks stay closed: their count says it all,
+                    // and a long run (Batman Vol 1) would otherwise be a wall of tiles.
+                    const aberto = grupos.length <= 2 || (owned > 0 && owned < g.itens.length);
                     return (
-                      <details className="bucket" key={key}>
+                      <details className="bucket" key={serieId + ":" + g.key} open={aberto}>
                         <summary>
                           {g.label} <span className="muted">{owned}/{g.itens.length}</span>
                         </summary>

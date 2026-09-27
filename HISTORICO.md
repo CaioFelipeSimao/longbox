@@ -2102,3 +2102,13 @@ with `align-self: center`; in the two-column grid the same property centres it v
 row as tall as the edições list. The wide rule now sets `align-self: start` (which sticky needs
 anyway). Missed in v106 because the harness volumes had short lists; checked on a 72-issue
 volume: cover and info column both start at 135px.
+
+**v108 The série map opens where the hunt is (critique 2, lote 1).** The second critique
+(2026-09-27, 28/40) found the número map, the payoff of all the cataloguing, closed on every
+path. In the série sheet (more than 60 issues, grouped by hundreds) a hundred-block with fewer
+than 6 issues now joins the block before it ("Nº 0-99 55/99" plus "Nº 100-199 0/1" became
+"Nº 0-100 55/100"). Blocks with some owned and some missing issues open by themselves, and all
+of them when there are one or two; complete and untouched blocks stay closed, so a long run like
+Batman Vol 1 is not a wall of grey tiles. "Copiar faltantes" went from 12px to the sheet's 13px
+buttons. The Séries tab keeps opening folded: that was the user's own v49 request (6949px open
+against 1782px folded on the real library). `tests/test-mapa-serie.mjs` covers it.
