@@ -17,6 +17,7 @@ export const store = {
   timer: null,
   inFlight: 0,
   onError: null,
+  onEstado: null,
   // v96: saves run one at a time, in order (a second flush used to be able to
   // overlap the first one).
   fila: Promise.resolve(),
@@ -134,6 +135,10 @@ async function flushAgora(lib) {
   if (!writes.length) return;
   const mescladas = [];
   store.inFlight++;
+  // v113: "Salvando…" / "Salvo" beside the wordmark. Only real writes report; a
+  // save with nothing changed stays silent, and a failure leaves it to the toast.
+  let ok = true;
+  if (store.onEstado) store.onEstado("salvando");
   try {
     for (const w of writes) {
       try {
@@ -158,6 +163,7 @@ async function flushAgora(lib) {
           gravarLast(w.chave, finalJson);
         }
       } catch (e) {
+        ok = false;
         if (store.onError) store.onError(dbErrorMessage(e));
         return;
       }
@@ -165,6 +171,7 @@ async function flushAgora(lib) {
   } finally {
     store.inFlight--;
     if (mescladas.length && store.aoMesclar) store.aoMesclar(mescladas, "ao-salvar");
+    if (store.onEstado && store.inFlight === 0 && store.timer === null) store.onEstado(ok ? "salvo" : null);
   }
 }
 

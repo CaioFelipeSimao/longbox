@@ -54,6 +54,13 @@ export function App() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [exportText, setExportText] = useState(null);
   const [importPendente, setImportPendente] = useState(null);
+  // v113: "salvando" while a write runs, "salvo" for 2s after, then null.
+  const [salvamento, setSalvamento] = useState(null);
+  useEffect(() => {
+    if (salvamento !== "salvo") return undefined;
+    const t = setTimeout(() => setSalvamento(null), 2000);
+    return () => clearTimeout(t);
+  }, [salvamento]);
   const [ultimoBackup, setUltimoBackup] = useState(null);
   const [corPersonagem, setCorPersonagem] = useState(null);
   const [scrolled, setScrolled] = useState(false);
@@ -93,6 +100,7 @@ export function App() {
       if (cancelled) return;
       store.db = db;
       store.onError = (msg) => showToast(msg);
+      store.onEstado = (e) => setSalvamento(e);
       // v96: changes written elsewhere (another device, or Claude cataloguing
       // books) arrive merged with this tab's own; they go on screen here, with a
       // quiet toast at most every few seconds. Any undo on offer expires by
@@ -1019,7 +1027,21 @@ export function App() {
       setOpenVolumeId(null); setOpenColecaoId(null); setOpenSerieId(null);
     }
     persist(next);
-    showToast(AVISO_REMOCAO[type], { antes, depois: next, reabrir });
+    showToast(avisoRemocao(type, id, antes), { antes, depois: next, reabrir });
+  }
+
+  // v113: the toast says how much went, and what stayed, where it is more than one thing.
+  function avisoRemocao(type, id, antes) {
+    if (type === "serie") {
+      const n = antes.edicoes.filter((e) => e.serieId === id).length;
+      return n ? "Série removida, com " + n + (n === 1 ? " edição" : " edições") + ". Os volumes continuam na biblioteca." : AVISO_REMOCAO.serie;
+    }
+    if (type === "colecao") {
+      const col = antes.colecoes.find((c) => c.id === id);
+      const n = col ? col.membros.length : 0;
+      return n ? "Coleção removida. " + (n === 1 ? "O volume continua" : "Os " + n + " volumes continuam") + " na biblioteca." : AVISO_REMOCAO.colecao;
+    }
+    return AVISO_REMOCAO[type];
   }
 
   function confirmarExclusao() {
@@ -1455,6 +1477,9 @@ export function App() {
               <span className="wordmark">LONG<b>BOX</b></span>
             </button>
           )}
+          <span className="salvamento" aria-live="polite" data-estado={salvamento || "nada"}>
+            {salvamento === "salvando" ? "Salvando…" : salvamento === "salvo" ? "Salvo" : ""}
+          </span>
 
           <div style={{ flex: 1 }} />
 
@@ -1903,12 +1928,14 @@ export function App() {
         footer={
           <div className="row">
             <button className="btn btn-quiet" style={{ flex: 1 }} onClick={() => setConfirmDelete(null)}>Cancelar</button>
-            <button className="btn btn-danger" style={{ flex: 1 }} onClick={confirmarExclusao}>Confirmar</button>
+            <button className="btn btn-danger" style={{ flex: 1 }} onClick={confirmarExclusao}>Apagar tudo</button>
           </div>
         }
       >
         <p className="t-body" style={{ margin: 0 }}>
-          Apaga volumes, coleções, séries e edições. Dá para desfazer logo em seguida, mas
+          Apaga {lib.volumes.length} {lib.volumes.length === 1 ? "volume" : "volumes"}, {lib.colecoes.length}{" "}
+          {lib.colecoes.length === 1 ? "coleção" : "coleções"}, {lib.series.length} {lib.series.length === 1 ? "série" : "séries"} e{" "}
+          {lib.edicoes.length} {lib.edicoes.length === 1 ? "edição" : "edições"}. Dá para desfazer logo em seguida, mas
           exporte um backup antes se quiser uma cópia guardada.
         </p>
       </Modal>

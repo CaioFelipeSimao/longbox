@@ -2153,3 +2153,14 @@ instead of their typeset title and character running into the card's title. Not 
 reasons: "Esconder todas" stays in its own row (moving it into the band would change the band's
 width on tab switches while the tab pill measures it, the reason recorded where `.fold-all` is
 styled); the sticky group heading passing over covers while scrolling is normal sticky behaviour.
+
+**v113 Copy at the decisive moments, and a save signal (critique 2, lote 4).** "Zerar tudo"
+confirms with "Apagar tudo" and says what goes ("Apaga 22 volumes, 3 coleções, 3 séries e 172
+edições"). The série sheet says "Escolha um número…" instead of "Toque", which was wrong on the
+PC. The hub's last button says what it does, "Abrir minha coleção"; the scroll-past gesture still
+works. Removal toasts say how much went and what stayed: "Série removida, com 100 edições. Os
+volumes continuam na biblioteca." and "Coleção removida. Os 14 volumes continuam na biblioteca."
+The app used to save in silence and speak only on failure: `store.onEstado` now reports real
+writes, and a small "Salvando…" / "Salvo" beside the wordmark fades in and out two seconds
+after (fixed width, `aria-live="polite"`, hidden under 520px). Not `role="status"`: test-boot
+holds that no status region stays on screen after loading.

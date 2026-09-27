@@ -197,7 +197,7 @@ export function SerieSheet({
                 </div>
               )}
               <p className="t-micro" style={{ margin: "0 0 8px" }}>
-                Toque num número para ver se você tem e em qual volume
+                Escolha um número para ver se você tem e em qual volume
               </p>
 
               {useGroups ? (

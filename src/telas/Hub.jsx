@@ -242,7 +242,7 @@ export function Hub({
       </div>
 
       <button className="hub-enter" onClick={onEnter}>
-        Continue rolando para abrir sua coleção
+        Abrir minha coleção
         <ChevronDown size={15} />
       </button>
 
