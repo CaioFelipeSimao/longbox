@@ -102,10 +102,10 @@ export function SerieSheet({
       subtitle={s ? anoRange(s) + (s.editora ? " · " + s.editora : "") : null}
       actions={s && (
         <>
-          <button className="btn-icon" onClick={onEdit} aria-label="Editar" data-dica="Editar · E"><Pencil size={16} /></button>
-          <button className="btn-icon" onClick={onDelete} aria-label="Remover">
+          <button className="btn-icon btn-remover" onClick={onDelete} aria-label="Remover">
             <Trash2 size={16} color="var(--danger-text)" />
           </button>
+          <button className="btn-icon" onClick={onEdit} aria-label="Editar" data-dica="Editar · E"><Pencil size={16} /></button>
         </>
       )}
     >
@@ -203,10 +203,10 @@ export function SerieSheet({
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
                     <span className="t-title num">Nº {selecionada.numero}</span>
                     <div className="row">
-                      <button className="btn-icon" onClick={() => onEditEdicao(selecionada)} aria-label="Editar edição"><Pencil size={14} /></button>
-                      <button className="btn-icon" onClick={() => onDeleteEdicao(selecionada)} aria-label="Remover edição">
+                      <button className="btn-icon btn-remover" onClick={() => onDeleteEdicao(selecionada)} aria-label="Remover edição">
                         <Trash2 size={14} color="var(--danger-text)" />
                       </button>
+                      <button className="btn-icon" onClick={() => onEditEdicao(selecionada)} aria-label="Editar edição"><Pencil size={14} /></button>
                       <button className="btn-icon" onClick={() => setSelectedId(null)} aria-label="Fechar"><X size={14} /></button>
                     </div>
                   </div>

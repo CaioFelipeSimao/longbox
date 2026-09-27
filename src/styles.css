@@ -703,6 +703,10 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   .btn-icon[data-active="true"]:hover { background: var(--accent); color: var(--accent-ink); }
 }
 .btn-icon svg[data-rot="true"] { transform: rotate(-90deg); }
+/* v101: finger-sized on touch (44px, the tablet floor); mouse and pen keep 36px. */
+@media (pointer: coarse) {
+  .btn-icon { width: 44px; height: 44px; }
+}
 /* Always in the accent, open or closed, with or without filters (the user's
    call). What changes is the count on its corner, which says filters are on. */
 .btn-filtros { position: relative; }
@@ -1841,6 +1845,7 @@ button.retrato-linha { cursor: pointer; }
               color 120ms var(--ease-out), border-color 120ms var(--ease-out);
 }
 .tile:active { transform: scale(0.94); }
+@media (pointer: coarse) { .tile { min-width: 44px; min-height: 44px; } }
 .tile[data-owned="true"] { background: var(--read); border-color: var(--read); color: var(--read-ink); }
 .tile[data-sel="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
 
@@ -1957,6 +1962,11 @@ button.retrato-linha { cursor: pointer; }
   .sug, .sheet-body, .modal-body { scrollbar-width: thin; scrollbar-color: var(--ed-rolagem) transparent; }
 }
 .sheet-actions { display: flex; gap: 6px; flex-shrink: 0; }
+/* v101: Remover leads the row, a clear gap away from Editar/Duplicar, and Fechar
+   keeps the far end: before, the trash sat between Duplicar and Fechar. */
+.btn-remover { margin-right: 14px; }
+/* On touch the 44px boxes already space the icons; a gap would only squeeze the title. */
+@media (pointer: coarse) { .sheet-actions { gap: 0; } }
 
 /* v88: ‹ 3 de 22 › under the volume sheet's subtitle. It first sat among the
    header actions, which squeezed the title to three lines; here the title keeps

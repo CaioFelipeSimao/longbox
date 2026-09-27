@@ -192,6 +192,10 @@ composite child as a group. Section tabs are a `tablist` with `aria-selected`; i
 "Nº 46, possuída" / "falta"; `.seg3` options carry `aria-pressed`, and the picked one is a 2px
 ring in its own text colour at weight 600.
 
+On a coarse pointer (v101) icon buttons are 44px and issue tiles at least 44×44; the sheet
+action row drops its gap there. Remover always leads the sheet action row, 14px apart from
+Editar/Duplicar, with Fechar at the far end.
+
 ## Data layer
 
 `claude.use("db")`. Hard limits from the contract: **256 KiB per document**, 5.000 documents

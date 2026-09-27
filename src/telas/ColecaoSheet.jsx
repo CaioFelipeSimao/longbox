@@ -17,10 +17,10 @@ export function ColecaoSheet({
       subtitle={openColecao && openColecao.descricao ? openColecao.descricao : null}
       actions={openColecao && (
         <>
-          <button className="btn-icon" onClick={() => openEditarColecao(openColecao)} aria-label="Editar" data-dica="Editar · E"><Pencil size={16} /></button>
-          <button className="btn-icon" onClick={() => onRemover({ type: "colecao", id: openColecao.id })} aria-label="Remover">
+          <button className="btn-icon btn-remover" onClick={() => onRemover({ type: "colecao", id: openColecao.id })} aria-label="Remover">
             <Trash2 size={16} color="var(--danger-text)" />
           </button>
+          <button className="btn-icon" onClick={() => openEditarColecao(openColecao)} aria-label="Editar" data-dica="Editar · E"><Pencil size={16} /></button>
         </>
       )}
     >

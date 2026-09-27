@@ -2034,3 +2034,11 @@ bottom tab bar `aria-current`, issue tiles an owned/missing label, "Buscar núme
 the reading status `aria-pressed` plus a visible 2px ring at weight 600, since "Não lida" picked
 looked almost like the others. `tests/test-foco.mjs` (20 checks) covers it. Shortcuts and ← →
 are unaffected: they already ignored focus on non-field elements.
+
+**v101 Touch targets and a safer delete (critique P2, lote 3).** On a coarse pointer `.btn-icon`
+grows from 36px to 44px and issue tiles get a 44×44 minimum; mouse and pen keep the old sizes.
+In the volume, série and collection sheets and the pinned edição row, Remover moved to the start
+of the action row with 14px after it, so it no longer sits between Duplicar and Fechar. On touch
+the row's own 6px gap goes to 0 (the 44px boxes space the icons) to give the title width back.
+Cost measured in the harness at 800px: "Constantine (Hellblazer)" now wraps to two lines on
+touch (one line on v100); shorter names are unaffected.
