@@ -2042,3 +2042,13 @@ of the action row with 14px after it, so it no longer sits between Duplicar and 
 the row's own 6px gap goes to 0 (the 44px boxes space the icons) to give the title width back.
 Cost measured in the harness at 800px: "Constantine (Hellblazer)" now wraps to two lines on
 touch (one line on v100); shorter names are unaffected.
+
+**v102 Small fixes (critique lote 4, the last).** `.slot-order` ("01/02/03" over collection
+covers) goes from 10px to 11px and the fallback cover's character line from 9px to 11px, the
+smallest step of the type scale; the hub wall's 8px fallback titles stay (52-64px thumbnails,
+decorative). "(meta N)" only shows when the goal differs from the number of catalogued issues.
+The hub's "Maior documento" meter only appears past 80% of the 256 KB limit, with its warning;
+the backup line stays. A missing number's panel in the série sheet now has "Vincular a um
+volume…" (the série's characters first, then "Outros volumes"), which adds the edição to that
+volume through `toggleLigacaoEdicao`. A keyboard button beside the search opens the shortcuts
+panel (hidden on touch). `tests/test-foco.mjs` grew to 29 checks.

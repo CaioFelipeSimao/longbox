@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from "react";
-import { Plus, X, Download, Upload, Library, AlertTriangle, RotateCcw, SlidersHorizontal, ChevronLeft, Copy } from "lucide-react";
+import { Plus, X, Download, Upload, Library, AlertTriangle, RotateCcw, SlidersHorizontal, ChevronLeft, Copy, Keyboard } from "lucide-react";
 import CursorGrid from "../components/CursorGrid/CursorGrid";
 
 import {
@@ -1478,6 +1478,13 @@ export function App() {
               }}
             />
           )}
+          {/* v102: the way in to the shortcuts panel, which only "?" opened before.
+              Hidden on touch, where there is no keyboard to use them with. */}
+          {!isHub && (
+            <button className="btn-icon so-teclado" onClick={() => setShowAtalhos(true)} aria-label="Atalhos do teclado" data-dica="Atalhos · ?">
+              <Keyboard size={16} />
+            </button>
+          )}
           {(tab === "volumes" || tab === "series") && (
             <button
               className="btn-icon btn-filtros"
@@ -1828,6 +1835,12 @@ export function App() {
         onEditEdicao={(ed) => { setEdicaoForm({ ...ed, posicao: ed.posicao !== null && ed.posicao !== undefined ? String(ed.posicao) : "" }); setShowEdicaoForm(true); }}
         onDeleteEdicao={(ed) => remover({ type: "edicao", id: ed.id })}
         avisar={showToast}
+        volumes={lib.volumes}
+        onVincular={(volumeId, edicaoId) => {
+          toggleLigacaoEdicao(volumeId, edicaoId);
+          const vol = lib.volumes.find((v) => v.id === volumeId);
+          showToast("Vinculado a " + (vol ? vol.titulo : "o volume") + ".");
+        }}
       />
 
       {/* ===================== forms ===================== */}

@@ -1160,8 +1160,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 .cover-fb-foot {
   font-family: var(--font-mono);
-  font-size: 0.5625rem;
-  letter-spacing: 0.04em;
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--fb-ink-soft, rgba(255, 255, 255, 0.62));
   overflow: hidden;
@@ -1680,6 +1680,7 @@ button.retrato-linha { cursor: pointer; }
 .hub-storage-top { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
 .hub-storage p { margin: 6px 0 0; }
 .hub-storage-warn { color: var(--danger-text); }
+.hub-storage > .hub-backup:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
 /* v88: the last backup, under the storage meter. Overdue reads in full text colour
    with a button beside it; it never borrows --danger, which is kept for the
    storage limit and destructive actions. */
@@ -1784,7 +1785,7 @@ button.retrato-linha { cursor: pointer; }
 
 .slot-order {
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   color: var(--text-muted);
   margin-bottom: 4px;
 }
@@ -1965,6 +1966,8 @@ button.retrato-linha { cursor: pointer; }
 /* v101: Remover leads the row, a clear gap away from Editar/Duplicar, and Fechar
    keeps the far end: before, the trash sat between Duplicar and Fechar. */
 .btn-remover { margin-right: 14px; }
+@media (pointer: coarse) { .so-teclado { display: none; } }
+.vincular-aqui { margin-top: 8px; }
 /* On touch the 44px boxes already space the icons; a gap would only squeeze the title. */
 @media (pointer: coarse) { .sheet-actions { gap: 0; } }
 

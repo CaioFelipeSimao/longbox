@@ -216,18 +216,22 @@ export function Hub({
         </div>
 
         <div className="hub-storage">
-          <div className="hub-storage-top">
-            <span className="t-micro" style={{ margin: 0 }}>Maior documento</span>
-            <span className="num t-small muted">{formatBytes(docUsage.maior.bytes)} de 256 KB</span>
-          </div>
-          <div className="meter">
-            <i style={{ width: Math.min(docUsage.pct, 100) + "%" }} data-over={docUsage.pct > 80 ? "true" : "false"} />
-          </div>
-          <p className="t-small muted">{docUsage.maior.nome}</p>
+          {/* v102: the storage meter is engineering data; it only shows once the
+              largest document passes 80% of the 256 KB limit, when it needs action. */}
           {docUsage.pct > 80 && (
-            <p className="t-small hub-storage-warn">
-              Chegando no limite. Me avise para reestruturar o armazenamento.
-            </p>
+            <>
+              <div className="hub-storage-top">
+                <span className="t-micro" style={{ margin: 0 }}>Maior documento</span>
+                <span className="num t-small muted">{formatBytes(docUsage.maior.bytes)} de 256 KB</span>
+              </div>
+              <div className="meter">
+                <i style={{ width: Math.min(docUsage.pct, 100) + "%" }} data-over="true" />
+              </div>
+              <p className="t-small muted">{docUsage.maior.nome}</p>
+              <p className="t-small hub-storage-warn">
+                Chegando no limite. Me avise para reestruturar o armazenamento.
+              </p>
+            </>
           )}
           {backup && <BackupLinha ultimo={backup.ultimo} onBackup={onBackup} />}
         </div>

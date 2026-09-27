@@ -196,6 +196,10 @@ On a coarse pointer (v101) icon buttons are 44px and issue tiles at least 44×44
 action row drops its gap there. Remover always leads the sheet action row, 14px apart from
 Editar/Duplicar, with Fechar at the far end.
 
+v102: nothing outside the hub wall renders below 11px; the storage meter shows only past 80%;
+a missing number can be linked to a volume from its panel; a keyboard button beside the search
+(fine pointer only) opens the shortcuts panel.
+
 ## Data layer
 
 `claude.use("db")`. Hard limits from the contract: **256 KiB per document**, 5.000 documents

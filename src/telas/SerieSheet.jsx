@@ -2,17 +2,26 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Search, Plus, X, Pencil, Trash2, Upload, Check, Copy } from "lucide-react";
 
 import { sortKey } from "../lib/util";
-import { anoRange, textoFaltantes } from "../lib/biblioteca";
+import { anoRange, personagensDaSerie, textoFaltantes } from "../lib/biblioteca";
 import { Sheet } from "../ui/base";
 
 export function SerieSheet({
   serie, contexto, verTudo, setVerTudo, edicoes, ownedIds, volumesQueColetam,
   busca, setBusca, selectedId, setSelectedId, onClose, onEdit, onDelete,
-  onImport, onNovaEdicao, onEditEdicao, onDeleteEdicao, avisar,
+  onImport, onNovaEdicao, onEditEdicao, onDeleteEdicao, avisar, volumes, onVincular,
 }) {
   const kept = useRef(null);
   if (serie) kept.current = serie;
   const s = serie || kept.current;
+
+  const [doPersonagem, outros] = useMemo(() => {
+    const nomes = new Set(s ? personagensDaSerie(s).map((p) => p.nome) : []);
+    const ord = (a, b) => a.titulo.localeCompare(b.titulo, "pt-BR", { numeric: true });
+    return [
+      volumes.filter((v) => nomes.has(v.personagem)).sort(ord),
+      volumes.filter((v) => !nomes.has(v.personagem)).sort(ord),
+    ];
+  }, [volumes, s]);
 
   const edsTotal = useMemo(() => (
     edicoes.slice().sort((a, b) => {
@@ -131,7 +140,7 @@ export function SerieSheet({
             <div className="faltantes-cont">
               <span className="num t-small muted">
                 {ownedCount} de {eds.length} possuídas
-                {s.totalEdicoes ? " (meta " + s.totalEdicoes + ")" : ""}
+                {s.totalEdicoes && s.totalEdicoes !== eds.length ? " (meta " + s.totalEdicoes + ")" : ""}
               </span>
               {faltantes && (
                 <button
@@ -228,6 +237,29 @@ export function SerieSheet({
                           <span className="chip" key={v.id}><Check size={12} color="var(--read)" /> <strong>{v.titulo}</strong></span>
                         ))}
                   </div>
+                  {/* v102: a missing number can be linked right here, instead of
+                      leaving for the volume sheet to find it again. The série's own
+                      characters come first; crossovers live under "Outros volumes". */}
+                  {volumesQueColetam(selecionada.id).length === 0 && volumes.length > 0 && (
+                    <select
+                      className="select vincular-aqui"
+                      aria-label={"Vincular o nº " + selecionada.numero + " a um volume"}
+                      value=""
+                      onChange={(e) => { if (e.target.value) onVincular(e.target.value, selecionada.id); }}
+                    >
+                      <option value="">Vincular a um volume…</option>
+                      {doPersonagem.length > 0 && (
+                        <optgroup label="Do personagem">
+                          {doPersonagem.map((v) => <option key={v.id} value={v.id}>{v.titulo}</option>)}
+                        </optgroup>
+                      )}
+                      {outros.length > 0 && (
+                        <optgroup label={doPersonagem.length > 0 ? "Outros volumes" : "Volumes"}>
+                          {outros.map((v) => <option key={v.id} value={v.id}>{v.titulo}</option>)}
+                        </optgroup>
+                      )}
+                    </select>
+                  )}
                 </div>
               )}
             </div>

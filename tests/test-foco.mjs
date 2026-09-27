@@ -134,7 +134,31 @@ await sleep(200);
 const tiles = [...s.root.querySelectorAll(".tile")];
 check("número possuído diz que é possuído", tiles.some((t) => t.getAttribute("aria-label") === "Nº 1, possuída"), tiles.map((t) => t.getAttribute("aria-label")).join(" | "));
 check("número faltante diz que falta", tiles.some((t) => t.getAttribute("aria-label") === "Nº 3, falta"));
-check("sem erros", m.erros.length === 0 && s.erros.length === 0, m.erros[0] || s.erros[0]);
+check("meta igual ao total não se repete", !/[(]meta/.test(s.sheetAberta()?.textContent || s.root.textContent), (s.root.querySelector(".faltantes-cont")?.textContent || ""));
+
+// v102: a missing number offers "Vincular a um volume" right in its panel.
+console.log("=== vincular um número faltante ===");
+tiles.find((t) => t.getAttribute("aria-label") === "Nº 3, falta")?.click();
+await sleep(150);
+const sel = s.root.querySelector(".vincular-aqui");
+check("número faltante oferece vincular", !!sel, s.root.querySelector(".edicao-pinned")?.textContent);
+check("volumes do personagem vêm primeiro", sel?.querySelector("optgroup")?.label === "Do personagem");
+const setter = Object.getOwnPropertyDescriptor(s.window.HTMLSelectElement.prototype, "value").set;
+setter.call(sel, "b3");
+sel.dispatchEvent(new s.window.Event("change", { bubbles: true }));
+await sleep(700);
+check("vincula no banco", s.docs.get("library/volumes").items.find((x) => x.id === "b3").edicoesColetadasIds.includes("e3"));
+check("o número vira possuído", [...s.root.querySelectorAll(".tile")].some((t) => t.getAttribute("aria-label") === "Nº 3, possuída"));
+check("o painel mostra o volume e some o seletor", /Batman b3/.test(s.root.querySelector(".edicao-pinned")?.textContent || "") && !s.root.querySelector(".vincular-aqui"));
+
+console.log("=== hub e atalhos ===");
+const h = await montar({ aba: "hub" });
+check("hub sem telemetria de armazenamento", !h.root.textContent.includes("Maior documento"));
+check("lembrete de backup continua", /backup/i.test(h.root.querySelector(".hub-storage")?.textContent || ""));
+m.root.querySelector(".so-teclado")?.click();
+await sleep(200);
+check("botão de teclado abre os atalhos", /Atalhos do teclado/.test(m.root.querySelector(".modal")?.textContent || ""));
+check("sem erros", m.erros.length === 0 && s.erros.length === 0 && h.erros.length === 0, m.erros[0] || s.erros[0] || h.erros[0]);
 
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);
