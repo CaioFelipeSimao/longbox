@@ -119,7 +119,7 @@ await sleep(60);
 check("Esc fecha e mantém sem filtro", !m1.root.querySelector("#filtro-personagem-lista") && campo.value === "");
 
 // Fold Batman first, so choosing him proves the filter forces his group open.
-const foldBatman = m1.root.querySelector('[aria-label="Esconder as HQs de Batman"]');
+const foldBatman = [...m1.root.querySelectorAll('.group-toggle')].find((b) => b.textContent === "Batman" && b.getAttribute("aria-expanded") === "true");
 check("existe a dobra do grupo Batman", !!foldBatman);
 if (foldBatman) { foldBatman.click(); await sleep(60); }
 

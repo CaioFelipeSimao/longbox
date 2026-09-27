@@ -40,15 +40,19 @@ function CapaGrande({ volume, c }) {
 
 function CapaDesenhada({ volume, c }) {
   return (
+    // v112: read as one picture, like a photo cover's alt, instead of its typeset
+    // title and character running into the card's own title ("…NinguemBatmanBatman").
     <div
       className="cover-fb"
+      role="img"
+      aria-label={"Capa de " + volume.titulo}
       style={{ "--fb-a": c.a, "--fb-b": c.b, "--fb-ink": c.ink, "--fb-ink-soft": c.inkSoft, "--fb-rule": c.rule }}
     >
-      <div>
+      <div aria-hidden="true">
         <div className="cover-rule" />
         <div className="cover-fb-title">{volume.titulo}</div>
       </div>
-      <div className="cover-fb-foot">{volume.personagem || ""}</div>
+      <div className="cover-fb-foot" aria-hidden="true">{volume.personagem || ""}</div>
     </div>
   );
 }

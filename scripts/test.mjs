@@ -21,7 +21,7 @@ const SUITES = [
   { args: ["tests/test-filtros.mjs"], minimo: 53 },
   { args: ["tests/test-colecoes.mjs"], minimo: 31 },
   { args: ["tests/test-desfazer.mjs"], minimo: 41 },
-  { args: ["tests/test-foco.mjs"], minimo: 29 },
+  { args: ["tests/test-foco.mjs"], minimo: 35 },
   { args: ["tests/test-capa-grande.mjs"], minimo: 5 },
   { args: ["tests/test-cor-capa.mjs"], minimo: 5 },
   { args: ["tests/test-mapa-serie.mjs"], minimo: 9 },

@@ -2139,3 +2139,17 @@ hunt, chosen by the user from a prototype screenshot: `.gm::after` fades the cov
 page, so in the light theme it is now the light page colour (rgba 251,251,252 from 0.74 to
 0.9) instead of the near-black used in both themes. The covers stay behind the whole hub, as a
 pale watermark under "Falta pouco" and the shelf, and dark text reads on it. Dark theme unchanged.
+
+**v112 Tablet targets and the group heading (critique 2, lote 3).** The group heading row now
+folds the group: the character name is a button inside the `h2` (it used to be the reverse, an
+`h2` inside a button, invisible to heading navigation), stretched over the row with `::after`,
+and the chevron is a decorative mark. Only the colour square opens the colour picker, as its own
+button "Cor de <personagem>" (it was the name, which is where a hand reaches to fold). The focus
+ring wraps the whole row (`:has(:focus-visible)`). On a coarse pointer the boxed text buttons,
+the status buttons, the search field, the cover upload button, the colour square and the heading
+row are at least 44px (measured at 1280x800 touch: all 44; the PC keeps 36-38). The filter count
+badge goes from 10px to 11px. Drawn fallback covers read as one picture, "Capa de <título>",
+instead of their typeset title and character running into the card's title. Not done, with
+reasons: "Esconder todas" stays in its own row (moving it into the band would change the band's
+width on tab switches while the tab pill measures it, the reason recorded where `.fold-all` is
+styled); the sticky group heading passing over covers while scrolling is normal sticky behaviour.

@@ -16,22 +16,39 @@ export function GroupHead({ personagem, count, onPickColor, aberto, onAlternar, 
   const guardado = cores && cores[(personagem || "").trim().toLowerCase()];
   const custom = guardado !== undefined && guardado !== null;
   const cor = swatchColors(spec, 0).edge;
+  // v112: the whole row folds the group (the name is a button inside the heading,
+  // stretched over the row by CSS), and only the colour square opens the colour
+  // picker. The name used to open the picker while only the chevron folded, and the
+  // heading sat inside a button, which hid it from heading navigation.
   return (
-    <div className="group-head" style={{ "--grp-cor": cor }}>
-      <button className="group-name press" onClick={() => onPickColor(personagem)} title="Escolher a cor deste personagem">
+    <div className="group-head" data-dobra={onAlternar ? "true" : "false"} style={{ "--grp-cor": cor }}>
+      <button
+        type="button"
+        className="group-cor press"
+        onClick={() => onPickColor(personagem)}
+        aria-label={"Cor de " + personagem}
+        data-dica="Cor do personagem"
+      >
         <span className="group-swatch" style={{ background: cor }} data-custom={custom ? "true" : "false"} />
-        <h2>{personagem}</h2>
       </button>
+      <h2>
+        {onAlternar ? (
+          <button
+            type="button"
+            className="group-toggle"
+            onClick={() => onAlternar(personagem)}
+            aria-expanded={aberto ? "true" : "false"}
+            aria-description={(aberto ? "Esconder" : "Mostrar") + " as " + itemLabel}
+          >
+            {personagem}
+          </button>
+        ) : personagem}
+      </h2>
       <span className="group-count">{count}</span>
       {onAlternar && (
-        <button
-          className="btn-icon group-fold"
-          onClick={() => onAlternar(personagem)}
-          aria-expanded={aberto ? "true" : "false"}
-          aria-label={(aberto ? "Esconder" : "Mostrar") + " as " + itemLabel + " de " + personagem}
-        >
+        <span className="group-fold" aria-hidden="true">
           <ChevronDown size={16} data-rot={aberto ? "false" : "true"} />
-        </button>
+        </span>
       )}
     </div>
   );

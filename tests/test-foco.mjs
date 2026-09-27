@@ -160,5 +160,20 @@ await sleep(200);
 check("botão de teclado abre os atalhos", /Atalhos do teclado/.test(m.root.querySelector(".modal")?.textContent || ""));
 check("sem erros", m.erros.length === 0 && s.erros.length === 0 && h.erros.length === 0, m.erros[0] || s.erros[0] || h.erros[0]);
 
+// v112: the group heading is a real heading; its name folds the group, the square picks the colour.
+console.log("=== cabeçalho do grupo ===");
+const g = await montar({ aba: "volumes" });
+const cab = () => g.root.querySelector('.aba[data-ativa="true"] .group-head');
+check("o título não fica dentro de um botão", !cab()?.querySelector("button h2") && !!cab()?.querySelector("h2 > .group-toggle"));
+check("o nome dobra o grupo", cab()?.querySelector(".group-toggle")?.getAttribute("aria-expanded") === "true");
+cab()?.querySelector(".group-toggle")?.click();
+await sleep(150);
+check("tocar no nome esconde as HQs", cab()?.querySelector(".group-toggle")?.getAttribute("aria-expanded") === "false" && !g.root.querySelector('.aba[data-ativa="true"] .shelf'));
+check("o quadradinho tem nome", cab()?.querySelector(".group-cor")?.getAttribute("aria-label") === "Cor de Batman");
+cab()?.querySelector(".group-cor")?.click();
+await sleep(200);
+check("o quadradinho abre a cor", !!g.root.querySelector(".sheet") && /Batman/.test(g.root.querySelector(".sheet")?.textContent || ""));
+check("sem erros (cabeçalho)", g.erros.length === 0, g.erros[0]);
+
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);

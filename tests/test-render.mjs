@@ -517,11 +517,11 @@ if (scenario === "seeded") {
               ", rows " + (h.includes("serie-row") ? "PASS" : "FAIL") +
               ", owned segments " + (h.includes('data-owned="true"') ? "PASS" : "FAIL"));
 
-  await click(visivel(".group-fold"), "fold one character back");
+  await click(visivel(".group-toggle"), "fold one character back");
   console.log("  folding one character hides its rows: " +
               (visiveis(".serie-row").length < visiveis(".group-head").length
                 ? "PASS" : "FAIL"));
-  await click(visivel(".group-fold"), "unfold it again");
+  await click(visivel(".group-toggle"), "unfold it again");
   h = htmlVisivel();
 
   await click(visivel(".serie-row"), "first serie row");
@@ -593,7 +593,7 @@ if (scenario === "seeded") {
   h = htmlVisivel();
 
   const shelvesAbertas = visiveis(".shelf").length;
-  await click(visivel(".group-fold"), "fold one HQs character");
+  await click(visivel(".group-toggle"), "fold one HQs character");
   console.log("  folding one HQs character hides its shelf: " +
               (visiveis(".shelf").length < shelvesAbertas ? "PASS" : "FAIL"));
   // Not every group is open now (one was just folded), so the smart toggle's
@@ -623,7 +623,7 @@ if (scenario === "seeded") {
 
   // Character colour: the group heading is the control, and the choice has to
   // reach both the covers and the store.
-  const groupBtn = visivel(".group-name");
+  const groupBtn = visivel(".group-cor");
   const edgeBefore = visivel(".shelf .cover").style.getPropertyValue("--edge");
   console.log("  legacy bare-hue value still resolves: " +
               (edgeBefore.includes("hsl(300") ? "PASS" : "FAIL (" + edgeBefore + ")") +
