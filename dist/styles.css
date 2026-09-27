@@ -2461,14 +2461,30 @@ button.retrato-linha { cursor: pointer; }
 /* v114: "Lidas até aqui" in a collection's reading order, and the read mark beside the character. */
 .ordem-ate { padding: 4px 8px; font-size: 0.75rem; color: var(--accent-text); flex-shrink: 0; white-space: nowrap; }
 @media (pointer: coarse) { .ordem-ate { min-height: 44px; } }
-.ordem-lida { color: var(--read); }
-/* v114: the cover field of the "Novo volume" form. */
-.capa-nova { display: flex; align-items: center; gap: 12px; }
-.capa-nova-alvo {
-  position: relative; width: 72px; aspect-ratio: 2 / 3; flex-shrink: 0; cursor: pointer; overflow: hidden;
-  display: grid; place-items: center; color: var(--text-muted);
-  border: 1.5px dashed var(--border-strong); border-radius: var(--r-sm);
+/* v115: the cover field of the "Novo volume" form, a full-width strip like its neighbours. */
+.capa-nova { display: flex; align-items: center; gap: 8px; }
+.capa-nova-faixa {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; cursor: pointer;
+  padding: 8px 12px 8px 8px; min-height: 64px;
+  background: var(--surface-2); border: 1.5px dashed var(--border-strong); border-radius: var(--r);
+  transition: border-color 120ms var(--ease-out);
 }
-.capa-nova-alvo img { width: 100%; height: 100%; object-fit: cover; }
-.capa-nova-alvo:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-@media (hover: hover) and (pointer: fine) { .capa-nova-alvo:hover { border-color: var(--accent); color: var(--accent-text); } }
+.capa-nova-mini {
+  width: 32px; height: 48px; flex-shrink: 0; overflow: hidden; border-radius: 4px;
+  display: grid; place-items: center; background: var(--surface); color: var(--text-muted);
+}
+.capa-nova-mini img { width: 100%; height: 100%; object-fit: cover; }
+.capa-nova-texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.capa-nova-texto strong { font-size: 0.8125rem; font-weight: 600; }
+.capa-nova-texto small { font-size: 0.75rem; color: var(--text-muted); }
+.capa-nova-faixa:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .capa-nova-faixa:hover { border-color: var(--accent); }
+  .capa-nova-faixa:hover .capa-nova-mini { color: var(--accent-text); }
+}
+/* v115: status of a read volume in a collection's reading order, to set it back. */
+.ordem-status {
+  flex-shrink: 0; height: 30px; padding: 0 6px; font: 500 0.75rem var(--font-body);
+  color: var(--read); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm);
+}
+@media (pointer: coarse) { .ordem-status { height: 44px; } }

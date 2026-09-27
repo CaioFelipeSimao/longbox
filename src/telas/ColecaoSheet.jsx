@@ -1,5 +1,6 @@
 import { X, Pencil, Trash2, ArrowUp, ArrowDown, ChevronDown } from "lucide-react";
 
+import { STATUS, STATUS_ORDER } from "../lib/constantes";
 import { PALETA_CROMATICA, PALETA_NEUTRA } from "../lib/cores";
 import { Field, Sheet } from "../ui/base";
 import { Swatch } from "../ui/CorPersonagem";
@@ -7,7 +8,7 @@ import { Swatch } from "../ui/CorPersonagem";
 export function ColecaoSheet({
   lib, onRemover, setOpenColecaoId, addMemberSel, openColecao, colecaoRola,
   ordemRecolhida, alternarOrdem, definirCorBarra, openEditarColecao, adicionarMembro,
-  removerMembro, moverMembro, personagensDaColecao, onLidasAte,
+  removerMembro, moverMembro, personagensDaColecao, onLidasAte, onStatus,
 }) {
   return (
     <Sheet
@@ -54,11 +55,20 @@ export function ColecaoSheet({
                   <span className="num t-small muted" style={{ width: 22, flexShrink: 0 }}>{idx + 1}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p className="t-small truncate" style={{ margin: 0, fontWeight: 500 }}>{v.titulo}</p>
-                    <p className="t-small muted truncate" style={{ margin: 0 }}>
-                      {v.personagem}
-                      {v.status === "lida" && <span className="ordem-lida"> · Lida</span>}
-                    </p>
+                    <p className="t-small muted truncate" style={{ margin: 0 }}>{v.personagem}</p>
                   </div>
+                  {/* v115: a volume already read can be set back (a "Lidas até aqui" pressed
+                      by mistake, or one being reread) right here. */}
+                  {v.status === "lida" && (
+                    <select
+                      className="ordem-status"
+                      value={v.status}
+                      onChange={(e) => onStatus(v.id, e.target.value)}
+                      aria-label={"Status de leitura de " + v.titulo}
+                    >
+                      {STATUS_ORDER.map((k) => <option key={k} value={k}>{STATUS[k].label}</option>)}
+                    </select>
+                  )}
                   {/* v114: reading a saga in order, mark this one and every one before it. */}
                   {v.status !== "lida" && (
                     <button

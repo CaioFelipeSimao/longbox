@@ -2178,3 +2178,17 @@ the usual `handleCoverPick` right after the volume is saved, from both "Salvar e
 "Salvar e cadastrar outro". While a form is open, the volume sheet underneath ignores pastes.
 I recommended against C (the user catalogues through the skill); the user asked for it.
 `tests/test-lote5.mjs` covers all three (17 checks).
+
+**v115 Sheets open where you are; two follow-ups to v114.** From the user's own use:
+- Opening a volume or a série used to move you to another tab first: a cover on the hub's wall
+  or in a collection, or a volume picked in the search, went to HQs; a série in "Falta pouco"
+  went to Séries. The sheets were always app-level overlays, so the `switchTab` calls are gone:
+  the sheet opens over the tab you are on and closing it leaves you there, scrolled where you
+  were (focus returns to the cover, v100). The hub's scroll-past-the-end unlock is off while any
+  sheet is open (`folhaAberta`), so scrolling inside a sheet over the hub cannot enter the
+  collection; checked in headless Chrome with wheel events at the bottom of the hub.
+- In a collection's reading order a read volume shows a small status select (Lida / Lendo /
+  Não lida) instead of nothing, to set back a "Lidas até aqui" pressed by mistake.
+- The "Novo volume" cover field is a full-width strip like its neighbours (thumbnail slot,
+  "Escolher imagem", the Ctrl+V hint inside, ✕ to remove), replacing v114's lone square with
+  the hint underneath, which the user found unbalanced.

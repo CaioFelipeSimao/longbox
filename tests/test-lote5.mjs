@@ -91,6 +91,17 @@ console.log("=== B: lidas até aqui ===");
     await sleep(700);
     check("desfazer volta tudo", m.docs.get("library/volumes").items.every((x) => x.status === "nao_lida"));
   }
+  // v115: a read one can be set back from the reading order.
+  m.root.querySelector(".sheet .ordem-ate")?.click();
+  await sleep(700);
+  const sel = m.root.querySelector(".sheet .ordem-status");
+  check("o lido ganha o seletor de status", m.root.querySelectorAll(".sheet .ordem-status").length === 1 && sel?.value === "lida");
+  const setSel = Object.getOwnPropertyDescriptor(m.window.HTMLSelectElement.prototype, "value").set;
+  setSel.call(sel, "lendo");
+  sel.dispatchEvent(new m.window.Event("change", { bubbles: true }));
+  await sleep(700);
+  check("mudar para Lendo grava", m.docs.get("library/volumes").items[0].status === "lendo", m.docs.get("library/volumes").items[0].status);
+  check("e o botão Lidas até aqui volta", m.root.querySelectorAll(".sheet .ordem-ate").length === 4);
   check("sem erros (B)", m.erros.length === 0, m.erros[0]);
 }
 
@@ -108,7 +119,7 @@ console.log("=== C: capa no Novo ===");
   Object.defineProperty(input, "files", { configurable: true, value: [arq] });
   input.dispatchEvent(new m.window.Event("change", { bubbles: true }));
   await sleep(150);
-  check("mostra a capa escolhida", !!m.root.querySelector(".capa-nova-alvo img"));
+  check("mostra a capa escolhida", !!m.root.querySelector(".capa-nova-mini img"));
   const titulo = modal.querySelector("input.input");
   const setter = Object.getOwnPropertyDescriptor(m.window.HTMLInputElement.prototype, "value").set;
   setter.call(titulo, "Batman novo");
@@ -123,6 +134,22 @@ console.log("=== C: capa no Novo ===");
   const novo = m.docs.get("library/volumes").items.find((x) => x.titulo === "Batman novo");
   check("o volume novo fica com a capa", novo && novo.capaAssetId === "a".repeat(32), JSON.stringify(novo));
   check("sem erros (C)", m.erros.length === 0, m.erros[0]);
+}
+
+// v115: opening a volume or a série from the hub, a collection or the search opens its
+// sheet over the tab you are on, instead of moving you to HQs or Séries.
+console.log("=== abrir não troca de aba ===");
+{
+  const h = await montar({ aba: "hub" });
+  h.root.querySelector(".wall .vol")?.click();
+  await sleep(250);
+  check("HQ do mural abre por cima do hub", !!h.root.querySelector('.sheet[data-in="true"], .sheet') && !!h.root.querySelector(".hub"), h.root.querySelector(".sheet") ? "" : "sem folha");
+  const c = await montar({ aba: "colecoes" });
+  c.root.querySelector('.aba[data-ativa="true"] .coll-strip .vol')?.click();
+  await sleep(250);
+  const ativa = c.root.querySelector('.segmented button[aria-selected="true"]')?.textContent.trim();
+  check("HQ da coleção abre por cima de Coleções", ativa === "Coleções" && !!c.root.querySelector(".sheet"), ativa);
+  check("sem erros (abas)", h.erros.length === 0 && c.erros.length === 0, h.erros[0] || c.erros[0]);
 }
 
 console.log("\n" + passes + " passaram, " + falhas + " falharam");

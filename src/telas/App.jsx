@@ -1321,7 +1321,6 @@ export function App() {
     setSelectedEdicaoId(edicaoId);
   }, []);
 
-  useHubUnlock(isHub && !loading, hubAtBottom, hubElRef, entrarNaColecao);
 
   useEffect(() => {
     if (!hubReturning) return;
@@ -1445,6 +1444,10 @@ export function App() {
     }
     return false;
   }
+  // v115: sheets can open over the hub now, and scrolling inside one must not
+  // count as scrolling past the hub's end into the collection.
+  const folhaAberta = !!(openVolumeId || openSerieId || openColecaoId || corPersonagem || showEditoras);
+  useHubUnlock(isHub && !loading && !folhaAberta, hubAtBottom, hubElRef, entrarNaColecao);
   useAtalhos({
     alternarDobra,
     podeDesfazer: !!desfazerAtual,
@@ -1524,7 +1527,7 @@ export function App() {
                   setSerieBusca("");
                   return;
                 }
-                switchTab("volumes");
+                // v115: sheets open over the tab you are on; the tab no longer changes.
                 abrirVolume(s.id, { tipo: "todas" });
               }}
             />
@@ -1623,8 +1626,8 @@ export function App() {
             docUsage={docUsage}
             edicoesPorSerie={edicoesPorSerie}
             ownedIds={ownedEdicaoIds}
-            onOpenVolume={(id) => { switchTab("volumes"); abrirVolume(id, { tipo: "todas" }); }}
-            onOpenSerie={(id) => { switchTab("series"); setOpenSerieId(id); setOpenSerieContexto(null); }}
+            onOpenVolume={(id) => abrirVolume(id, { tipo: "todas" })}
+            onOpenSerie={(id) => { setOpenSerieId(id); setOpenSerieContexto(null); }}
             onNovo={openNovoVolume}
             onEnter={entrarNaColecao}
             backup={storageMode === "db" ? { ultimo: ultimoBackup } : null}
@@ -1864,6 +1867,7 @@ export function App() {
         moverMembro={moverMembro}
         personagensDaColecao={personagensDaColecao}
         onLidasAte={marcarLidasAte}
+        onStatus={setStatusVolume}
       />
 
       {/* ===================== series detail ===================== */}

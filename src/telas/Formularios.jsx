@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus, X, ImagePlus } from "lucide-react";
 
 import { STATUS, STATUS_ORDER, tiposDaEditora } from "../lib/constantes";
 import { usePasteImage } from "../lib/hooks";
@@ -134,11 +134,19 @@ export function FormVolume({
           <Field label="Notas">
             <textarea className="textarea" value={volumeForm.notas} onChange={(e) => setVolumeForm((f) => ({ ...f, notas: e.target.value }))} />
           </Field>
+          {/* v115: a full-width strip like the fields around it (v114's lone square
+              with the hint below read as an empty hole in the form). */}
           {aceitaCapa && (
-            <Field label="Capa" hint={capaNova ? undefined : "Escolha uma imagem ou cole com Ctrl+V. Pode ficar para depois."}>
+            <Field label="Capa">
               <div className="capa-nova">
-                <label className="capa-nova-alvo">
-                  {previa ? <img src={previa} alt="Capa escolhida" /> : <Plus size={20} aria-hidden="true" />}
+                <label className="capa-nova-faixa">
+                  <span className="capa-nova-mini">
+                    {previa ? <img src={previa} alt="" /> : <ImagePlus size={18} aria-hidden="true" />}
+                  </span>
+                  <span className="capa-nova-texto">
+                    <strong className="truncate">{capaNova ? capaNova.name : "Escolher imagem"}</strong>
+                    <small>{capaNova ? "Toque para trocar" : "ou cole com Ctrl+V. Pode ficar para depois."}</small>
+                  </span>
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/gif,image/webp"
@@ -148,8 +156,8 @@ export function FormVolume({
                   />
                 </label>
                 {capaNova && (
-                  <button type="button" className="btn btn-ghost" onClick={() => setCapaNova(null)}>
-                    <X size={14} /> Tirar a capa
+                  <button type="button" className="btn-icon" onClick={() => setCapaNova(null)} aria-label="Tirar a capa escolhida">
+                    <X size={16} />
                   </button>
                 )}
               </div>

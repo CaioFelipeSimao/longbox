@@ -68,7 +68,7 @@ export function AbaColecoes({
                       index={0}
                       tabParada={i === 0 ? 0 : -1}
                       open={false}
-                      onClick={() => { switchTab("volumes"); abrirVolume(v.id, { tipo: "colecao", id: c.id }); }}
+                      onClick={() => abrirVolume(v.id, { tipo: "colecao", id: c.id })}
                     />
                   </div>
                 ))}
