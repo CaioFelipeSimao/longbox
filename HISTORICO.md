@@ -2206,3 +2206,14 @@ per-document list of the tab's own recent writes, and echoes equal to any of the
 entries expire after 60 s. `tests/test-sincronia.mjs` reproduces the case with a mock server
 whose echo carries the written state and arrives 900 ms late: it failed before the fix (screen
 back to the older value, false toast) and passes now; changes from elsewhere still arrive.
+
+**v117 The own-echo window: 20 s and fingerprints.** Discussed with the user after v116: the
+only failure mode of ignoring echoes by content is the reverse one, a real change made on
+another device that recreates, byte for byte, a whole document this tab wrote within the
+window, which would be skipped (the screen stays stale until the tab's next save re-reads and
+merges it, or a reload; nothing is lost). The window went from 60 s to 20 s, still far above a
+normal echo delay but a third of the exposure, and each recent write is kept as a fingerprint
+(length plus a 32-bit FNV-1a hash) instead of the document text (up to 12 copies of the ~116 KB
+volumes document before). Considered and not done: stamping each write with a tab id and a
+sequence number, which removes the window entirely but adds a field to every stored document;
+worth it only if the stale-screen case is ever actually seen.

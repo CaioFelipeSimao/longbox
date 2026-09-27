@@ -261,8 +261,10 @@ replacing it (`lib/mesclar.js`, a three-way merge by item id: base = what the ta
 read or wrote, local = the screen, remote = the server; the tab wins only on items it
 changed itself). The merged result goes back to the screen. `onSnapshot` on the five
 library documents and the `edicoes` collection brings changes made elsewhere in live,
-merged the same way, with a quiet "Biblioteca atualizada em outro aparelho" toast at most
-every few seconds; a change that arrives while a save is pending waits for it (the save
+merged the same way (the tab's own writes echo back too and can arrive late, after a newer
+write; since v116-v117 echoes matching a fingerprint of any own write from the last 20 s are
+ignored, so they are never taken for another device), with a quiet "Biblioteca atualizada em
+outro aparelho" toast at most every few seconds; a change that arrives while a save is pending waits for it (the save
 merges it anyway). Snapshots equal to what the tab last saw cost one string comparison
 (0.2 ms for volumes, 3 ms once at start for all edições, measured on the real 147-volume
 library). Before v96 this paragraph promised `onSnapshot` although the code never had it.

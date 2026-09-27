@@ -56,19 +56,31 @@ const parseOu = (json, vazio) => { try { return json ? JSON.parse(json) : vazio;
 // echo of "edits 1-5" landing once "1-8" is saved looked like another device undoing
 // 6-8, so the screen reverted 6-8, showed "atualizada em outro aparelho", and put
 // them back when the next echo came. Comparing with the last write alone could not
-// tell. Echoes equal to any recent own write are ignored; entries expire after 60s
-// so a real later change elsewhere that happens to match an old state still lands.
-const PROPRIAS_MS = 60000;
-const proprias = new Map(); // chave -> [{ json, quando }]
+// tell. Echoes equal to any recent own write are ignored.
+// v117: entries expire after 20s (was 60s), long enough for a slow echo, short enough
+// that a real change made elsewhere which happens to recreate one of this tab's recent
+// states is rarely skipped (and a skipped one heals on the next save, which re-reads
+// and merges). Kept as a fingerprint (length + FNV-1a hash), not the document text:
+// the volumes document is ~116 KB and up to 12 were held per document.
+const PROPRIAS_MS = 20000;
+const proprias = new Map(); // chave -> [{ marca, quando }]
+function marcaDe(json) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < json.length; i++) { h ^= json.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return json.length + ":" + (h >>> 0).toString(36);
+}
 function registrarPropria(chave, json) {
   const agora = Date.now();
   const lista = (proprias.get(chave) || []).filter((p) => agora - p.quando < PROPRIAS_MS);
-  lista.push({ json, quando: agora });
+  lista.push({ marca: marcaDe(json), quando: agora });
   proprias.set(chave, lista.slice(-12));
 }
 function ehPropria(chave, json) {
   const agora = Date.now();
-  return (proprias.get(chave) || []).some((p) => p.json === json && agora - p.quando < PROPRIAS_MS);
+  const lista = proprias.get(chave);
+  if (!lista || !lista.length) return false;
+  const marca = marcaDe(json);
+  return lista.some((p) => p.marca === marca && agora - p.quando < PROPRIAS_MS);
 }
 
 export function shardEdicoes(edicoes) {
