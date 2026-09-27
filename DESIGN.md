@@ -527,6 +527,14 @@ reviews; the app form is used for adjustments. A batch mode here would duplicate
 Improvements go to the skill instead (2026-09-27: parser gaps fixed, the "reload every tab
 after a write" step retired since v96 merges and syncs live).
 
+**Hiding "Seu acervo" behind the wordmark** (critique question 3: "daily or monthly? could it
+sit behind the mark so the shelf starts sooner?"). Answered 2026-09-27: the user looks at it
+most visits, so it stays visible where it is. Hiding it would cost a click on most visits to
+save some scrolling; the wordmark already means "back to the hub"; and nobody has to scroll
+through it to reach the collection ("Minha Coleção" at the top, keys 1-3). Its engineering
+line went in v102. If it ever starts to weigh, the agreed fallback is a remembered collapse
+toggle on the block, not a hidden entry point.
+
 ## Pre-flight, scoped to this project
 
 Run before publishing:
