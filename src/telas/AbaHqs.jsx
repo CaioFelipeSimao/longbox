@@ -2,7 +2,7 @@ import { BookOpen, ChevronDown } from "lucide-react";
 
 import { EmptyState } from "../ui/base";
 import { GroupHead } from "../ui/CorPersonagem";
-import { VolumeCard } from "../ui/VolumeCard";
+import { VolumeCard, gradeTeclado } from "../ui/VolumeCard";
 
 export function AbaHqs({
   lib, setCorPersonagem, openVolumeId, buscando, gruposFechados, grupoAbertoVolumes,
@@ -53,12 +53,13 @@ export function AbaHqs({
             itemLabel="HQs"
           />
           {aberto && (
-          <div className="shelf stagger">
+          <div className="shelf stagger" role="group" aria-label={"HQs de " + grupo.personagem} {...gradeTeclado}>
             {itensExibidos.map((v, i) => (
               <VolumeCard
                 key={v.id}
                 volume={v}
                 index={i}
+                tabParada={i === 0 ? 0 : -1}
                 open={v.id === openVolumeId}
                 onClick={() => abrirVolumeCard(v.id)}
                 reordenavel={podeReordenarVolumes}

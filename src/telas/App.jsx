@@ -250,6 +250,9 @@ export function App() {
   const [filtroSerie, setFiltroSerie] = useState(lerFiltroSeries);
   const [showFiltros, setShowFiltros] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  // v114: a cover picked in the "Novo volume" form, uploaded once the volume exists.
+  const [capaNova, setCapaNova] = useState(null);
+  useEffect(() => { if (!showVolumeForm) setCapaNova(null); }, [showVolumeForm]);
 
   useEffect(() => {
     salvarFiltros({ status: filtroStatus, tipo: filtroTipo, personagem: filtroPersonagem });
@@ -541,6 +544,7 @@ export function App() {
       next = { ...lib, volumes: [...lib.volumes, { ...volumeForm, id: novoId, edicoesColetadasIds: [] }] };
     }
     persist(next);
+    if (!volumeForm.id && capaNova) handleCoverPick(novoId, capaNova);
     setShowVolumeForm(false);
     setVolumeDupWarning(null);
     setOpenVolumeId(novoId);
@@ -555,6 +559,8 @@ export function App() {
     }
     const novo = { ...volumeForm, id: uid(), edicoesColetadasIds: [] };
     persist({ ...lib, volumes: [...lib.volumes, novo] });
+    if (capaNova) handleCoverPick(novo.id, capaNova);
+    setCapaNova(null);
     showToast('"' + novo.titulo + '" adicionado. Pronto pro próximo.');
     setVolumeForm((f) => ({
       id: null, titulo: "", personagem: f.personagem, tipo: f.tipo,
@@ -713,6 +719,26 @@ export function App() {
   function removerMembro(colecaoId, volumeId) {
     persist({ ...lib, colecoes: lib.colecoes.map((c) => (c.id === colecaoId ? { ...c, membros: c.membros.filter((v) => v !== volumeId) } : c)) });
   }
+  // v114: "Lidas até aqui" in a collection's reading order marks that volume and
+  // every one before it as read, in one save, with the usual undo.
+  function marcarLidasAte(colecaoId, index) {
+    const c = lib.colecoes.find((x) => x.id === colecaoId);
+    if (!c) return;
+    const alvo = new Set(c.membros.slice(0, index + 1));
+    let n = 0;
+    const next = {
+      ...lib,
+      volumes: lib.volumes.map((v) => {
+        if (!alvo.has(v.id) || v.status === "lida") return v;
+        n++;
+        return { ...v, status: "lida" };
+      }),
+    };
+    if (!n) return;
+    persist(next);
+    showToast(n + (n === 1 ? " volume marcado como lido." : " volumes marcados como lidos."), { antes: lib, depois: next, reabrir: null });
+  }
+
   function moverMembro(colecaoId, index, direcao) {
     const c = lib.colecoes.find((x) => x.id === colecaoId);
     const membros = [...c.membros];
@@ -1837,6 +1863,7 @@ export function App() {
         removerMembro={removerMembro}
         moverMembro={moverMembro}
         personagensDaColecao={personagensDaColecao}
+        onLidasAte={marcarLidasAte}
       />
 
       {/* ===================== series detail ===================== */}
@@ -1880,6 +1907,9 @@ export function App() {
         volumeDupWarning={volumeDupWarning}
         salvarVolume={salvarVolume}
         salvarVolumeEContinuar={salvarVolumeEContinuar}
+        canUpload={canUpload}
+        capaNova={capaNova}
+        setCapaNova={setCapaNova}
       />
 
       <FormColecao

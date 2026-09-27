@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 
 import { STATUS, STATUS_ORDER, tiposDaEditora } from "../lib/constantes";
+import { usePasteImage } from "../lib/hooks";
 import { Field, Modal } from "../ui/base";
 
 // v95: the publisher is picked from the registered ones (Gerenciar editoras), so a
@@ -26,7 +27,19 @@ function SeletorEditora({ editoras, valor, onChange }) {
 export function FormVolume({
   personagens, editoras, showVolumeForm, setShowVolumeForm, volumeForm, setVolumeForm,
   volumeErrors, volumeDupWarning, salvarVolume, salvarVolumeEContinuar,
+  canUpload, capaNova, setCapaNova,
 }) {
+  // v114: a new volume can take its cover in the same pass (file or Ctrl+V). The
+  // file waits here and is uploaded right after the volume is saved.
+  const aceitaCapa = !!(canUpload && volumeForm && !volumeForm.id);
+  usePasteImage(!!showVolumeForm && aceitaCapa, setCapaNova);
+  const [previa, setPrevia] = useState(null);
+  useEffect(() => {
+    if (!capaNova) { setPrevia(null); return undefined; }
+    const url = URL.createObjectURL(capaNova);
+    setPrevia(url);
+    return () => URL.revokeObjectURL(url);
+  }, [capaNova]);
   // Kept out of volumeForm on purpose: the form object is spread into the stored
   // volume on save, and this line is not part of it.
   const [avisoTipo, setAvisoTipo] = useState(null);
@@ -121,6 +134,27 @@ export function FormVolume({
           <Field label="Notas">
             <textarea className="textarea" value={volumeForm.notas} onChange={(e) => setVolumeForm((f) => ({ ...f, notas: e.target.value }))} />
           </Field>
+          {aceitaCapa && (
+            <Field label="Capa" hint={capaNova ? undefined : "Escolha uma imagem ou cole com Ctrl+V. Pode ficar para depois."}>
+              <div className="capa-nova">
+                <label className="capa-nova-alvo">
+                  {previa ? <img src={previa} alt="Capa escolhida" /> : <Plus size={20} aria-hidden="true" />}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/gif,image/webp"
+                    className="sr-only"
+                    aria-label={capaNova ? "Trocar a capa escolhida" : "Escolher a capa"}
+                    onChange={(e) => { if (e.target.files[0]) setCapaNova(e.target.files[0]); e.target.value = ""; }}
+                  />
+                </label>
+                {capaNova && (
+                  <button type="button" className="btn btn-ghost" onClick={() => setCapaNova(null)}>
+                    <X size={14} /> Tirar a capa
+                  </button>
+                )}
+              </div>
+            </Field>
+          )}
           {volumeDupWarning && <p className="field-error">{volumeDupWarning}</p>}
         </Modal>
       )}

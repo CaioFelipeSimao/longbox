@@ -2457,3 +2457,18 @@ button.retrato-linha { cursor: pointer; }
 @media (prefers-reduced-transparency: reduce) {
   .topbar, .tabbar { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); }
 }
+
+/* v114: "Lidas até aqui" in a collection's reading order, and the read mark beside the character. */
+.ordem-ate { padding: 4px 8px; font-size: 0.75rem; color: var(--accent-text); flex-shrink: 0; white-space: nowrap; }
+@media (pointer: coarse) { .ordem-ate { min-height: 44px; } }
+.ordem-lida { color: var(--read); }
+/* v114: the cover field of the "Novo volume" form. */
+.capa-nova { display: flex; align-items: center; gap: 12px; }
+.capa-nova-alvo {
+  position: relative; width: 72px; aspect-ratio: 2 / 3; flex-shrink: 0; cursor: pointer; overflow: hidden;
+  display: grid; place-items: center; color: var(--text-muted);
+  border: 1.5px dashed var(--border-strong); border-radius: var(--r-sm);
+}
+.capa-nova-alvo img { width: 100%; height: 100%; object-fit: cover; }
+.capa-nova-alvo:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .capa-nova-alvo:hover { border-color: var(--accent); color: var(--accent-text); } }

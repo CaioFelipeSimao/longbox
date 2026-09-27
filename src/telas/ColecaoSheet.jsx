@@ -7,7 +7,7 @@ import { Swatch } from "../ui/CorPersonagem";
 export function ColecaoSheet({
   lib, onRemover, setOpenColecaoId, addMemberSel, openColecao, colecaoRola,
   ordemRecolhida, alternarOrdem, definirCorBarra, openEditarColecao, adicionarMembro,
-  removerMembro, moverMembro, personagensDaColecao,
+  removerMembro, moverMembro, personagensDaColecao, onLidasAte,
 }) {
   return (
     <Sheet
@@ -54,8 +54,22 @@ export function ColecaoSheet({
                   <span className="num t-small muted" style={{ width: 22, flexShrink: 0 }}>{idx + 1}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p className="t-small truncate" style={{ margin: 0, fontWeight: 500 }}>{v.titulo}</p>
-                    <p className="t-small muted truncate" style={{ margin: 0 }}>{v.personagem}</p>
+                    <p className="t-small muted truncate" style={{ margin: 0 }}>
+                      {v.personagem}
+                      {v.status === "lida" && <span className="ordem-lida"> · Lida</span>}
+                    </p>
                   </div>
+                  {/* v114: reading a saga in order, mark this one and every one before it. */}
+                  {v.status !== "lida" && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost ordem-ate"
+                      onClick={() => onLidasAte(openColecao.id, idx)}
+                      aria-label={"Marcar como lidas até " + v.titulo}
+                    >
+                      Lidas até aqui
+                    </button>
+                  )}
                   <button className="btn-icon" onClick={() => moverMembro(openColecao.id, idx, -1)} aria-label="Mover para cima"><ArrowUp size={14} /></button>
                   <button className="btn-icon" onClick={() => moverMembro(openColecao.id, idx, 1)} aria-label="Mover para baixo"><ArrowDown size={14} /></button>
                   <button className="btn-icon" onClick={() => removerMembro(openColecao.id, vid)} aria-label="Remover da coleção">

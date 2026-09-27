@@ -22,7 +22,8 @@ export function VolumeSheet({
   if (volume) kept.current = volume;
   const v = volume || kept.current;
 
-  usePasteImage(!!volume && canUpload, onCoverPick);
+  // v114: a form on top (the "Novo volume" cover field) takes the paste, not this sheet.
+  usePasteImage(!!volume && canUpload, (f) => { if (!document.querySelector(".modal")) onCoverPick(f); });
 
   // v106: the top of the sheet takes the cover's own colour; without a cover, or
   // with one that is mostly black, white or grey, the character's colour instead.

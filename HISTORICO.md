@@ -2164,3 +2164,17 @@ The app used to save in silence and speak only on failure: `store.onEstado` now 
 writes, and a small "Salvando…" / "Salvo" beside the wordmark fades in and out two seconds
 after (fixed width, `aria-live="polite"`, hidden under 520px). Not `role="status"`: test-boot
 holds that no status region stays on screen after loading.
+
+**v114 Three features from critique 2 (lote 5), chosen from a throwaway preview.**
+A) Keyboard on the shelves: each HQs shelf and each Coleções strip is one Tab stop (roving
+tabindex, `gradeTeclado` in ui/VolumeCard.jsx); the arrows move between covers, up and down by
+the row's measured width, Home/End go to the ends, Enter opens, and the next Tab leaves for the
+next character's heading. Tab used to walk every cover, 163+ on the real library.
+B) "Lidas até aqui" in a collection's reading order (ColecaoSheet): marks that volume and every
+one before it as read in one save, toast with the count and Desfazer. Read volumes show "· Lida"
+and lose the button.
+C) The "Novo volume" form takes a cover (file or Ctrl+V, with a preview); it is uploaded through
+the usual `handleCoverPick` right after the volume is saved, from both "Salvar e fechar" and
+"Salvar e cadastrar outro". While a form is open, the volume sheet underneath ignores pastes.
+I recommended against C (the user catalogues through the skill); the user asked for it.
+`tests/test-lote5.mjs` covers all three (17 checks).

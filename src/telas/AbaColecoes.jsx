@@ -66,6 +66,7 @@ export function AbaColecoes({
                     <VolumeCard
                       volume={v}
                       index={0}
+                      tabParada={i === 0 ? 0 : -1}
                       open={false}
                       onClick={() => { switchTab("volumes"); abrirVolume(v.id, { tipo: "colecao", id: c.id }); }}
                     />

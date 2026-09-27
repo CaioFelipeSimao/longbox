@@ -104,15 +104,40 @@ export function ordenarGrupoVolumes(itens) {
   });
 }
 
+// v114: a shelf is one Tab stop. Inside it the arrows move between covers (up and
+// down by the row's width), Home and End jump to the ends, Enter opens; the next Tab
+// leaves for the next character. Roving tabindex: the cover last focused keeps
+// tabindex 0, every other one -1, set on the DOM so a re-render does not undo it.
+export const gradeTeclado = {
+  onFocus(e) {
+    const card = e.target.closest(".vol");
+    if (!card || !e.currentTarget.contains(card)) return;
+    for (const c of e.currentTarget.querySelectorAll(".vol")) c.tabIndex = c === card ? 0 : -1;
+  },
+  onKeyDown(e) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    const itens = [...e.currentTarget.querySelectorAll(".vol")];
+    const i = itens.indexOf(document.activeElement);
+    if (i < 0) return;
+    const topo = Math.round(itens[0].getBoundingClientRect().top);
+    const cols = Math.max(1, itens.filter((c) => Math.round(c.getBoundingClientRect().top) === topo).length);
+    const alvo = { ArrowRight: i + 1, ArrowLeft: i - 1, ArrowDown: i + cols, ArrowUp: i - cols, Home: 0, End: itens.length - 1 }[e.key];
+    if (alvo === undefined) return;
+    e.preventDefault();
+    itens[Math.max(0, Math.min(itens.length - 1, alvo))].focus();
+  },
+};
+
 export function VolumeCard({
   volume, open, onClick, index, bare,
   reordenavel, personagem, dragging, holdColor, cardRef,
-  onDragPointerDown, onDragPointerMove, onDragPointerEnd,
+  onDragPointerDown, onDragPointerMove, onDragPointerEnd, tabParada,
 }) {
   const c = coverColors(volume, useCores());
   return (
     <button
       ref={cardRef}
+      tabIndex={tabParada}
       className="vol press"
       data-open={open ? "true" : "false"}
       data-vol-id={reordenavel ? volume.id : undefined}

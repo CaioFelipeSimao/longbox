@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 
 import { swatchColors } from "../lib/cores";
+import { gradeTeclado } from "./VolumeCard";
 
 // The scrollbar under a collection's strip. The native bar is hidden; this one
 // is a row of short spines at the logo's rhythm, filling the whole width so a
@@ -164,7 +165,7 @@ export function ShelfStrip({ total, cor, children }) {
     : undefined;
   return (
     <div className="shelf-wrap" style={estilo}>
-      <div className="coll-strip" ref={stripRef}>{children}</div>
+      <div className="coll-strip" ref={stripRef} {...gradeTeclado}>{children}</div>
       <ShelfBar stripRef={stripRef} total={total} />
     </div>
   );
