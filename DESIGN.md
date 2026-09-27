@@ -296,6 +296,17 @@ only then. The ready state carries the volume id and the `<img>` is keyed by it,
 is never painted under another volume's title. With neither thumbnail nor full cover yet, the
 plain cover box waits; if the full file fails, the composed fallback shows.
 
+**The volume sheet (v106).** The cover is its content. Below 1024px the 440px sheet shows it
+centred on top, `min(240px, 62%)` wide, with the fields under it; from 1024px (PC, tablet on
+its side) the sheet is `min(680px, 92vw)` (`Sheet variante="volume"`) in two columns, a 250px
+cover column that stays put (`sticky`) while the rest scrolls. The top of the sheet is washed in
+the cover's most prominent colour (`corDosPixels` in `lib/util.js` on the 16x24 thumbnail,
+`useCorDaCapa` in `lib/capas.js`), or in the character's hue when the cover is mostly black,
+white or grey or has no thumbnail yet: one `linear-gradient` from `color-mix(tint 34%, surface)`
+(18% in the light theme) to the surface over 420px (`Sheet tinta`, `.sheet-tinta`). No filter runs
+while the sheet slides, steps or recedes. Slide-in, ← →, and the recede under a stacked série
+sheet are unchanged.
+
 ## Migration
 
 "Importar backup" accepts the v2 `longbox.json` export as-is. The user exports from the old

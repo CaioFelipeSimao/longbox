@@ -57,7 +57,9 @@ function prenderTab(e) {
 // nav (v88) is an optional row under the subtitle, used by the volume sheet for
 // its ‹ 3 de 22 › stepping; it lives there rather than among the actions so the
 // title keeps the header's width.
-export function Sheet({ open, onClose, title, subtitle, actions, nav, children, recede }) {
+// tinta (v106) washes the top of the sheet in a colour (the volume's cover);
+// variante lets one kind of sheet take its own width (the volume sheet widens).
+export function Sheet({ open, onClose, title, subtitle, actions, nav, children, recede, tinta, variante }) {
   const [mounted, shown] = useTransitionMount(open, 220);
   // While another sheet is stacked on top of this one, it recedes instead of
   // closing: no scrim of its own (the front sheet's scrim already dims the
@@ -82,6 +84,8 @@ export function Sheet({ open, onClose, title, subtitle, actions, nav, children, 
         aria-modal="true"
         aria-labelledby={id}
         onKeyDown={recede ? undefined : prenderTab}
+        data-variante={variante}
+        style={tinta ? { "--sheet-tinta": tinta } : undefined}
         // pointer-events:none (in CSS) keeps the mouse out, but a receded
         // sheet's inputs and buttons would still be reachable by Tab and
         // still announced to screen readers without this: inert removes it
@@ -90,6 +94,7 @@ export function Sheet({ open, onClose, title, subtitle, actions, nav, children, 
         // silently, with only a dev warning) — it wants the empty string.
         inert={recede ? "" : undefined}
       >
+        {tinta && <div className="sheet-tinta" aria-hidden="true" />}
         <div className="sheet-grab"><i /></div>
         <div className="sheet-head">
           <div style={{ minWidth: 0 }}>

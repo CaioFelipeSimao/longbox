@@ -4,6 +4,8 @@ import { Pencil, Trash2, Link2, ImagePlus, ChevronLeft, ChevronRight, Copy } fro
 import { STATUS, STATUS_ORDER } from "../lib/constantes";
 import { parseNum } from "../lib/util";
 import { usePasteImage } from "../lib/hooks";
+import { useCorDaCapa } from "../lib/capas";
+import { specForCharacter, useCores } from "../lib/cores";
 import { Field, Sheet } from "../ui/base";
 import { CoverArt } from "../ui/VolumeCard";
 
@@ -21,6 +23,13 @@ export function VolumeSheet({
   const v = volume || kept.current;
 
   usePasteImage(!!volume && canUpload, onCoverPick);
+
+  // v106: the top of the sheet takes the cover's own colour; without a cover, or
+  // with one that is mostly black, white or grey, the character's colour instead.
+  const corCapa = useCorDaCapa(v);
+  const cores = useCores();
+  const spec = v ? specForCharacter(v.personagem || v.titulo, cores) : null;
+  const tinta = v ? corCapa || "hsl(" + (spec.longbox ? 188 : spec.h || 0) + " 50% 45%)" : null;
 
   // v88: ← → step to the neighbouring volume. Not while typing, not with a
   // modifier held (those belong to the browser and the text field), not while a
@@ -78,6 +87,8 @@ export function VolumeSheet({
       open={!!volume}
       onClose={onClose}
       recede={recede}
+      tinta={tinta}
+      variante="volume"
       title={v ? v.titulo : ""}
       subtitle={v ? v.personagem : null}
       nav={v && total > 1 && (
@@ -110,8 +121,7 @@ export function VolumeSheet({
           onTouchStart={toqueInicio}
           onTouchEnd={toqueFim}
         >
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-            <div className="detail-cover">
+          <div className="detail-cover">
               <div className="cover"><CoverArt volume={v} grande /></div>
               {canUpload && (
                 <>
@@ -129,8 +139,9 @@ export function VolumeSheet({
                   />
                 </>
               )}
-            </div>
-            <dl className="deflist" style={{ flex: 1, minWidth: 0 }}>
+          </div>
+          <div className="vs-info">
+            <dl className="deflist">
               <dt>Tipo</dt><dd>{v.tipo}</dd>
               {v.editora && <><dt>Editora</dt><dd>{v.editora}</dd></>}
               {v.ano && <><dt>Ano</dt><dd className="num">{v.ano}</dd></>}
@@ -138,7 +149,6 @@ export function VolumeSheet({
                 <><dt>Coleções</dt><dd>{colecoes.map((c) => c.nome).join(", ")}</dd></>
               )}
             </dl>
-          </div>
 
           <div>
             <p className="t-micro" style={{ margin: "0 0 8px" }}>Status de leitura</p>
@@ -238,6 +248,7 @@ export function VolumeSheet({
                 onClose={() => setLinkSerieId(null)}
               />
             )}
+          </div>
           </div>
         </div>
       )}

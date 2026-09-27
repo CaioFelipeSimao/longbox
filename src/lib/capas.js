@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 import { IMG_TYPES } from "./constantes";
 import { store } from "./armazenamento";
+import { corDosPixels } from "./util";
 
 export function coverUrl(volume) {
   return volume && volume.capaAssetId ? "/_blob/" + volume.capaAssetId : null;
@@ -241,4 +242,48 @@ export async function uploadCover(file) {
     if (!type) throw { code: "unsupported_type", message: "extensão desconhecida" };
   }
   return store.assets.upload(prepared, { type });
+}
+
+// v106: the colour that tints the top of the volume sheet, taken from the cover
+// itself. The shelf thumbnail (already on this device) is drawn at 16x24 and its
+// pixels are grouped by hue; the hue with the most saturated pixels wins, averaged
+// within its group. A plain average would be mud on most covers. Near-black, near-
+// white and grey pixels do not vote, so a cover that is mostly those gives null and
+// the sheet uses the character's colour instead. Lightness is fixed and saturation
+// clamped, so every wash sits at the same strength. One small draw per cover, cached.
+const corCache = new Map();
+
+export function corDominante(url) {
+  if (corCache.has(url)) return Promise.resolve(corCache.get(url));
+  return new Promise((res) => {
+    const img = new Image();
+    img.onload = () => {
+      let cor = null;
+      try {
+        const W = 16, H = 24;
+        const cv = document.createElement("canvas");
+        cv.width = W; cv.height = H;
+        const x = cv.getContext("2d", { willReadFrequently: true });
+        x.drawImage(img, 0, 0, W, H);
+        cor = corDosPixels(x.getImageData(0, 0, W, H).data);
+      } catch (e) { cor = null; }
+      corCache.set(url, cor);
+      res(cor);
+    };
+    img.onerror = () => { corCache.set(url, null); res(null); };
+    img.src = url;
+  });
+}
+
+// The sheet's tint for this volume: the cover's colour once known, null before.
+export function useCorDaCapa(volume) {
+  const mini = useMiniCapa(volume && volume.capaAssetId);
+  const [cor, setCor] = useState(null); // { url, cor }
+  useEffect(() => {
+    if (!mini) return undefined;
+    let vivo = true;
+    corDominante(mini).then((c) => { if (vivo) setCor({ url: mini, cor: c }); });
+    return () => { vivo = false; };
+  }, [mini]);
+  return cor && cor.url === mini ? cor.cor : null;
 }

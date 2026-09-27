@@ -2081,3 +2081,16 @@ in headless Chrome with 800ms of simulated network: hub, five fast rerolls, v104
 stale or grey cover for about 1.65s in total, v105 never; sheet, first picture at 840ms on
 v104, 7ms (thumbnail) on v105, full cover at ~817ms. `tests/test-capa-grande.mjs` guards it.
 This is step 1 of the big-cover sheet redesign (the critique's first open question).
+
+**v106 The volume sheet puts the cover first (critique question 1, done).** Chosen from a
+throwaway mockup of three layouts (https://claude.ai/artifact/4TDuwPEK8TXnxLbn9qhbHd): the user
+took the two-column one with the blurred-cover atmosphere of another, then asked for a solid
+colour taken from the cover instead of the blurred image. Two columns only from 1024px, since
+the user's tablet is used on its side; below that the cover is centred on top of the 440px
+sheet. The wash is the cover's most prominent colour, computed once per cover from the local
+thumbnail (hue bins weighted by saturation, so a vivid accent beats a larger dull area; mostly
+black/white/grey covers fall back to the character's hue), drawn as a plain gradient: the
+blurred version would have run a GPU filter on every frame of the slide, the ← → step and the
+recede. `tests/test-cor-capa.mjs` checks the colour picking; checked in headless Chrome at
+1467, 1280 (touch), 800 and in the light theme, including the sticky cover column and the
+recede under the série sheet.

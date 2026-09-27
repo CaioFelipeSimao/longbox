@@ -2044,7 +2044,31 @@ button.retrato-linha { cursor: pointer; }
 
 /* ---------- detail bits ---------- */
 
-.detail-cover { width: 118px; flex-shrink: 0; }
+/* v106: the cover is the content of the volume sheet. Below 1024px it sits centred
+   on top of the 440px sheet; from 1024px (PC, tablet on its side) the sheet widens and
+   the cover takes a column of its own, holding still while the rest scrolls. */
+.detail-cover { width: min(240px, 62%); align-self: center; display: flex; flex-direction: column; gap: 8px; position: relative; z-index: 1; }
+.detail-cover .cover { box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); }
+.detail-cover .cover-paste-hint { margin: 0; }
+.vs-info { display: flex; flex-direction: column; gap: 18px; min-width: 0; position: relative; z-index: 1; }
+@media (min-width: 1024px) {
+  .sheet[data-variante="volume"] { width: min(680px, 92vw); }
+  .sheet[data-variante="volume"] .vol-nav { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 22px; align-items: start; }
+  .sheet[data-variante="volume"] .detail-cover { width: 100%; position: sticky; top: 0; }
+}
+
+/* v106: the cover's colour washes down from the top of the sheet and fades into it.
+   A plain gradient of one colour: no filter runs while the sheet slides, steps or
+   recedes. Weaker in the light theme so text keeps its contrast. */
+.sheet { --tinta-forca: 34%; }
+@media (prefers-color-scheme: light) { .sheet { --tinta-forca: 18%; } }
+.sheet-tinta {
+  position: absolute; left: 0; right: 0; top: 0; height: 420px; pointer-events: none;
+  background: linear-gradient(to bottom, color-mix(in oklab, var(--sheet-tinta) var(--tinta-forca), var(--surface)), var(--surface));
+}
+.sheet-tinta ~ .sheet-head, .sheet-tinta ~ .sheet-grab { position: relative; z-index: 1; }
+.sheet-tinta ~ .sheet-head { border-bottom-color: transparent; }
+.sheet-tinta ~ .sheet-body { position: relative; z-index: 1; }
 .deflist { display: grid; grid-template-columns: auto 1fr; gap: 7px 14px; align-items: baseline; }
 .deflist dt { font-size: 0.75rem; color: var(--text-muted); }
 .deflist dd { margin: 0; font-size: 0.8125rem; }
