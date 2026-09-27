@@ -2133,3 +2133,9 @@ hub in both themes (`.hub-topo` stays, always `position: static`). The rest of v
 light-theme legibility of the hunt is reopened: the cause is that `.gm::after`, the veil over
 the backdrop covers, is a near-black gradient in both themes, so on the light page it paints a
 dark smear under dark text.
+
+**v111 The hub backdrop's veil follows the theme.** The other solution for the light-theme
+hunt, chosen by the user from a prototype screenshot: `.gm::after` fades the covers toward the
+page, so in the light theme it is now the light page colour (rgba 251,251,252 from 0.74 to
+0.9) instead of the near-black used in both themes. The covers stay behind the whole hub, as a
+pale watermark under "Falta pouco" and the shelf, and dark text reads on it. Dark theme unchanged.
