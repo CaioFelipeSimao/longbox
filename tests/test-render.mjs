@@ -350,6 +350,32 @@ if (scenario === "seeded") {
   await click(visivel("button.brand"), "brand back to hub");
   await new Promise((r) => setTimeout(r, 400));
 
+  // v137: a wheel turned notch by notch, slower than 160ms apart, used to spring
+  // the cover back between notches, so a slow wheel never unlocked (PC report).
+  for (let i = 0; i < 3; i++) { wheel(60); await new Promise((r) => setTimeout(r, 260)); }
+  await new Promise((r) => setTimeout(r, 500));
+  console.log("  slow notches add up and enter: " + (!onHub() ? "PASS" : "FAIL"));
+  await click(visivel("button.brand"), "back to hub for the long spin");
+  await new Promise((r) => setTimeout(r, 400));
+
+  // v137: one unbroken spin from above into the end never unlocked either, since
+  // only a 250ms pause re-read "at the end". Arriving still must not throw the
+  // cover; pushing on against the end for a while must.
+  const capa = visivel(".hub-capa");
+  let rolado = 0;
+  Object.defineProperty(capa, "scrollHeight", { configurable: true, get: () => 2000 });
+  Object.defineProperty(capa, "clientHeight", { configurable: true, get: () => 1000 });
+  Object.defineProperty(capa, "scrollTop", { configurable: true, get: () => rolado, set: (v) => { rolado = v; } });
+  for (let i = 0; i < 4; i++) { wheel(50); await new Promise((r) => setTimeout(r, 80)); }
+  rolado = 1000; // reached the end mid-spin
+  for (let i = 0; i < 3; i++) { wheel(50); await new Promise((r) => setTimeout(r, 80)); }
+  console.log("  arriving at the end mid-spin does not lift: " + (onHub() && !capa.style.transform ? "PASS" : "FAIL (" + capa.style.transform + ")"));
+  for (let i = 0; i < 12 && onHub(); i++) { wheel(50); await new Promise((r) => setTimeout(r, 80)); }
+  await new Promise((r) => setTimeout(r, 500));
+  console.log("  spinning on against the end enters: " + (!onHub() ? "PASS" : "FAIL"));
+  await click(visivel("button.brand"), "back to hub");
+  await new Promise((r) => setTimeout(r, 400));
+
   console.log("\n--- tab walk ---");
 
   await click(minhaColecao(), "lift the cover");

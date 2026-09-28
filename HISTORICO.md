@@ -2475,3 +2475,25 @@ scrolled past behind the app's bar like a hole over the header. Safari and the P
 and were fine. A `::before` on the cover's sticky header, `env(safe-area-inset-top)` tall, in the page
 colour, now rides with it. Checked with a simulated 110px inset in Chrome: scrolled, the strip is
 solid and the hub passes under it.
+
+**v137 Hub unlock by wheel on the PC, and the tabs' header below the Claude app's bar.** The user
+reported that on the PC, mostly on a first visit or reload and not always, wheeling with the hub's
+scrollbar already at the bottom did not unlock it, while "Minha coleção" did. Reproduced in Chrome
+(1707x960, several device scale factors), two causes, both in the wheel path of `useHubUnlock`:
+(1) a notch lifts the cover ~100px but the unlock needs 120, and after 160ms idle the wheel counted as
+released and the cover sprang back, so notches 200ms or more apart never added up (100px every 200 or
+300ms: still locked after 15 notches); (2) since v126 a turn that scrolls into the end cannot lift the
+cover, and only a 250ms pause re-read "at the end", so one unbroken spin from above never unlocked.
+Fix: the idle release waits 450ms, and a spin that keeps pushing against the end for 400ms counts as a
+new pull (arriving at the end still lifts nothing). After: every pace tried unlocks in 2 to 6 notches.
+The first-visit pattern was not proven; the likeliest reading is that a first visit is when the hub is
+scrolled down in one go. Three checks in test-render (slow notches, arrival mid-spin does not lift,
+pushing on enters), shown failing before the fix.
+The offered follow-up to v136: in the Claude iOS app the tabs' sticky header pinned at the window
+top, under the app's translucent bar (the host pads :root, but a sticky offset on the document counts
+from the window edge). `--topo` = env(safe-area-inset-top) now joins the sticky tops of the header,
+band and group headings, reset to 0 inside the hub cover (whose padding already clears the bar), and
+the v136 `::before` strip moved from the hub's header to every header. Simulated 110px inset in
+Chrome (phone 390x844): scrolled, header at 110, band at 172, solid strip above; hub header still 110,
+not doubled; with 0 inset everything measures as before. Not verifiable here on the real app: the user
+checks on the iPhone.

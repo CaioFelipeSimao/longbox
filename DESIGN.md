@@ -184,7 +184,9 @@ cover is down stays per browser tab (`sessionStorage["longbox:aba"]`, "hub" or t
 visit opens on the hub and a reload keeps you where you were. The unlock lifts the whole cover,
 opaque, no fade, and the tab is revealed where it was scrolled; the wordmark or 0 drops it back
 from the top. The unlock only counts when the gesture **starts** at the hub's end (a touch that
-begins there, or a wheel turn after a 250ms pause); a flick needs 40px of travel as well as speed.
+begins there, or a wheel turn after a 250ms pause, or a spin that has kept pushing against the end
+for 400ms, v137); a flick needs 40px of travel as well as speed. The wheel counts as released after
+450ms idle (v137; 160ms sprang slow notches back between turns, so they never added up to 120px).
 A flick is thrown at the finger's speed (v127: duration 2 x remaining / speed, 180-360ms,
 cubic-bezier(0.25, 0.5, 0.3, 1)); a slow drag past 120px uses 280ms ease-drawer. The tab takes over
 on transitionend. The cover has the thin inner scrollbar; the page's own bar is transparent while
@@ -195,7 +197,9 @@ Top safe area (v134-v136, for the Claude iOS app, whose translucent bar covers t
 cover pads its content by `env(safe-area-inset-top)` and its sticky header keeps `top: 0` (inside a
 padded scroller a sticky offset counts from the content edge; adding the inset again doubled it), and
 a `::before` of the inset height in `--bg` rides above the header so the hub never shows through the
-app bar. All zero in Safari and on the PC. Also v132-v134: `lang="pt-BR"` set at mount, one hidden h1
+app bar. v137: the tabs do the same on the document: `--topo` (the inset, reset to 0 inside the
+cover) is added to the sticky tops of `.topbar`, `.ed-band` and `.group-head`, and every `.topbar`
+wears the `::before` strip. All zero in Safari and on the PC. Also v132-v134: `lang="pt-BR"` set at mount, one hidden h1
 per surface, skip link for keyboards only (absent on touch screens), 15s undo when a removal takes a
 série with edições or everything.
 

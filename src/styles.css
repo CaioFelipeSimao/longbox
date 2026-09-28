@@ -63,6 +63,12 @@
      inside are sized so this is exactly what it measures, which is also what the
      sticky group headers offset themselves by. */
   --edbar-h: 72px;
+  /* v137: where the sticky bars pin. The Claude iOS app covers the page top with
+     its own translucent bar and reports it as the top safe-area inset; the host
+     pads :root by it, but a sticky offset on the document counts from the window
+     edge, so the tabs' header slid under that bar. 0 in Safari and on the PC.
+     The hub cover resets it: its own padding already clears the bar (v135). */
+  --topo: env(safe-area-inset-top, 0px);
 
   /* The hub's rhythm lives here rather than in each block, so a section and a
      rule-separated block are spaced by the same two numbers everywhere. */
@@ -240,7 +246,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 
 .topbar {
   position: sticky;
-  top: 0;
+  top: var(--topo);
   z-index: 20;
   background: var(--topbar-bg);
   backdrop-filter: blur(20px) saturate(180%);
@@ -342,7 +348,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    the same --col column as .content, so the strip and the content share a margin. */
 .ed-band {
   position: sticky;
-  top: var(--topbar-h);
+  top: calc(var(--topo) + var(--topbar-h));
   z-index: 15;
   border-bottom: 1px solid var(--border);
   background: var(--bg);
@@ -1368,7 +1374,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .group-head {
   position: sticky;
   /* Clears the publisher strip, which is itself stuck under the header. */
-  top: calc(var(--topbar-h) + var(--edbar-h));
+  top: calc(var(--topo) + var(--topbar-h) + var(--edbar-h));
   z-index: 10;
   display: flex;
   /* v122: centred, like on touch; on the baseline the name sat 5px above the colour
@@ -1692,6 +1698,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   --ed-accent-text: var(--accent-text);
   --ed-borda: var(--border-strong);
   --ed-rolagem: var(--border-strong);
+  --topo: 0px;
 }
 /* The publisher gradient belongs to the app's own header, never the hub's. */
 .app .hub-capa > .topbar { background-image: none; }
@@ -1703,8 +1710,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 /* v136: the strip above the sticky header (the inset, under the Claude app's
    translucent bar) was see-through, so the hub scrolled past behind the app's bar
    like a hole over the header. It is painted in the page colour and rides with the
-   header. Zero tall in Safari and on the PC, where the inset is 0. */
-.hub-capa > .topbar::before {
+   header. Zero tall in Safari and on the PC, where the inset is 0. v137: every
+   header wears it, so the tabs' stuck header gets the same solid strip. */
+.topbar::before {
   content: "";
   position: absolute;
   left: 0;

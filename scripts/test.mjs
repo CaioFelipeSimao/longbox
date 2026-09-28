@@ -14,7 +14,7 @@ import { spawnSync } from "node:child_process";
 
 const SUITES = [
   { args: ["scripts/check-encoding.mjs"], minimo: 0 },
-  { args: ["tests/test-render.mjs", "seeded"], minimo: 174 },
+  { args: ["tests/test-render.mjs", "seeded"], minimo: 177 },
   { args: ["tests/test-render.mjs", "no-claude"], minimo: 6 },
   { args: ["tests/test-render.mjs", "with-claude"], minimo: 6 },
   { args: ["tests/test-boot.mjs"], minimo: 37 },
@@ -39,7 +39,7 @@ const SUITES = [
   { args: ["tests/test-capa-hub.mjs"], minimo: 40 },
   { args: ["tests/test-arrastar-folha.mjs"], minimo: 14 },
   { args: ["tests/test-barra-busca.mjs"], minimo: 30 },
-  { args: ["tests/test-acessibilidade.mjs"], minimo: 23 },
+  { args: ["tests/test-acessibilidade.mjs"], minimo: 24 },
 ];
 
 // Lines that report a count which must be zero. Source and CSS dash counts are

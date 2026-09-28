@@ -127,6 +127,7 @@ export function useHubUnlock(active, elRef, onEnter) {
     let wheelIdle = null;
     let ultimaRoda = 0;
     let rodaNoFim = false;
+    let fimDesde = 0; // when this spin first found the scroller at its end
     const armTimer = setTimeout(() => { armed = true; }, 350);
 
     const paint = (v) => {
@@ -224,9 +225,13 @@ export function useHubUnlock(active, elRef, onEnter) {
     const onWheel = (e) => {
       if (!armed || committed) return;
       // A wheel has no finger-down, so a pause between turns stands in for one:
-      // the turn that scrolls into the end cannot also lift the cover.
+      // the turn that scrolls into the end cannot also lift the cover. v137: but a
+      // spin that keeps pushing against the end for 400ms means it, pause or not.
       const now = Date.now();
-      if (now - ultimaRoda > 250) rodaNoFim = noFim();
+      const fim = noFim();
+      if (now - ultimaRoda > 250) rodaNoFim = fim;
+      fimDesde = fim ? fimDesde || now : 0;
+      if (fimDesde && now - fimDesde > 400) rodaNoFim = true;
       ultimaRoda = now;
       if (!rodaNoFim) return;
       if (e.deltaY <= 0 && offset <= 0) return;
@@ -238,9 +243,10 @@ export function useHubUnlock(active, elRef, onEnter) {
       el.style.willChange = "transform";
       paint(Math.max(0, offset + e.deltaY));
       if (offset >= UNLOCK_COMMIT_PX) { commit(); return; }
-      // A wheel has no finger-up, so idleness stands in for release.
+      // A wheel has no finger-up, so idleness stands in for release. v137: 450ms,
+      // not 160: notches turned slowly sprang back between turns and never added up.
       if (wheelIdle) clearTimeout(wheelIdle);
-      wheelIdle = setTimeout(() => { velocity = 0; release(); }, 160);
+      wheelIdle = setTimeout(() => { velocity = 0; release(); }, 450);
     };
 
     window.addEventListener("wheel", onWheel, { passive: true });
