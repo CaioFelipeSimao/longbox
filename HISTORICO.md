@@ -2446,3 +2446,18 @@ buttons get min-width 44px, the publisher select 44px tall on coarse pointers. T
 (filter and "+"): of two options (A filter outlined, B "+" named) the user chose B, so "Novo
 volume / Nova coleção / Nova série" keeps its word on a phone (the search left the header in v129)
 and only folds to "+" under 360px. `test-barra-busca.mjs` 30 checks.
+
+**v134 Critique 4, last batch, plus two Claude-app reports.** The user declined the denser tab-bar
+glass and the stronger hub veil after a side-by-side preview (both stay as they were), and agreed to
+drop "Zerar tudo" farther from Importar (it already confirms with counts and offers undo) and the
+header "jump" on Coleções (the Novo button changes width per tab anyway; the alternative was a dead
+filter button). Kept: the undo toast stays 15s instead of 8s when a removal took more than one thing
+with it (a série with edições, or Zerar tudo). Two reports from the Claude iOS app: the hub cover's
+header (wordmark, "Minha coleção") sat under the app's own top bar. The host pads :root by the top
+safe-area inset, which the tabs' normal flow respects, but the fixed cover started at the very top;
+it now pads its content and its sticky header by env(safe-area-inset-top). And the v132 skip link
+showed over the tab band on the phone and could not be used: that web view counted a tap or an
+automatic focus move as keyboard focus, and with :focus-visible only the link hid itself on the press.
+It now shows on any focus (a click works) and does not exist on touch-only screens (no Tab there;
+VoiceOver uses the v132 headings). The safe-area fix is unverifiable here: the user checks on device.
+`test-acessibilidade.mjs` 22 checks.

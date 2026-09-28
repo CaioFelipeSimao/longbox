@@ -1679,6 +1679,12 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
      tab underneath would fight it. */
   overscroll-behavior: none;
   background: var(--bg);
+  /* v134: the Claude iOS app draws its own header over the top of the page and says so
+     through the top safe-area inset. The page's normal flow leaves that room (the
+     host pads :root), but this fixed layer started at the very top, so its header
+     (wordmark, "Minha coleção") sat under the app's bar. The cover still paints
+     under that bar; its content and sticky header start below it. */
+  padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
   /* The hub never takes the publisher's colour; the app under it keeps it. */
@@ -1689,6 +1695,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 /* The publisher gradient belongs to the app's own header, never the hub's. */
 .app .hub-capa > .topbar { background-image: none; }
+.hub-capa > .topbar { top: env(safe-area-inset-top, 0px); }
 
 /* The unlock in reverse: returning drops the cover back in from the top. */
 @media (prefers-reduced-motion: no-preference) {
@@ -2532,7 +2539,7 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 /* v132: the keyboard way past the header, shown only when Tab reaches it. */
 .pular {
   position: fixed;
-  top: 8px;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
   left: 8px;
   z-index: 60;
   padding: 10px 14px;
@@ -2543,7 +2550,13 @@ html[data-capa="true"] body { scrollbar-color: auto; }
   text-decoration: none;
   transform: translateY(-160%);
 }
-.pular:focus-visible { transform: none; }
+/* v134: shown for any focus, so a click that lands on it still works (with
+   :focus-visible only it hid itself on the mouse press and the click missed). */
+.pular:focus { transform: none; }
+/* A touch screen has no Tab to skip with, and the Claude iOS app counted a tap or an
+   automatic focus move as keyboard focus, showing it over the tab band where it could
+   not be used. VoiceOver moves by the hidden headings instead (v132). */
+@media (hover: none) and (pointer: coarse) { .pular { display: none; } }
 
 .sr-only {
   position: absolute;

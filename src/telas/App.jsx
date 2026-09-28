@@ -151,7 +151,9 @@ export function App() {
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), toast.desfazer ? 8000 : 3000);
+    // v134: 15s when the removal took more than one thing with it (a série and its
+    // edições, or everything); once this toast is gone only a backup brings it back.
+    const t = setTimeout(() => setToast(null), toast.desfazer ? (toast.desfazer.longo ? 15000 : 8000) : 3000);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -1064,7 +1066,8 @@ export function App() {
       setOpenVolumeId(null); setOpenColecaoId(null); setOpenSerieId(null);
     }
     persist(next);
-    showToast(avisoRemocao(type, id, antes), { antes, depois: next, reabrir });
+    const longo = type === "all" || (type === "serie" && antes.edicoes.some((e) => e.serieId === id));
+    showToast(avisoRemocao(type, id, antes), { antes, depois: next, reabrir, longo });
   }
 
   // v113: the toast says how much went, and what stayed, where it is more than one thing.

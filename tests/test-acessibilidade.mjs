@@ -84,6 +84,27 @@ console.log("=== séries ===");
   check("sem erros", m.erros.length === 0, m.erros[0]);
 }
 
+console.log("=== v134: desfazer mais longo e o topo do app do Claude ===");
+{
+  const m = await montar("series");
+  m.root.querySelector('.aba[data-ativa="true"] .serie-row')?.click();
+  await sleep(200);
+  const sheet = [...m.root.querySelectorAll(".sheet")].find((s) => s.dataset.in === "true");
+  sheet?.querySelector(".btn-remover")?.click();
+  await sleep(150);
+  const confirmar = [...m.root.querySelectorAll(".modal button")].find((b) => /Remover|Apagar/.test(b.textContent));
+  confirmar?.click();
+  await sleep(200);
+  const desfazerBotao = () => [...m.root.querySelectorAll(".toast button")].find((b) => /Desfazer/.test(b.textContent));
+  check("remover a série oferece desfazer", !!desfazerBotao(), m.root.querySelector(".toast")?.textContent);
+  await sleep(9000);
+  check("com edições, o desfazer ainda está lá depois de 9 s", !!desfazerBotao(), m.root.querySelector(".toast")?.textContent);
+  const css = fs.readFileSync("src/styles.css", "utf8");
+  check("o hub respeita o espaço do cabeçalho do app", css.includes("padding-top: env(safe-area-inset-top, 0px);") && css.includes(".hub-capa > .topbar { top: env(safe-area-inset-top, 0px); }"));
+  check("o pular não existe em tela de toque e aceita clique", css.includes("@media (hover: none) and (pointer: coarse) { .pular { display: none; } }") && css.includes(".pular:focus { transform: none; }"));
+  check("sem erros", m.erros.length === 0, m.erros[0]);
+}
+
 console.log("=== detalhes ===");
 {
   const css = fs.readFileSync("src/styles.css", "utf8");

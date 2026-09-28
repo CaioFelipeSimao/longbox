@@ -39,7 +39,7 @@ const SUITES = [
   { args: ["tests/test-capa-hub.mjs"], minimo: 40 },
   { args: ["tests/test-arrastar-folha.mjs"], minimo: 14 },
   { args: ["tests/test-barra-busca.mjs"], minimo: 30 },
-  { args: ["tests/test-acessibilidade.mjs"], minimo: 17 },
+  { args: ["tests/test-acessibilidade.mjs"], minimo: 22 },
 ];
 
 // Lines that report a count which must be zero. Source and CSS dash counts are
