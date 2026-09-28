@@ -540,6 +540,17 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   pointer-events: none;
+  transition: background-color 250ms var(--ease-out);
+}
+/* v131: solid for 0.7s after a tab switch, while the Claude iOS app would draw the
+   glass in stale tiles over the new tab's covers; then it fades back to glass. */
+.tabbar[data-trocando="true"] .tabbar-capsula::before,
+.tabbar[data-trocando="true"] .search-barra .search-field::before {
+  /* As opaque as the probe bar that tested clean (0.96): unblurred covers must not show through. */
+  background: color-mix(in srgb, var(--bg) 96%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition: none;
 }
 .tabbar-capsula {
   display: flex;

@@ -190,8 +190,8 @@ The hub never takes the publisher colour: its header carries no hue and the cove
 `--ed-*` accents.
 
 HQs shelf on a phone (v128): four covers a row under 640px, caption title 11px and meta 10px,
-status stacked under the format without the dot. After every tab switch the bottom tab bar gets a
-one-frame `translateZ(0)` so its glass re-samples the backdrop (the Claude iOS app left it stale).
+status stacked under the format without the dot. After every tab switch the tab bar's glass turns solid for 0.7s and fades back (v131, replacing v128's one-frame nudge):
+the Claude iOS app draws any backdrop filter over images in stale tiles for ~500ms after they change.
 
 Each tab gets a **different layout family**, which is what actually fixes the sameness:
 

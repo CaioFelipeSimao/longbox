@@ -36,7 +36,7 @@ const SUITES = [
   { args: ["tests/test-formatos.mjs"], minimo: 24 },
   { args: ["tests/test-sincronia.mjs"], minimo: 36 },
   { args: ["tests/test-miniaturas.mjs"], minimo: 15 },
-  { args: ["tests/test-capa-hub.mjs"], minimo: 39 },
+  { args: ["tests/test-capa-hub.mjs"], minimo: 40 },
   { args: ["tests/test-arrastar-folha.mjs"], minimo: 14 },
   { args: ["tests/test-barra-busca.mjs"], minimo: 21 },
 ];

@@ -2408,3 +2408,16 @@ box), the box keeps only the rim and shadow, and the capsule lost its `overflow:
 clip their own labels instead). Same for the search circle. Looks identical (captures compared).
 The v128 nudge stays as a second line. `test-barra-busca.mjs` 21 checks (the CSS keeps the blur off
 the box that holds the buttons).
+
+**v131 The Claude-app glass glitch, found and worked around.** v130 did not fix it, so a throwaway
+probe page took it apart on the user's iPhone. Round 1 (four glass bars built four ways over loud
+CSS-gradient blocks) was clean in the Claude app, which ruled out the glass structure and the sliding
+pill. Round 2 added real `<img>` covers and three ways of switching (rebuild, kept tabs with
+content-visibility, kept tabs with display: none): every glass bar glitched in every mode. So the
+trigger is any backdrop filter over images that just changed, in the Claude app's web view only
+(Safari is clean); the photo's seams were the covers' edges, not the buttons'. Round 3's bar that
+goes solid for 0.7s after a switch and fades back to glass never showed it, and the user asked for
+it in the Longbox: `data-trocando` on the tab bar for 700ms after any tab or hub change turns both
+glass layers to a 96% solid, then a 250ms fade restores the glass. Applies everywhere (the user
+agent was not compared; in Safari it is only a brief solid moment). v128's nudge removed.
+`test-capa-hub.mjs` 40 checks.

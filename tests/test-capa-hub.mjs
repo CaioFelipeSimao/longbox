@@ -190,16 +190,15 @@ console.log("=== arremesso ===");
 console.log("=== v128: vidro da barra e legenda ===");
 {
   const m = await montar({ sessao: { "longbox:aba": "volumes" } });
-  const barra = m.root.querySelector(".tabbar-capsula"); // v129: the glass is on the capsule
-  const vistos = [];
-  const obs = new m.window.MutationObserver(() => vistos.push(barra.style.transform));
-  obs.observe(barra, { attributes: true, attributeFilter: ["style"] });
+  // v131: the bar goes solid for 0.7s after a switch (the Claude iOS app draws the
+  // glass in stale tiles over fresh covers), then back to glass.
+  const barra = m.root.querySelector(".tabbar");
+  check("ao abrir, a barra já está de vidro", !barra.dataset.trocando);
   const series = [...m.root.querySelectorAll(".tabbar button")].find((b) => /Séries/.test(b.textContent));
   await m.clicar(series);
-  await sleep(400);
-  obs.disconnect();
-  check("trocar de aba cutuca o vidro da barra", vistos.includes("translateZ(0)"), vistos.join(","));
-  check("e devolve a barra como estava", barra.style.transform === "", barra.style.transform);
+  check("trocar de aba deixa a barra sólida", barra.dataset.trocando === "true", barra.dataset.trocando);
+  await sleep(700);
+  check("e ela volta ao vidro", !barra.dataset.trocando, barra.dataset.trocando);
 
   const lida = await montar({ sessao: { "longbox:aba": "volumes" } });
   const card = [...lida.root.querySelectorAll('.aba[data-ativa="true"] .vol')][0];

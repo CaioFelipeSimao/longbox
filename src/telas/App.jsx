@@ -1349,26 +1349,21 @@ export function App() {
 
   const entrarNaColecao = useCallback(() => setHubAberto(false), []);
 
-  // v128: in the Claude iOS app (not Safari) the tab bar's glass could keep showing
-  // a blurred copy of the previous screen after a tab switch, until the next touch;
-  // a screenshot forced a redraw, so it never showed in one. After a switch the bar
-  // gets a throwaway transform for one frame once the new tab has painted, and
-  // again a little later, which makes WebKit sample its backdrop afresh.
+  // v131: in the Claude iOS app (not Safari) the tab bar's glass is drawn wrong,
+  // in tiles showing stale backdrop, for about half a second whenever the images
+  // behind it change, i.e. after every tab switch. A throwaway probe page settled it:
+  // any backdrop filter over <img> content does it there, however the glass or the
+  // tabs are built, and a bar that turns solid for 0.7s after a switch never shows
+  // it. So the bar does that (data-trocando, styles.css) and fades back to glass.
+  // (v128's one-frame transform nudge only shortened the glitch; this replaces it.)
   const tabbarRef = useRef(null);
+  const [trocandoAba, setTrocandoAba] = useState(false);
+  const primeiraTroca = useRef(true);
   useEffect(() => {
-    // v129: the glass is on the capsule and the search circle now, not the bar.
-    const nav = tabbarRef.current;
-    if (!nav || typeof requestAnimationFrame !== "function") return undefined;
-    const vidros = () => [...nav.querySelectorAll(".tabbar-capsula, .search-barra .search-field")];
-    let ids = [];
-    const cutucar = () => {
-      const els = vidros();
-      els.forEach((el) => { el.style.transform = "translateZ(0)"; });
-      ids.push(requestAnimationFrame(() => { els.forEach((el) => { el.style.transform = ""; }); }));
-    };
-    ids.push(requestAnimationFrame(() => { ids.push(requestAnimationFrame(cutucar)); }));
-    const t = setTimeout(cutucar, 300);
-    return () => { ids.forEach(cancelAnimationFrame); clearTimeout(t); vidros().forEach((el) => { el.style.transform = ""; }); };
+    if (primeiraTroca.current) { primeiraTroca.current = false; return undefined; }
+    setTrocandoAba(true);
+    const t = setTimeout(() => setTrocandoAba(false), 700);
+    return () => clearTimeout(t);
   }, [tab, hubAberto]);
 
   // The page's own scrollbar is made transparent under the cover (styles.css).
@@ -1832,6 +1827,7 @@ export function App() {
         className="tabbar"
         ref={tabbarRef}
         data-buscando={buscaNaBarra ? "true" : "false"}
+        data-trocando={trocandoAba ? "true" : undefined}
         style={{ "--aba-i": TABS.indexOf(abaAtual) }}
       >
         <div className="tabbar-capsula">
