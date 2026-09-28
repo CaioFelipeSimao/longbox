@@ -102,6 +102,7 @@ console.log("=== v134: desfazer mais longo e o topo do app do Claude ===");
   const css = fs.readFileSync("src/styles.css", "utf8");
   // v135: the padding alone; a sticky top on top of it counted the inset twice.
   check("o hub respeita o espaço do cabeçalho do app, uma vez só", css.includes("padding-top: env(safe-area-inset-top, 0px);") && !css.includes(".hub-capa > .topbar { top: env("));
+  check("a faixa acima do cabeçalho do hub é pintada (v136)", /\.hub-capa > \.topbar::before \{[^}]*height: env\(safe-area-inset-top, 0px\);[^}]*background: var\(--bg\);/.test(css));
   check("o pular não existe em tela de toque e aceita clique", css.includes("@media (hover: none) and (pointer: coarse) { .pular { display: none; } }") && css.includes(".pular:focus { transform: none; }"));
   check("sem erros", m.erros.length === 0, m.erros[0]);
 }

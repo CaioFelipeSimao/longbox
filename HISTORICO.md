@@ -2468,3 +2468,10 @@ env(safe-area-inset-top)` AND its sticky header `top: env(...)`; inside a padded
 offset is measured from the content edge, so the inset counted twice. Measured in Chrome with a
 110px pad: top 0 rests and sticks at 110, top 110 at 220 (both at rest and scrolled). The sticky top
 went back to 0; the padding stays.
+
+**v136 No hole above the hub header in the Claude app.** After v135 the header sat right, but the
+strip above it (the top inset, under the Claude app's translucent bar) was see-through, so the hub
+scrolled past behind the app's bar like a hole over the header. Safari and the PC have a zero inset
+and were fine. A `::before` on the cover's sticky header, `env(safe-area-inset-top)` tall, in the page
+colour, now rides with it. Checked with a simulated 110px inset in Chrome: scrolled, the strip is
+solid and the hub passes under it.

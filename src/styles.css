@@ -1700,6 +1700,20 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    second time, to the middle of the screen in the Claude app. With the padding alone
    it rests and sticks just below the app's bar (measured: 110 at rest and scrolled,
    against 220 with both). */
+/* v136: the strip above the sticky header (the inset, under the Claude app's
+   translucent bar) was see-through, so the hub scrolled past behind the app's bar
+   like a hole over the header. It is painted in the page colour and rides with the
+   header. Zero tall in Safari and on the PC, where the inset is 0. */
+.hub-capa > .topbar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--bg);
+  pointer-events: none;
+}
 
 /* The unlock in reverse: returning drops the cover back in from the top. */
 @media (prefers-reduced-motion: no-preference) {
