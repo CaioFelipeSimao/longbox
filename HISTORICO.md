@@ -2497,3 +2497,14 @@ the v136 `::before` strip moved from the hub's header to every header. Simulated
 Chrome (phone 390x844): scrolled, header at 110, band at 172, solid strip above; hub header still 110,
 not doubled; with 0 inset everything measures as before. Not verifiable here on the real app: the user
 checks on the iPhone.
+
+**v138 "Adicionar volumes" in the collection sheet: a search that picks several.** The user found the
+field out of tone and slow: it was the last native select in the app, so its open list was drawn by
+the OS (white border, system font, about half again wider than the field), and ten volumes meant ten
+trips through an alphabetical list. Now a typeable field in the character filter's look, its list
+flowing under it inside the sheet (the field is the sheet's last control), as wide as the field
+(measured 407/407 on PC, 358/358 on a phone). Title and character are searched accent-free; the
+collection's own characters come first. A tap marks a volume with the place it will take (1, 2, 3...)
+and keeps the list open, a second tap unmarks; "Adicionar N volumes" adds them all in the order
+tapped (the user's pick over year order), in one save with Desfazer. `adicionarMembros` replaced
+`adicionarMembro` and the `addMemberSel` state. test-colecoes gained 15 checks, shown failing first.

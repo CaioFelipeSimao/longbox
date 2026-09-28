@@ -525,7 +525,9 @@ select and format list, the fallback and its note, old values kept, the filter p
 
 `tests/test-colecoes.mjs` covers the collection manage sheet (v66): the reading
 order fold and its session memory, and the bar colour option that only appears
-while a collection's spine bar is on screen. It stubs strip widths, since JSDOM
+while a collection's spine bar is on screen, and (v138) the "Adicionar volumes" search:
+several picked at once, added in the order tapped, the collection's characters first,
+one save with undo. It stubs strip widths, since JSDOM
 has no layout. Exits non-zero on a failure.
 
 `tests/test-boot.mjs` covers what the walk cannot reach: which tab the app opens on

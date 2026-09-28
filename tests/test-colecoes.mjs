@@ -193,5 +193,64 @@ botao("Pronto")?.click(); await sleep(120);
 check("Pronto volta à leitura", R.querySelectorAll('.sheet [aria-label^="Mover"]').length === 0 && R.querySelectorAll(".sheet .ordem-ate").length === 8);
 check("sem erros (4)", m4.erros.length === 0, m4.erros[0]);
 
+// v138: "Adicionar volumes" is a search field in the Longbox look (the native select
+// opened an OS list, white and wider than the field) and picks several at once, in
+// the order tapped, the collection's own characters suggested first.
+console.log("=== quinta montagem: adicionar vários ===");
+{
+  const bat = (id) => ({ id, titulo: "Batman " + id, personagem: "Batman", tipo: "Trade Paperback", editora: "DC Comics", ano: "2020", status: "nao_lida", notas: "", edicoesColetadasIds: [] });
+  const outro = (id, titulo, personagem) => ({ ...bat(id), titulo, personagem });
+  const vols = [outro("fl", "Flash: Renascimento", "Flash"), outro("su", "Superman: Ação", "Superman"), ...Array.from({ length: 6 }, (_, i) => bat("b" + i))];
+  const m5 = await montar({ sessao: { "longbox:aba": "colecoes" }, docsIniciais: [
+    ["library/volumes", { items: vols }],
+    ["library/colecoes", { items: [{ id: "c", nome: "Saga", descricao: "", membros: ["b0", "b1"] }] }],
+    ["library/series", { items: [] }],
+    ["library/cores", { mapa: {} }],
+  ] });
+  const R = m5.root;
+  await m5.gerenciar("Saga");
+  const W = m5.window;
+  check("sem select nativo para adicionar", ![...R.querySelectorAll(".sheet select")].some((s) => /Escolha um volume/.test(s.textContent)));
+  const campo = R.querySelector('.sheet input[aria-label="Adicionar volumes"]');
+  check("campo de busca existe", !!campo);
+  const digitar = async (t) => {
+    const set = Object.getOwnPropertyDescriptor(W.HTMLInputElement.prototype, "value").set;
+    set.call(campo, t);
+    campo.dispatchEvent(new W.Event("input", { bubbles: true }));
+    await sleep(80);
+  };
+  const linhas = () => [...R.querySelectorAll(".sheet .add-lista [role=option]")];
+  const nomes = () => linhas().map((l) => l.querySelector(".sug-title").textContent);
+  const tocar = async (nome) => { linhas().find((l) => l.querySelector(".sug-title").textContent === nome)?.click(); await sleep(80); };
+  campo?.focus(); campo?.click(); await sleep(80);
+  check("lista abre com os que faltam", linhas().length === 6, linhas().length);
+  check("personagem da coleção primeiro", nomes().length > 0 && nomes().slice(0, 4).every((n) => n.startsWith("Batman")), nomes().join(","));
+  await digitar("acao");
+  check("busca sem acento", nomes().join() === "Superman: Ação", nomes().join());
+  await tocar("Superman: Ação");
+  await digitar("flash");
+  await tocar("Flash: Renascimento");
+  await digitar("");
+  await tocar("Batman b4");
+  check("lista continua aberta", linhas().length > 0);
+  const ordem = (nome) => linhas().find((l) => l.querySelector(".sug-title").textContent === nome)?.querySelector(".add-ordem")?.textContent;
+  check("número na ordem do toque", ordem("Superman: Ação") === "1" && ordem("Flash: Renascimento") === "2" && ordem("Batman b4") === "3");
+  const botaoAdd = () => [...R.querySelectorAll(".sheet button")].find((b) => /^Adicionar \d/.test(b.textContent));
+  check("botão conta 3", botaoAdd()?.textContent === "Adicionar 3 volumes", botaoAdd()?.textContent);
+  await tocar("Batman b4");
+  check("tocar de novo desmarca", botaoAdd()?.textContent === "Adicionar 2 volumes" && !ordem("Batman b4"), botaoAdd()?.textContent);
+  botaoAdd()?.click(); await sleep(150);
+  const titulosOrdem = () => [...R.querySelectorAll(".sheet .ordem-titulo")].map((p) => p.textContent);
+  check("entram na ordem do toque", titulosOrdem().join() === "Batman b0,Batman b1,Superman: Ação,Flash: Renascimento", titulosOrdem().join());
+  check("seleção zera", !botaoAdd());
+  const t5 = R.querySelector(".toast")?.textContent || "";
+  check("aviso com Desfazer", /2 volumes/.test(t5) && !!R.querySelector(".toast button"), t5);
+  await sleep(700);
+  check("salvo no db", m5.docs.get("library/colecoes").items[0].membros.join() === "b0,b1,su,fl", m5.docs.get("library/colecoes").items[0].membros.join());
+  R.querySelector(".toast button")?.click(); await sleep(150);
+  check("Desfazer tira os dois", titulosOrdem().length === 2, titulosOrdem().join());
+  check("sem erros (5)", m5.erros.length === 0, m5.erros[0]);
+}
+
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);

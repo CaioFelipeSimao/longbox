@@ -1109,6 +1109,28 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .pfiltro-n { font-size: 0.75rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .pfiltro-check { color: var(--ed-accent-text); flex-shrink: 0; }
 
+/* v138: "Adicionar volumes" in the collection sheet. The field is the sheet's last
+   control, so its list flows under it instead of floating past the sheet's end,
+   as wide as the field. A picked row carries the place it will take. */
+.add-lista { position: static; margin-top: 6px; max-height: 320px; box-shadow: none; }
+.add-lista .sug-row { min-height: 52px; }
+.add-lista .sug-row[aria-selected="true"] .sug-title { color: var(--ed-accent-text); }
+.add-ordem {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.add-acoes { display: flex; gap: 8px; margin-top: 10px; }
+.add-acoes .btn-primary { flex: 1; }
+
 /* ---------- status ---------- */
 
 .seg3 { display: flex; gap: 6px; }

@@ -605,7 +605,6 @@ export function App() {
   const [showColecaoForm, setShowColecaoForm] = useState(false);
   const [colecaoForm, setColecaoForm] = useState(null);
   const [colecaoErrors, setColecaoErrors] = useState({});
-  const [addMemberSel, setAddMemberSel] = useState("");
 
   const colecoesFiltradas = useMemo(() => {
     // A collection has no publisher of its own, so it inherits from its members:
@@ -720,9 +719,12 @@ export function App() {
     setOpenColecaoId(novoId);
     showToast(colecaoForm.id ? "Coleção atualizada." : "Coleção criada.");
   }
-  function adicionarMembro(colecaoId, volumeId) {
-    persist({ ...lib, colecoes: lib.colecoes.map((c) => (c.id === colecaoId ? { ...c, membros: [...c.membros, volumeId] } : c)) });
-    setAddMemberSel("");
+  // v138: several at once, in the order they were tapped, one save and one undo.
+  function adicionarMembros(colecaoId, ids) {
+    const next = { ...lib, colecoes: lib.colecoes.map((c) => (c.id === colecaoId ? { ...c, membros: [...c.membros, ...ids.filter((id) => !c.membros.includes(id))] } : c)) };
+    persist(next);
+    const v = ids.length === 1 && lib.volumes.find((x) => x.id === ids[0]);
+    showToast(v ? v.titulo + " entrou na coleção." : ids.length + " volumes entraram na coleção.", { antes: lib, depois: next, reabrir: null });
   }
   // v120: taking a volume out of a collection names it and can be undone (it used to
   // vanish at once, one tap beside the move buttons).
@@ -2029,14 +2031,13 @@ export function App() {
         lib={lib}
         onRemover={remover}
         setOpenColecaoId={setOpenColecaoId}
-        addMemberSel={addMemberSel}
         openColecao={openColecao}
         colecaoRola={colecaoRola}
         ordemRecolhida={ordemRecolhida}
         alternarOrdem={alternarOrdem}
         definirCorBarra={definirCorBarra}
         openEditarColecao={openEditarColecao}
-        adicionarMembro={adicionarMembro}
+        adicionarMembros={adicionarMembros}
         removerMembro={removerMembro}
         moverMembro={moverMembro}
         personagensDaColecao={personagensDaColecao}
