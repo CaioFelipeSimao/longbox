@@ -511,23 +511,41 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   transform: translateY(calc(-1 * max(0px, var(--teclado, 0px) - env(safe-area-inset-bottom, 0px))));
   transition: transform 220ms var(--ease-out);
 }
+/* v130: the glass is an empty layer (::before) BEHIND the content, never on the
+   element that holds the buttons. In the Claude iOS app (not Safari) a backdrop
+   filter on a box whose children were their own compositing layers (the pill
+   sliding, the tabs' colour fade) was drawn in tiles, one per button, each showing
+   the backdrop of a different moment, for about half a second after every tab
+   switch (the user's photo showed the seams exactly on the button edges). A glass
+   layer with no children has nothing to be split by. The box keeps the rim and the
+   shadow, and z-index 0 makes it a stacking context so the -1 layer stays inside
+   it; no overflow clip on the box either, which WebKit also turns into a layer. */
 .tabbar-capsula,
 .search-barra .search-field {
+  position: relative;
+  z-index: 0;
   height: var(--vidro-h);
   border-radius: 999px;
-  background: var(--topbar-bg);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--vidro-borda);
   box-shadow: var(--vidro-sombra);
 }
+.tabbar-capsula::before,
+.search-barra .search-field::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  pointer-events: none;
+}
 .tabbar-capsula {
-  position: relative;
   display: flex;
   padding: 4px;
   flex: 0 0 calc(100% - var(--vidro-h) - 10px);
   min-width: 0;
-  overflow: hidden;
   transition: flex-basis 320ms var(--ease-drawer);
 }
 .tabbar-capsula > button {
@@ -535,6 +553,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   z-index: 1;
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -933,7 +953,6 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   transition: flex-basis 320ms var(--ease-drawer);
 }
 .tabbar[data-buscando="true"] .search-barra { flex-basis: calc(100% - var(--vidro-h) - 10px); }
-.search-barra .search-field { overflow: hidden; }
 .search-barra .search-field > svg { left: 18px; color: var(--text); }
 .search-barra input {
   height: 100%;
@@ -2652,7 +2671,7 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .topbar, .tabbar-capsula, .search-barra .search-field { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); }
+  .topbar, .tabbar-capsula::before, .search-barra .search-field::before { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); }
 }
 
 /* v114: "Lidas até aqui" in a collection's reading order, and the read mark beside the character. */

@@ -2396,3 +2396,15 @@ visualViewport. The search left the phone header (`useCelular`), and the old ful
 and its narrow-header padding rule were deleted. The glass nudge now targets the capsule and circle.
 Tablet and PC unchanged. Honest note given to the user: smaller glass, not a guaranteed cure for the
 WebKit glitch. `tests/test-barra-busca.mjs` (19 checks); preview from real captures approved first.
+
+**v130 The glass is its own empty layer.** v129 kept the Claude-app glitch. The user's photo (taken
+with another phone, since screenshots never catch it) showed the capsule's glass in three
+rectangles with straight seams exactly on the three tab buttons, each a different shade, for about
+500ms after every tab switch, on every tab. During a switch the pill slides (320ms) and the tabs fade
+colour (160ms), so they become compositing layers; the embedded WebKit then drew the backdrop filter
+of the box that holds them tile by tile, each tile sampled at a different moment. Known workaround:
+the blur and fill moved to an empty `::before` behind the content (z-index -1 inside a z-index 0
+box), the box keeps only the rim and shadow, and the capsule lost its `overflow: hidden` (the tabs
+clip their own labels instead). Same for the search circle. Looks identical (captures compared).
+The v128 nudge stays as a second line. `test-barra-busca.mjs` 21 checks (the CSS keeps the blur off
+the box that holds the buttons).
