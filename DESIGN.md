@@ -191,6 +191,13 @@ on transitionend. The cover has the thin inner scrollbar; the page's own bar is 
 the cover is down, so only one bar shows and the width does not change.
 The hub never takes the publisher colour: its header carries no hue and the cover resets the
 `--ed-*` accents.
+Top safe area (v134-v136, for the Claude iOS app, whose translucent bar covers the page top): the
+cover pads its content by `env(safe-area-inset-top)` and its sticky header keeps `top: 0` (inside a
+padded scroller a sticky offset counts from the content edge; adding the inset again doubled it), and
+a `::before` of the inset height in `--bg` rides above the header so the hub never shows through the
+app bar. All zero in Safari and on the PC. Also v132-v134: `lang="pt-BR"` set at mount, one hidden h1
+per surface, skip link for keyboards only (absent on touch screens), 15s undo when a removal takes a
+série with edições or everything.
 
 HQs shelf on a phone (v128): four covers a row under 640px, caption title 11px and meta 10px,
 status stacked under the format without the dot. After every tab switch the tab bar's glass turns solid for 0.7s and fades back (v131, replacing v128's one-frame nudge):
