@@ -1346,6 +1346,25 @@ export function App() {
 
   const entrarNaColecao = useCallback(() => setHubAberto(false), []);
 
+  // v128: in the Claude iOS app (not Safari) the tab bar's glass could keep showing
+  // a blurred copy of the previous screen after a tab switch, until the next touch;
+  // a screenshot forced a redraw, so it never showed in one. After a switch the bar
+  // gets a throwaway transform for one frame once the new tab has painted, and
+  // again a little later, which makes WebKit sample its backdrop afresh.
+  const tabbarRef = useRef(null);
+  useEffect(() => {
+    const el = tabbarRef.current;
+    if (!el || typeof requestAnimationFrame !== "function") return undefined;
+    let ids = [];
+    const cutucar = () => {
+      el.style.transform = "translateZ(0)";
+      ids.push(requestAnimationFrame(() => { el.style.transform = ""; }));
+    };
+    ids.push(requestAnimationFrame(() => { ids.push(requestAnimationFrame(cutucar)); }));
+    const t = setTimeout(cutucar, 300);
+    return () => { ids.forEach(cancelAnimationFrame); clearTimeout(t); el.style.transform = ""; };
+  }, [tab, hubAberto]);
+
   // The page's own scrollbar is made transparent under the cover (styles.css).
   useEffect(() => {
     document.documentElement.dataset.capa = hubAberto ? "true" : "false";
@@ -1796,7 +1815,7 @@ export function App() {
 
       </main>
 
-      <nav className="tabbar">
+      <nav className="tabbar" ref={tabbarRef}>
         {TABS.map((t) => {
           const Icon = t.icon;
           return (

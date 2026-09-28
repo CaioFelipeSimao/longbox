@@ -184,6 +184,10 @@ the cover is down, so only one bar shows and the width does not change.
 The hub never takes the publisher colour: its header carries no hue and the cover resets the
 `--ed-*` accents.
 
+HQs shelf on a phone (v128): four covers a row under 640px, caption title 11px and meta 10px,
+status stacked under the format without the dot. After every tab switch the bottom tab bar gets a
+one-frame `translateZ(0)` so its glass re-samples the backdrop (the Claude iOS app left it stale).
+
 Each tab gets a **different layout family**, which is what actually fixes the sameness:
 
 1. **HQs** - cover grid, `repeat(auto-fill, minmax(104px, 1fr))`, grouped by personagem

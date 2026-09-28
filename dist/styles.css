@@ -1018,6 +1018,22 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   gap: 14px;
 }
 @media (min-width: 640px) { .shelf { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 18px; } }
+/* v128: four covers a row on a phone (about 82px each at 390px), chosen by the user
+   from a preview over three. The caption steps down (title 11px, meta 10px) so
+   "Trade Paperback" fits whole, and the status moves to a line of its own, without
+   the dot, instead of cutting the format. The drawn covers shrink their type the
+   way the hub wall's do. */
+@media (max-width: 639px) {
+  .shelf { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 8px; }
+  .shelf .vol-title { font-size: 0.6875rem; line-height: 1.25; margin-top: 6px; }
+  .shelf .vol-meta { font-size: 0.625rem; }
+  .shelf .vol-meta-linha { flex-direction: column; gap: 1px; }
+  .shelf .vol-ponto { display: none; }
+  .shelf .cover-fb { padding: 7px 6px; }
+  .shelf .cover-fb-title { font-size: 0.6875rem; }
+  .shelf .cover-fb-foot { font-size: 0.5625rem; }
+  .shelf .cover-rule { width: 16px; margin-bottom: 5px; }
+}
 
 .vol { text-align: left; display: block; width: 100%; }
 .cover {

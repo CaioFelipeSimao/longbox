@@ -187,5 +187,27 @@ console.log("=== arremesso ===");
   check("sem erros", m.erros.length === 0, m.erros[0]);
 }
 
+console.log("=== v128: vidro da barra e legenda ===");
+{
+  const m = await montar({ sessao: { "longbox:aba": "volumes" } });
+  const barra = m.root.querySelector(".tabbar");
+  const vistos = [];
+  const obs = new m.window.MutationObserver(() => vistos.push(barra.style.transform));
+  obs.observe(barra, { attributes: true, attributeFilter: ["style"] });
+  const series = [...m.root.querySelectorAll(".tabbar button")].find((b) => /Séries/.test(b.textContent));
+  await m.clicar(series);
+  await sleep(400);
+  obs.disconnect();
+  check("trocar de aba cutuca o vidro da barra", vistos.includes("translateZ(0)"), vistos.join(","));
+  check("e devolve a barra como estava", barra.style.transform === "", barra.style.transform);
+
+  const lida = await montar({ sessao: { "longbox:aba": "volumes" } });
+  const card = [...lida.root.querySelectorAll('.aba[data-ativa="true"] .vol')][0];
+  check("formato e status continuam no card", !!card?.querySelector(".vol-meta .truncate"));
+  const css = fs.readFileSync("src/styles.css", "utf8");
+  check("celular: 4 por linha e status embaixo sem o ponto",
+    /@media \(max-width: 639px\) \{\s*\.shelf \{ grid-template-columns: repeat\(4/.test(css) && css.includes(".shelf .vol-ponto { display: none; }"));
+}
+
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas === 0 ? 0 : 1);

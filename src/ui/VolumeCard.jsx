@@ -171,7 +171,9 @@ export function VolumeCard({
           {volume.tipo && <span className="truncate">{volume.tipo}</span>}
           {volume.status !== "nao_lida" && STATUS[volume.status] && (
             <span className="vol-status-wrap">
-              {volume.tipo ? "· " : ""}
+              {/* v128: its own span, so the phone's four-column shelf can stack the
+                  status under the format and drop the dot. */}
+              {volume.tipo ? <span className="vol-ponto">· </span> : null}
               <span className="vol-status" data-s={volume.status}>{STATUS[volume.status].label}</span>
             </span>
           )}

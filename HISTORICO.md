@@ -2367,3 +2367,17 @@ cover has left (transitionend) instead of 20ms before the end, which put React's
 inside the animation. And GridMotion, the hub backdrop, queued four new GSAP tweens on every frame
 forever, even with the pointer still (always, on a phone); it now does nothing until the pointer
 moves. `test-capa-hub.mjs` 35 checks.
+
+**v128 Four covers a row on the phone; the tab bar's glass redraws after a switch.** The user asked
+for four HQs per row on the iPhone instead of three, keeping the format. From a throwaway preview of
+real captures (3 today; 4 with smaller type, where "Trade Paperback · Lida" still cut the format; 4
+with the status stacked) they chose the stacked one: under 640px the shelf is four columns (~82px at
+390px), the title 11px and the meta 10px, and the status sits on its own line without the dot (the
+dot is now its own `.vol-ponto` span). Drawn covers shrink their type like the hub wall's. Tablet and
+PC unchanged. The tab-bar glitch: only in the Claude iOS app, not Safari (screenshots from both), the
+bar's glass could keep a blurred copy of the previous screen after a tab switch until the next
+touch, and a screenshot forced a redraw so it never showed in one. The glass stays (the user likes
+it); after every switch the bar gets a throwaway `translateZ(0)` for one frame once the new tab has
+painted, and again at 300ms, so WebKit samples its backdrop afresh. Unverifiable here: the user checks
+on the iPhone; next step if it persists is a denser glass (50% to ~75% background).
+`test-capa-hub.mjs` 39 checks.
