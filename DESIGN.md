@@ -301,7 +301,11 @@ the personagem name small at the foot.
 
 Shelves never draw the uploaded file itself (v85). Each device makes a 360px JPEG thumbnail
 of every cover in the background and keeps it in its own IndexedDB (`longbox-miniaturas`),
-served as a `blob:` URL; nothing is uploaded or written to `db`. Full size is only drawn
+served as a `blob:` URL. Since v123 the first device to make one also uploads it and records it
+on the volume as `mini: { capa, id }` (batched, one library write per 3 s of uploads); a device
+without its own copy draws that small shared file (`loading="lazy"`) instead of downloading the
+full covers, which average ~760 KB. The local copy stays first choice; a record whose `capa` is
+not the volume's current `capaAssetId` is ignored, so a swapped cover gets a new one. Full size is only drawn
 where a cover is large (`CoverArt grande`: the volume sheet and the hub's suggestion).
 Decoding full-size covers on every tab switch was the 475ms stall of v80-v84. Code in
 `src/lib/capas.js`.

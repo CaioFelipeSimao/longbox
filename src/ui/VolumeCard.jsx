@@ -78,7 +78,8 @@ function CoverArtEstante({ volume, cores }) {
         // A thumbnail is already on this device and small, so it loads at
         // once. Left lazy, a cover in a hidden tab kept showing the full image
         // it had before its thumbnail arrived, and decoded that on the switch.
-        loading={usandoMini ? "eager" : "lazy"}
+        // A shared one (v123) comes over the network, so it waits to be seen.
+        loading={usandoMini && mini.startsWith("blob:") ? "eager" : "lazy"}
         draggable={false}
         // A thumbnail that will not load falls back to the full cover, not
         // to the drawn one.

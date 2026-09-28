@@ -15,7 +15,7 @@ import {
   aplicarMescladas, gravarUltimoBackup, lerUltimoBackup, loadLibrary, ouvirMudancas, scheduleSave, shardEdicoes, store,
 } from "../lib/armazenamento";
 import {
-  assetErrorMessage, esperarMiniaturas, prepararMiniaturas, uploadCover,
+  assetErrorMessage, esperarMiniaturas, prepararMiniaturas, registrarMiniRemotas, uploadCover,
 } from "../lib/capas";
 import { useHubUnlock, useLarguraDaBarra, usePonteiroFino } from "../lib/hooks";
 import {
@@ -140,6 +140,9 @@ export function App() {
         }
         // Usually long done by now; the cap keeps a slow disk from holding the app.
         await esperarMiniaturas(400);
+        // v123: known before the first shelf renders, so no full cover starts
+        // downloading for a volume that has a shared thumbnail.
+        registrarMiniRemotas(libRef.current.volumes);
         if (!cancelled) setLoading(false);
       }
 
@@ -1256,14 +1259,22 @@ export function App() {
   // v85: shelf thumbnails for every cover in use, made once per device.
   // Only with a loaded, non-empty library: the same call forgets thumbnails no
   // volume uses, and an empty list after a failed load would forget them all.
+  // v123: the key also moves when a shared thumbnail is recorded (here or on
+  // another device), and the effect reruns once uploads become possible.
   const idsCapas = useMemo(
-    () => [...new Set(lib.volumes.map((v) => v.capaAssetId).filter(Boolean))].join("|"),
+    () => [...new Set(lib.volumes.filter((v) => v.capaAssetId).map((v) => v.capaAssetId + ":" + (v.mini ? v.mini.capa + v.mini.id : "")))].join("|"),
     [lib.volumes]
   );
   useEffect(() => {
     if (loading || !idsCapas) return;
-    prepararMiniaturas(idsCapas.split("|"));
-  }, [loading, idsCapas]);
+    prepararMiniaturas(libRef.current.volumes, (lote) => {
+      const atual = libRef.current;
+      persist({
+        ...atual,
+        volumes: atual.volumes.map((v) => (lote[v.capaAssetId] ? { ...v, mini: { capa: v.capaAssetId, id: lote[v.capaAssetId] } } : v)),
+      });
+    });
+  }, [loading, idsCapas, canUpload]);
 
   const [abasProntas, setAbasProntas] = useState(false);
   const abaMontada = (k) => tab === k || abasProntas;

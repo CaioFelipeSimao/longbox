@@ -31,8 +31,30 @@ export const miniOuvintes = new Map();
 export const miniGerais = new Set();
 export let miniAviso = 0;
 
+// v123. A device's own copies above are still the first choice (the PC keeps
+// drawing exactly what it drew before), but a device without them no longer
+// makes its own from the full covers, which average ~760 KB (the Panini ones
+// are PNGs of up to 2.6 MB): a new phone, or Safari after it cleared the site's
+// storage, downloaded well over 100 MB for that. The first device to make a
+// thumbnail uploads it and the volume records it as { capa, id }; everyone else
+// draws that small file. A record made for another cover is ignored, so a
+// swapped cover gets a fresh one whoever swapped it.
+export const miniRemotas = new Map();
+
+export function registrarMiniRemotas(volumes) {
+  const novas = [];
+  volumes.forEach((v) => {
+    if (!v.capaAssetId || !v.mini || v.mini.capa !== v.capaAssetId || !v.mini.id) return;
+    const url = "/_blob/" + v.mini.id;
+    if (miniRemotas.get(v.capaAssetId) !== url) { miniRemotas.set(v.capaAssetId, url); novas.push(v.capaAssetId); }
+  });
+  return novas;
+}
+
+const melhorMini = (id) => miniUrls.get(id) || miniRemotas.get(id) || null;
+
 export function miniUrl(volume) {
-  return volume && volume.capaAssetId ? miniUrls.get(volume.capaAssetId) || null : null;
+  return volume && volume.capaAssetId ? melhorMini(volume.capaAssetId) : null;
 }
 
 export function avisarMini(id) {
@@ -52,7 +74,7 @@ export function useMiniCapa(id) {
     miniOuvintes.get(id).add(f);
     return () => { const s = miniOuvintes.get(id); if (s) s.delete(f); };
   }, [id]);
-  return id ? miniUrls.get(id) || null : null;
+  return id ? melhorMini(id) : null;
 }
 
 // A number that moves whenever thumbnails arrive, for memoised lists of them.
@@ -144,6 +166,25 @@ export const ocioso = (fn) => (typeof requestIdleCallback === "function"
   ? requestIdleCallback(fn, { timeout: 2000 })
   : setTimeout(fn, 60));
 
+const miniFalhas = new Set();
+let envioParado = false;
+let aoEnviarMini = null;
+let enviadas = {};
+let envioAviso = 0;
+
+// v123: uploads are recorded in batches, so the first device to run this makes
+// a handful of library writes instead of one per cover.
+function registrarEnvio(capa, mini) {
+  enviadas[capa] = mini;
+  miniRemotas.set(capa, "/_blob/" + mini);
+  if (envioAviso) return;
+  envioAviso = setTimeout(() => {
+    const lote = enviadas;
+    enviadas = {}; envioAviso = 0;
+    if (aoEnviarMini) aoEnviarMini(lote);
+  }, 3000);
+}
+
 export function rodarMiniFila() {
   if (miniRodando) return;
   const id = miniFila.shift();
@@ -151,31 +192,53 @@ export function rodarMiniFila() {
   miniRodando = true;
   ocioso(async () => {
     try {
-      const blob = await gerarMini(id);
-      if (!miniUrls.has(id)) miniUrls.set(id, URL.createObjectURL(blob));
-      avisarMini(id);
-      const db = await miniBanco;
-      if (db) {
-        try { db.transaction("capas", "readwrite").objectStore("capas").put({ blob, largura: MINI_LARGURA, formato: MINI_FORMATO }, id); } catch (e) { /* the session copy still works */ }
+      let blob = null;
+      if (!miniUrls.has(id)) {
+        blob = await gerarMini(id);
+        miniUrls.set(id, URL.createObjectURL(blob));
+        avisarMini(id);
+        const db = await miniBanco;
+        if (db) {
+          try { db.transaction("capas", "readwrite").objectStore("capas").put({ blob, largura: MINI_LARGURA, formato: MINI_FORMATO }, id); } catch (e) { /* the session copy still works */ }
+        }
+      }
+      if (!miniRemotas.has(id) && !envioParado && store.assets) {
+        if (!blob) blob = await (await fetch(miniUrls.get(id))).blob();
+        try {
+          const r = await store.assets.upload(new File([blob], "miniatura.jpg", { type: MINI_FORMATO }), { type: MINI_FORMATO });
+          registrarEnvio(id, r.id);
+        } catch (e) {
+          // Quota, rate limit or a lapsed session: stop for this session; the
+          // local copies keep working and the next visit tries again.
+          envioParado = true;
+        }
       }
     } catch (e) {
       // This cover keeps its full size; nothing else changes.
+      miniFalhas.add(id);
     }
+    miniNaFila.delete(id);
     miniRodando = false;
     rodarMiniFila();
   });
 }
 
-// Queues a thumbnail for every cover in use that has none, and forgets the
-// ones no volume uses any more.
-export async function prepararMiniaturas(ids) {
+// Queues every cover in use that has no thumbnail anywhere (made here, then
+// uploaded) or only a local one (uploaded), and forgets the local copies no
+// volume uses any more. aoEnviar receives { capaAssetId: miniAssetId } batches.
+export async function prepararMiniaturas(volumes, aoEnviar) {
+  aoEnviarMini = aoEnviar;
+  registrarMiniRemotas(volumes).forEach(avisarMini);
   if (typeof createImageBitmap !== "function") return;
   await miniCacheLido;
+  const ids = [...new Set(volumes.map((v) => v.capaAssetId).filter(Boolean))];
   const usados = new Set(ids);
   ids.forEach((id) => {
-    if (miniUrls.has(id) || miniNaFila.has(id)) return;
-    miniNaFila.add(id);
-    miniFila.push(id);
+    if (miniRemotas.has(id) || miniNaFila.has(id) || miniFalhas.has(id)) return;
+    if (!miniUrls.has(id) || (store.assets && !envioParado)) {
+      miniNaFila.add(id);
+      miniFila.push(id);
+    }
   });
   rodarMiniFila();
   const db = await miniBanco;

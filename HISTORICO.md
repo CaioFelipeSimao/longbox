@@ -2296,3 +2296,15 @@ user in a before/after preview:
 - Character group headings (HQs and Séries) aligned on the text baseline on a fine pointer, so the
   name sat 5px above the colour square and the fold arrow, which centre on the 36px row. They are
   centred now, as they already were on touch; name, count, square and arrow share one centre.
+
+**v123 Shared shelf thumbnails, for the iPhone.** The user reported covers taking long to load on
+the phone (iPhone, Safari), only on the first open. Cause: the v85 thumbnails are made per device
+from the full covers, and those weigh 143 MB across the store (~760 KB average; the Panini ones are
+PNGs of 1 to 2.6 MB), so a device without its own copies downloaded over 100 MB, one cover at a
+time. Safari also clears a site's storage after about 7 days unused, so the "first open" comes back.
+Now the first device to make a thumbnail uploads it (360px JPEG, tens of KB) and records it on the
+volume as `mini: { capa, id }`; other devices draw that file, lazily. The PC keeps drawing its
+local copies, so its tab switches are unchanged; its one-off cost is uploading the 163 thumbnails in
+idle time on the first open after the update. Uploads stop for the session on the first error.
+Volumes doc was 116 KB of 256 KB before; the records add about 14 KB. `tests/test-miniaturas.mjs`
+(11 checks) failed first: a recorded thumbnail still downloaded the full cover and nothing uploaded.
