@@ -158,12 +158,13 @@ const root = window.document.getElementById("root");
 // v80: the three tabs stay mounted, the ones not in use hidden. Everything below
 // asserts what is on screen, so queries skip anything inside a hidden tab, and
 // "the page's HTML" is the page with the hidden tabs taken out.
-const naAbaEscondida = (el) => !!(el.closest && el.closest('.aba[data-ativa="false"]'));
+// v126: the app under the hub cover is built but inert, so it counts as hidden too.
+const naAbaEscondida = (el) => !!(el.closest && el.closest('.aba[data-ativa="false"], .app-base[inert]'));
 const visiveis = (sel) => [...root.querySelectorAll(sel)].filter((el) => !naAbaEscondida(el));
 const visivel = (sel) => visiveis(sel)[0] || null;
 const htmlVisivel = () => {
   const copia = root.cloneNode(true);
-  copia.querySelectorAll('.aba[data-ativa="false"]').forEach((el) => el.remove());
+  copia.querySelectorAll('.aba[data-ativa="false"], .app-base[inert]').forEach((el) => el.remove());
   return copia.innerHTML;
 };
 const html = htmlVisivel();
@@ -177,7 +178,8 @@ const huntText = [...visiveis(".prog .prog-row")].map((r) => r.textContent).join
 
 const checks = {
   "wordmark rendered": html.includes("LONG") && html.includes("BOX"),
-  "tabbar rendered": html.includes("tabbar"),
+  // v126: built under the hub cover, not shown over it.
+  "tabbar rendered under the cover": root.innerHTML.includes("tabbar") && !html.includes("tabbar"),
   "no raw undefined": !html.includes(">undefined<"),
   "no NaN": !html.includes("NaN"),
   "no [object Object]": !html.includes("[object Object]"),
@@ -312,8 +314,8 @@ if (scenario === "seeded") {
 
   // Remount the hub so the arming window is genuinely open. Measuring from page
   // load raced the 350ms timer and passed by luck rather than by behaviour.
-  const tabs0 = [...visiveis(".tabbar button")];
-  await click(tabs0[0], "into volumes");
+  const minhaColecao = () => visiveis(".hub-capa button").find((b) => b.textContent.includes("Minha coleção"));
+  await click(minhaColecao(), "into the collection");
   await click(visivel("button.brand"), "back to hub, fresh mount");
 
   // Before the arming delay elapses, a wheel burst must be ignored, so momentum
@@ -333,11 +335,12 @@ if (scenario === "seeded") {
   console.log("  small nudge below threshold: " + (onHub() ? "PASS" : "FAIL"));
 
   // The surface must actually track the gesture, not just wait for a threshold.
-  const hubEl = visivel(".hub");
+  // v126: the whole cover moves, and stays opaque: it is lifted, not faded.
+  const hubEl = visivel(".hub-capa");
   const tf = hubEl ? hubEl.style.transform : "";
   const op = hubEl ? hubEl.style.opacity : "";
   console.log("  surface tracks the gesture: " + (tf === "translateY(-40px)" ? "PASS" : "FAIL (" + tf + ")") +
-              ", fades while travelling " + (op && parseFloat(op) < 1 && parseFloat(op) > 0.8 ? "PASS" : "FAIL (" + op + ")"));
+              ", stays opaque while travelling " + (op === "" ? "PASS" : "FAIL (" + op + ")"));
 
   wheel(80);
   await new Promise((r) => setTimeout(r, 340));
@@ -347,9 +350,10 @@ if (scenario === "seeded") {
   await click(visivel("button.brand"), "brand back to hub");
   await new Promise((r) => setTimeout(r, 400));
 
-  const tabButtons = [...visiveis(".tabbar button")];
   console.log("\n--- tab walk ---");
 
+  await click(minhaColecao(), "lift the cover");
+  const tabButtons = [...visiveis(".tabbar button")];
   await click(tabButtons[0], "tab volumes");
   let h = htmlVisivel();
 

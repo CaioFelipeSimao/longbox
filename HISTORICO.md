@@ -2329,3 +2329,27 @@ and returned without a word. Now the module remembers the last state it reported
 follow-up closes a "Salvando…" left open. Only the indicator was wrong; the data was saved.
 `test-miniaturas.mjs` has another device edit a volume mid-upload (the edit survives the merge) and
 checks the indicator (15 checks; the indicator one failed first).
+
+**v126 The hub is a cover over the tab.** Two reports from the user's first long session on the
+iPhone (opened from a home-screen shortcut). First, an ordinary swipe often unlocked the hub before
+it had been read to the end: the gesture switched to tracking mid-swipe, the moment the scroll
+reached the end, and that swipe's scrolling speed then counted as a flick. Now a gesture only
+unlocks when it starts at the end (a touch that begins there, or a wheel turn after a 250ms pause),
+and a flick also needs 40px of travel. Second, the user asked for the hub to behave like a cover:
+lifting it showed an empty page and only then the HQs tab. The hub is now a fixed layer with its own
+scroll and header, and the app is fully built underneath on the last tab used (kept on the device;
+HQs on a first visit), inert while covered. The cover lifts whole, opaque, and the tab shows through
+as it goes; the wordmark or 0 drops it back from the top. The phone's bottom tab bar is under the
+cover too. `tests/test-capa-hub.mjs` (26 checks); with the old gesture rules put back, its two
+gesture checks fail. Old tests that assumed the hub was a page were updated (the app under the
+cover counts as hidden).
+
+**v126 Pull a sheet down to close it (phone).** Also from the iPhone session: the volume sheet
+stepped sideways with a swipe but did not close with the downward pull iOS teaches. Every sheet
+(volume, série, coleção) now follows the finger down on a phone and closes past 120px or on a flick
+with 40px of travel, otherwise settles back; closing hands over to the sheet's own exit transition
+from where the finger left it. The drag only starts when nothing between the finger and the sheet
+is scrolled, and only once the finger clearly moves down, so scrolling a list back up and the
+sideways navigation are untouched. Tablet and PC keep the side panel with no drag (sideways there
+already means the next volume). `tests/test-arrastar-folha.mjs` (14 checks, 4 failed first); also
+driven with real touch events in an emulated iPhone.

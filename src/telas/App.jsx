@@ -20,7 +20,7 @@ import {
 import { useHubUnlock, useLarguraDaBarra, usePonteiroFino } from "../lib/hooks";
 import {
   lerAbaSalva, lerColecoesFechadas, lerFiltroSeries, lerFiltros, lerGruposAbertos, lerGruposFechados,
-  lerOrdemRecolhida, salvarAba, salvarColecoesFechadas, salvarFiltroSeries, salvarFiltros, salvarGruposAbertos,
+  lerOrdemRecolhida, lerAbaBase, salvarAba, salvarAbaBase,salvarColecoesFechadas, salvarFiltroSeries, salvarFiltros, salvarGruposAbertos,
   salvarGruposFechados, salvarOrdemRecolhida,
 } from "../lib/sessao";
 import { Aba, Modal, Toast } from "../ui/base";
@@ -47,7 +47,10 @@ export function App() {
   const [loading, setLoading] = useState(true);
   const [storageMode, setStorageMode] = useState("checking");
   const [canUpload, setCanUpload] = useState(false);
-  const [tab, setTab] = useState(lerAbaSalva);
+  // v126: the hub is a cover over the app, so `tab` is always a real tab (the one
+  // under the cover) and hubAberto says whether the cover is down.
+  const [hubAberto, setHubAberto] = useState(() => lerAbaSalva() === "hub");
+  const [tab, setTab] = useState(() => { const s = lerAbaSalva(); return s === "hub" ? lerAbaBase() : s; });
   const [query, setQuery] = useState("");
   const [toast, setToast] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -64,27 +67,9 @@ export function App() {
   const [corPersonagem, setCorPersonagem] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const sentinelRef = useRef(null);
-  const hubAtBottom = useRef(false);
-  const hubObserver = useRef(null);
   const hubElRef = useRef(null);
   const [hubReturning, setHubReturning] = useState(false);
-
-  // Callback ref: the sentinel lives inside Hub, which mounts and unmounts, so
-  // the observer has to follow the node rather than run once on mount.
-  const hubSentinelRef = useCallback((node) => {
-    if (hubObserver.current) {
-      hubObserver.current.disconnect();
-      hubObserver.current = null;
-    }
-    hubAtBottom.current = false;
-    if (!node || typeof IntersectionObserver !== "function") return;
-    const io = new IntersectionObserver(
-      ([entry]) => { hubAtBottom.current = entry.isIntersecting; },
-      { threshold: 0 }
-    );
-    io.observe(node);
-    hubObserver.current = io;
-  }, []);
+  const [hubRolado, setHubRolado] = useState(false);
 
   const libRef = useRef(lib);
   libRef.current = lib;
@@ -1250,7 +1235,7 @@ export function App() {
     return { maior, pct: (maior.bytes / DOC_LIMIT) * 100 };
   }, [lib, serieById]);
 
-  const isHub = tab === "hub";
+  const isHub = hubAberto;
 
   // v80: the three tabs stay mounted once built, hidden when not in use, so
   // coming back to one does not rebuild every card and cover from scratch. The
@@ -1296,8 +1281,8 @@ export function App() {
   // Only the hue travels to the header and the strip; the accent's own
   // saturation and lightness stay, so contrast never moves. A publisher with no
   // colour, or a greyscale one, lends nothing: hue 0 would come out red.
+  // v126: the tab under the hub keeps its colours, since lifting the cover shows it.
   const edCroma = useMemo(() => {
-    if (isHub) return null;
     const sel = lib.editoraSel || ED_TODAS;
     const atual = (lib.editoras || []).find((e) => e.id === sel);
     const spec = atual && atual.cor;
@@ -1310,14 +1295,13 @@ export function App() {
       tintaEscuro: tintaSobre(spec.h, 100, 42),
       tintaClaro: tintaSobre(spec.h, 100, 33),
     };
-  }, [isHub, lib.editoras, lib.editoraSel]);
+  }, [lib.editoras, lib.editoraSel]);
   const edHue = edCroma ? edCroma.h : null;
 
   // The publisher's backdrop colour, for the gradient that now runs from the very
-  // top of the page through the header into the band (v68). Only where the band
-  // is tinted, so never on the hub.
+  // top of the page through the header into the band (v68). The hub is a layer of
+  // its own (v126) and never takes it.
   const edFundo = useMemo(() => {
-    if (isHub) return null;
     const sel = lib.editoraSel || ED_TODAS;
     const atual = (lib.editoras || []).find((e) => e.id === sel);
     // Both ends of the colour: the deep cover shade tints the dark theme, the
@@ -1327,7 +1311,7 @@ export function App() {
     if (atual) return atual.cor ? par(swatchColors(atual.cor, 0)) : null;
     // Todas as editoras: the Longbox cyan, as in the band (v70).
     return sel === ED_SEM ? null : par(swatchColors(COR_LONGBOX, 0));
-  }, [isHub, lib.editoras, lib.editoraSel]);
+  }, [lib.editoras, lib.editoraSel]);
 
   const malhaCor = useMemo(() => {
     const sel = lib.editoraSel || ED_TODAS;
@@ -1335,22 +1319,32 @@ export function App() {
     return atual && atual.cor ? swatchColors(atual.cor, 0).edge : ACCENT_HEX;
   }, [lib.editoras, lib.editoraSel]);
 
+  // "hub" lowers the cover over whatever tab is open, which stays where it was
+  // scrolled; any other key lifts the cover onto that tab.
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
+  const hubAbertoRef = useRef(hubAberto);
+  hubAbertoRef.current = hubAberto;
   const switchTab = useCallback((key) => {
-    setTab((prev) => {
+    setQuery("");
+    if (key === "hub") {
       // Coming back to the hub reverses the unlock: it drops in from the top,
       // the same path it left by.
-      if (key === "hub" && prev !== "hub") setHubReturning(true);
-      return key;
-    });
-    setQuery("");
-    if (typeof window !== "undefined" && window.scrollTo) window.scrollTo(0, 0);
+      if (!hubAbertoRef.current) { setHubReturning(true); setHubRolado(false); setHubAberto(true); }
+      return;
+    }
+    setHubAberto(false);
+    if (key !== tabRef.current) {
+      setTab(key);
+      if (typeof window !== "undefined" && window.scrollTo) window.scrollTo(0, 0);
+    }
   }, []);
 
   // Written from the state rather than from switchTab, so every route into a tab
   // is covered, including the scroll gesture that unlocks the hub.
-  useEffect(() => { salvarAba(tab); }, [tab]);
+  useEffect(() => { salvarAba(hubAberto ? "hub" : tab); salvarAbaBase(tab); }, [tab, hubAberto]);
 
-  const entrarNaColecao = useCallback(() => switchTab("volumes"), [switchTab]);
+  const entrarNaColecao = useCallback(() => setHubAberto(false), []);
 
   // From a volume's "Edições coletadas" tile: open that edição's série card
   // stacked on top of the volume sheet, without touching the active tab or
@@ -1444,10 +1438,11 @@ export function App() {
     }
   }
 
-  // v121: the button says what it makes; the hub's makes a volume.
+  // v121: the button says what it makes; the hub's makes a volume (its own button, v126).
   const rotuloNovo = tab === "colecoes" ? "Nova coleção" : tab === "series" ? "Nova série" : "Novo volume";
   function novoNaAba() {
-    if (tab === "colecoes") openNovaColecao();
+    if (isHub) openNovoVolume();
+    else if (tab === "colecoes") openNovaColecao();
     else if (tab === "series") openNovaSerie();
     else openNovoVolume();
   }
@@ -1462,14 +1457,14 @@ export function App() {
     if (openColecao) { openEditarColecao(openColecao); return true; }
     return false;
   }
-  // The search box only exists off the hub, so from the hub "/" enters the HQs
-  // tab first and focuses the box once it has rendered.
+  // The search box lives under the hub, so from the hub "/" lifts the cover first
+  // and focuses the box once it is no longer inert.
   function focarBusca() {
-    if (isHub) switchTab("volumes");
+    if (isHub) entrarNaColecao();
     let tentativas = 0;
     const tentar = () => {
       const campo = document.querySelector(".search input");
-      if (campo) { campo.focus(); return; }
+      if (campo && !campo.closest("[inert]")) { campo.focus(); return; }
       if (++tentativas < 20) setTimeout(tentar, 30);
     };
     tentar();
@@ -1492,7 +1487,7 @@ export function App() {
   // v115: sheets can open over the hub now, and scrolling inside one must not
   // count as scrolling past the hub's end into the collection.
   const folhaAberta = !!(openVolumeId || openSerieId || openColecaoId || corPersonagem || showEditoras);
-  useHubUnlock(isHub && !loading && !folhaAberta, hubAtBottom, hubElRef, entrarNaColecao);
+  useHubUnlock(isHub && !loading && !folhaAberta, hubElRef, entrarNaColecao);
   useAtalhos({
     alternarDobra,
     podeDesfazer: !!desfazerAtual,
@@ -1507,6 +1502,23 @@ export function App() {
   });
 
   /* ============================ render ============================ */
+
+  // Both in the app's header and in the hub cover's (v126).
+  const avisoSalvamento = (
+    <span className="salvamento" aria-live="polite" data-estado={salvamento || "nada"}>
+      {salvamento === "salvando" ? "Salvando…" : salvamento === "salvo" ? "Salvo" : ""}
+    </span>
+  );
+  const avisoMemoria = storageMode === "memory" && (
+    <div className="banner" data-tone="warn">
+      <AlertTriangle size={16} />
+      <div>
+        <strong>Nada está sendo salvo nesta visualização.</strong> O armazenamento do
+        artefato não está disponível aqui, então tudo que você cadastrar some ao
+        recarregar. Abra o artefato publicado na sua conta para usar de verdade.
+      </div>
+    </div>
+  );
 
   return (
     <CoresContext.Provider value={lib.cores || null}>
@@ -1525,6 +1537,11 @@ export function App() {
 
       <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />
 
+      {/* v126: everything under the hub cover. Inert while the cover is down, so
+          Tab and screen readers stay on the hub; the sheets sit outside it because
+          they open over the hub too. display: contents keeps the sticky header and
+          band working as before. */}
+      <div className="app-base" inert={isHub ? "" : undefined}>
       <header
         className="topbar"
         data-scrolled={scrolled ? "true" : "false"}
@@ -1540,28 +1557,14 @@ export function App() {
         }
       >
         <div className="topbar-inner">
-          {isHub ? (
-            <span className="brand">
-              <span className="mark" aria-hidden="true"><i /><i /><i /><i /></span>
-              <span className="wordmark">LONG<b>BOX</b></span>
-            </span>
-          ) : (
-            <button className="brand" onClick={() => switchTab("hub")} aria-label="Voltar ao início" data-dica="Início · 0">
-              <ChevronLeft size={18} className="brand-chev" />
-              <span className="mark" aria-hidden="true"><i /><i /><i /><i /></span>
-              <span className="wordmark">LONG<b>BOX</b></span>
-            </button>
-          )}
-          <span className="salvamento" aria-live="polite" data-estado={salvamento || "nada"}>
-            {salvamento === "salvando" ? "Salvando…" : salvamento === "salvo" ? "Salvo" : ""}
-          </span>
+          <button className="brand" onClick={() => switchTab("hub")} aria-label="Voltar ao início" data-dica="Início · 0">
+            <ChevronLeft size={18} className="brand-chev" />
+            <span className="mark" aria-hidden="true"><i /><i /><i /><i /></span>
+            <span className="wordmark">LONG<b>BOX</b></span>
+          </button>
+          {avisoSalvamento}
 
-          {/* v118: only the hub needs the spacer; elsewhere the search is the flexible
-              item, and sharing the free width with a spacer squeezed it to 0px at 390. */}
-          {isHub && <div style={{ flex: 1 }} />}
-
-          {!isHub && (
-            <SearchBox
+          <SearchBox
               query={query}
               setQuery={setQuery}
               sugestoes={sugestoes}
@@ -1579,14 +1582,11 @@ export function App() {
                 abrirVolume(s.id, { tipo: "todas" });
               }}
             />
-          )}
           {/* v102: the way in to the shortcuts panel, which only "?" opened before.
               Hidden on touch, where there is no keyboard to use them with. */}
-          {!isHub && (
-            <button className="btn-icon so-teclado" onClick={() => setShowAtalhos(true)} aria-label="Atalhos do teclado" data-dica="Atalhos · ?">
-              <Keyboard size={16} />
-            </button>
-          )}
+          <button className="btn-icon so-teclado" onClick={() => setShowAtalhos(true)} aria-label="Atalhos do teclado" data-dica="Atalhos · ?">
+            <Keyboard size={16} />
+          </button>
           {(tab === "volumes" || tab === "series") && (
             <button
               className="btn-icon btn-filtros"
@@ -1602,24 +1602,15 @@ export function App() {
               {filtrosAtivosAba > 0 && <span className="btn-badge" aria-hidden="true">{filtrosAtivosAba}</span>}
             </button>
           )}
-          {/* v118: on a narrow hub "Novo" folds to its icon so the primary button keeps
-              its whole name; "Coleção" alone read as the Coleções tab below it. */}
-          <button className={isHub ? "btn btn-quiet novo-hub" : "btn btn-primary"} onClick={novoNaAba} data-dica={rotuloNovo + " · N"} aria-label={rotuloNovo}>
+          <button className="btn btn-primary" onClick={novoNaAba} data-dica={rotuloNovo + " · N"} aria-label={rotuloNovo}>
             <Plus size={15} /> <span className="novo-rotulo">{rotuloNovo}</span>
           </button>
-          {isHub && (
-            <button className="btn btn-primary" onClick={entrarNaColecao}>
-              <Library size={15} />
-              <span>Minha coleção</span>
-            </button>
-          )}
         </div>
       </header>
 
       {/* Drawn during the load too, so the content does not jump down the page the
           moment the library lands. The count is held blank until there is a real
           one: a "0 HQs" that turns into 47 reads as a wrong answer, not a wait. */}
-      {!isHub && (
         <EditoraBar
           editoras={lib.editoras || []}
           selecionada={lib.editoraSel || ED_TODAS}
@@ -1637,7 +1628,6 @@ export function App() {
               : seriesFiltradas.reduce((s, g) => s + g.itens.length, 0) + " séries"
           }
         />
-      )}
 
       <main className="content" ref={conteudoRef} data-lattice={comMalha ? "true" : "false"}>
         {comMalha && (
@@ -1658,36 +1648,7 @@ export function App() {
             pulseSpeed={850}
           />
         )}
-        {storageMode === "memory" && (
-          <div className="banner" data-tone="warn">
-            <AlertTriangle size={16} />
-            <div>
-              <strong>Nada está sendo salvo nesta visualização.</strong> O armazenamento do
-              artefato não está disponível aqui, então tudo que você cadastrar some ao
-              recarregar. Abra o artefato publicado na sua conta para usar de verdade.
-            </div>
-          </div>
-        )}
-
-        {!loading && isHub && (
-          <Hub
-            lib={lib}
-            stats={statsGerais}
-            docUsage={docUsage}
-            edicoesPorSerie={edicoesPorSerie}
-            ownedIds={ownedEdicaoIds}
-            onOpenVolume={(id) => abrirVolume(id, { tipo: "todas" })}
-            onOpenSerie={(id) => { setOpenSerieId(id); setOpenSerieContexto(null); }}
-            onNovo={openNovoVolume}
-            onEnter={entrarNaColecao}
-            backup={storageMode === "db" ? { ultimo: ultimoBackup } : null}
-            onBackup={exportJson}
-            onRecorte={abrirRecorte}
-            sentinelRef={hubSentinelRef}
-            rootRef={hubElRef}
-            returning={hubReturning}
-          />
-        )}
+        {avisoMemoria}
 
         {tab === "volumes" && showFiltros && (
           <div className="filtros-hqs" style={{ marginBottom: 20 }}>
@@ -1751,13 +1712,14 @@ export function App() {
           </div>
         )}
 
-        {loading && (
+        {/* Under the cover nothing is drawn while loading: the hub skeleton is
+            what shows, and it carries the status line. */}
+        {loading && !isHub && (
           <>
             {/* The blocks themselves are hidden from a screen reader, since a
                 grey rectangle has nothing to say. This line does the talking. */}
             <p className="sr-only" role="status">Carregando sua biblioteca</p>
-            {isHub ? <HubSkeleton />
-              : tab === "volumes" ? <ShelfSkeleton />
+            {tab === "volumes" ? <ShelfSkeleton />
               : tab === "colecoes" ? <ColecoesSkeleton />
               : <SeriesSkeleton />}
           </>
@@ -1827,30 +1789,6 @@ export function App() {
           )} />
         )}
 
-        {!loading && isHub && (
-          <div className="footer-actions">
-            <button className="btn btn-ghost" onClick={exportJson}>
-              <Download size={14} /> Exportar backup
-            </button>
-            {/* v99: the two actions that replace the library sit apart from the safe one. */}
-            <span className="footer-sep" aria-hidden="true" />
-            <button className="btn btn-ghost" onClick={() => fileInputRef.current && fileInputRef.current.click()}>
-              <Upload size={14} /> Importar backup
-            </button>
-            {(lib.volumes.length > 0 || lib.series.length > 0) && (
-              <button className="btn btn-ghost" style={{ color: "var(--danger-text)" }} onClick={() => setConfirmDelete({ type: "all" })}>
-                <RotateCcw size={14} /> Zerar tudo
-              </button>
-            )}
-          </div>
-        )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="application/json,.json"
-          hidden
-          onChange={(e) => { importBackup(e.target.files[0]); e.target.value = ""; }}
-        />
       </main>
 
       <nav className="tabbar">
@@ -1864,6 +1802,87 @@ export function App() {
           );
         })}
       </nav>
+      </div>
+
+      {/* v126: the hub, a cover laid over the app with its own scroll. The unlock
+          gesture lifts this whole layer and the tab under it is already there. */}
+      {isHub && (
+        <div
+          className="hub-capa"
+          ref={hubElRef}
+          data-returning={hubReturning ? "true" : "false"}
+          onScroll={(e) => setHubRolado(e.currentTarget.scrollTop > 0)}
+        >
+          <header className="topbar" data-scrolled={hubRolado ? "true" : "false"}>
+            <div className="topbar-inner">
+              <span className="brand">
+                <span className="mark" aria-hidden="true"><i /><i /><i /><i /></span>
+                <span className="wordmark">LONG<b>BOX</b></span>
+              </span>
+              {avisoSalvamento}
+              <div style={{ flex: 1 }} />
+              {/* v118: on a narrow hub "Novo" folds to its icon so the primary button keeps
+                  its whole name; "Coleção" alone read as the Coleções tab below it. */}
+              <button className="btn btn-quiet novo-hub" onClick={openNovoVolume} data-dica="Novo volume · N" aria-label="Novo volume">
+                <Plus size={15} /> <span className="novo-rotulo">Novo volume</span>
+              </button>
+              <button className="btn btn-primary" onClick={entrarNaColecao}>
+                <Library size={15} />
+                <span>Minha coleção</span>
+              </button>
+            </div>
+          </header>
+          <main className="content hub-conteudo">
+            {avisoMemoria}
+            {loading ? (
+              <>
+                <p className="sr-only" role="status">Carregando sua biblioteca</p>
+                <HubSkeleton />
+              </>
+            ) : (
+              <>
+                <Hub
+                  lib={lib}
+                  stats={statsGerais}
+                  docUsage={docUsage}
+                  edicoesPorSerie={edicoesPorSerie}
+                  ownedIds={ownedEdicaoIds}
+                  onOpenVolume={(id) => abrirVolume(id, { tipo: "todas" })}
+                  onOpenSerie={(id) => { setOpenSerieId(id); setOpenSerieContexto(null); }}
+                  onNovo={openNovoVolume}
+                  onEnter={entrarNaColecao}
+                  backup={storageMode === "db" ? { ultimo: ultimoBackup } : null}
+                  onBackup={exportJson}
+                  onRecorte={abrirRecorte}
+                />
+                <div className="footer-actions">
+                  <button className="btn btn-ghost" onClick={exportJson}>
+                    <Download size={14} /> Exportar backup
+                  </button>
+                  {/* v99: the two actions that replace the library sit apart from the safe one. */}
+                  <span className="footer-sep" aria-hidden="true" />
+                  <button className="btn btn-ghost" onClick={() => fileInputRef.current && fileInputRef.current.click()}>
+                    <Upload size={14} /> Importar backup
+                  </button>
+                  {(lib.volumes.length > 0 || lib.series.length > 0) && (
+                    <button className="btn btn-ghost" style={{ color: "var(--danger-text)" }} onClick={() => setConfirmDelete({ type: "all" })}>
+                      <RotateCcw size={14} /> Zerar tudo
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </main>
+        </div>
+      )}
+      {/* Outside both layers: neither inert under the cover nor gone with it. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json,.json"
+        hidden
+        onChange={(e) => { importBackup(e.target.files[0]); e.target.value = ""; }}
+      />
 
       {/* ===================== volume detail ===================== */}
       <VolumeSheet

@@ -28,6 +28,28 @@ export function salvarAba(key) {
   }
 }
 
+// v126: the tab lying under the hub, which is a cover over the app. Unlike the
+// note above this one is kept on the device, so tomorrow's first visit lifts the
+// cover onto the tab you used last. HQs on a first visit.
+export const ABA_BASE_KEY = "longbox:aba-base";
+
+export function lerAbaBase() {
+  try {
+    const salva = window.localStorage.getItem(ABA_BASE_KEY);
+    return salva && salva !== "hub" && ABAS.indexOf(salva) !== -1 ? salva : "volumes";
+  } catch {
+    return "volumes";
+  }
+}
+
+export function salvarAbaBase(key) {
+  try {
+    window.localStorage.setItem(ABA_BASE_KEY, key);
+  } catch {
+    // Not remembered on this device; the next visit opens over HQs.
+  }
+}
+
 // Which character groups are open on the séries tab. Same storage and the same
 // reasoning as the tab above, deliberately: a reload keeps what you had open,
 // and a fresh visit starts closed again. Closed is the default because the tab

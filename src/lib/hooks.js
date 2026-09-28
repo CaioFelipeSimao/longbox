@@ -23,7 +23,7 @@ export function useTransitionMount(open, exitMs) {
 
 export const UNLOCK_COMMIT_PX = 120;
 export const UNLOCK_FLICK_V = 0.35; // px per ms
-export const UNLOCK_FADE_OVER = 420; // px of travel over which the hub fades out
+export const UNLOCK_FLICK_MIN_PX = 40; // a flick has to travel at least this far
 
 // The lattice follows a cursor, and a finger is not one. On touch the only thing
 // it could do is drag a lit trail around while the page scrolls, repainting a
@@ -82,38 +82,42 @@ export function prefersReducedMotion() {
 export const HOLD_EASE_LINEAR = (t) => t;
 export const HOLD_EASE_OUT = (t) => 1 - Math.pow(1 - t, 3);
 
-// Phone-unlock gesture: past the end of the hub, the surface tracks the finger
-// 1:1 and is thrown clear on release. Gated on a bottom sentinel so a hub taller
-// than the viewport stays readable. Transforms are written straight to the node,
-// so nothing re-renders per frame.
-export function useHubUnlock(active, atBottomRef, elRef, onEnter) {
+// Phone-unlock gesture: past the end of the hub, the cover tracks the finger 1:1
+// and is thrown clear on release. The hub is a layer over the app with its own
+// scroll (v126), so "at the end" is read from that layer, and lifting it reveals
+// the tab underneath. Transforms are written straight to the node, so nothing
+// re-renders per frame.
+//
+// v126: a gesture only unlocks when it STARTS at the end, like a lock screen:
+// scroll to the end, let go, swipe again. Before, a swipe that scrolled into the
+// end switched to tracking mid-way and its scrolling speed counted as a flick, so
+// an ordinary swipe on the iPhone threw the hub away before you had read it. A
+// flick also needs some real travel now, not just speed.
+export function useHubUnlock(active, elRef, onEnter) {
   useEffect(() => {
     if (!active) return;
     const el = elRef.current;
     if (!el) return;
 
     const reduce = prefersReducedMotion();
+    const noFim = () => el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
     let offset = 0;
     let tracking = false;
+    let comecouNoFim = false;
     let startY = 0;
-    let startOffset = 0;
     let lastY = 0;
     let lastT = 0;
     let velocity = 0;
     let committed = false;
     let armed = false;
     let wheelIdle = null;
+    let ultimaRoda = 0;
+    let rodaNoFim = false;
     const armTimer = setTimeout(() => { armed = true; }, 350);
 
     const paint = (v) => {
       offset = v;
-      if (v <= 0) {
-        el.style.transform = "";
-        el.style.opacity = "";
-      } else {
-        el.style.transform = "translateY(" + -v + "px)";
-        el.style.opacity = String(Math.max(0, 1 - v / UNLOCK_FADE_OVER));
-      }
+      el.style.transform = v <= 0 ? "" : "translateY(" + -v + "px)";
     };
 
     const commit = () => {
@@ -126,21 +130,18 @@ export function useHubUnlock(active, atBottomRef, elRef, onEnter) {
         setTimeout(onEnter, 130);
         return;
       }
-      el.style.transition = "transform 260ms var(--ease-drawer), opacity 200ms var(--ease-out)";
+      el.style.transition = "transform 280ms var(--ease-drawer)";
       el.style.transform = "translateY(-100%)";
-      el.style.opacity = "0";
-      setTimeout(onEnter, 230);
+      setTimeout(onEnter, 260);
     };
-
-    // Friction rather than a wall: pulling the wrong way resists instead of refusing.
-    const damp = (v) => (v < 0 ? v * 0.25 : v);
 
     const release = () => {
       tracking = false;
+      comecouNoFim = false;
       if (committed) return;
-      if (offset >= UNLOCK_COMMIT_PX || velocity > UNLOCK_FLICK_V) { commit(); return; }
+      if (offset >= UNLOCK_COMMIT_PX || (velocity > UNLOCK_FLICK_V && offset >= UNLOCK_FLICK_MIN_PX)) { commit(); return; }
       if (offset === 0) return;
-      el.style.transition = "transform 220ms var(--ease-drawer), opacity 180ms var(--ease-out)";
+      el.style.transition = "transform 220ms var(--ease-drawer)";
       paint(0);
       setTimeout(() => {
         if (committed) return;
@@ -155,48 +156,47 @@ export function useHubUnlock(active, atBottomRef, elRef, onEnter) {
       lastT = Date.now();
       velocity = 0;
       tracking = false;
+      comecouNoFim = noFim();
     };
 
     const onTouchMove = (e) => {
-      if (!armed || committed || e.touches.length > 1) return;
+      if (!armed || committed || !comecouNoFim || e.touches.length > 1) return;
       const y = e.touches[0].clientY;
       const now = Date.now();
       const dt = Math.max(1, now - lastT);
       velocity = (lastY - y) / dt;
       lastY = y;
       lastT = now;
-
-      if (!atBottomRef.current) {
-        if (offset > 0) release();
-        tracking = false;
-        return;
-      }
       if (!tracking) {
-        // Start from wherever the finger is now, so reaching the bottom mid-swipe
-        // does not make the surface jump.
         tracking = true;
         startY = y;
-        startOffset = offset;
         el.style.transition = "";
-        el.style.willChange = "transform, opacity";
+        el.style.willChange = "transform";
       }
+      // Pulling back down scrolls the hub as usual; the cover never moves down.
+      const v = startY - y;
       if (reduce) {
-        if (startY - y > UNLOCK_COMMIT_PX) commit();
+        if (v > UNLOCK_COMMIT_PX) commit();
         return;
       }
-      paint(damp(startOffset + (startY - y)));
+      paint(Math.max(0, v));
     };
 
     const onWheel = (e) => {
       if (!armed || committed) return;
-      if (!atBottomRef.current) { if (offset > 0) release(); return; }
+      // A wheel has no finger-down, so a pause between turns stands in for one:
+      // the turn that scrolls into the end cannot also lift the cover.
+      const now = Date.now();
+      if (now - ultimaRoda > 250) rodaNoFim = noFim();
+      ultimaRoda = now;
+      if (!rodaNoFim) return;
       if (e.deltaY <= 0 && offset <= 0) return;
       if (reduce) {
-        if (e.deltaY > 0) { startOffset += e.deltaY; if (startOffset > UNLOCK_COMMIT_PX) commit(); }
+        if (e.deltaY > 0) { offset += e.deltaY; if (offset > UNLOCK_COMMIT_PX) commit(); }
         return;
       }
       el.style.transition = "";
-      el.style.willChange = "transform, opacity";
+      el.style.willChange = "transform";
       paint(Math.max(0, offset + e.deltaY));
       if (offset >= UNLOCK_COMMIT_PX) { commit(); return; }
       // A wheel has no finger-up, so idleness stands in for release.
@@ -218,7 +218,7 @@ export function useHubUnlock(active, atBottomRef, elRef, onEnter) {
       window.removeEventListener("touchend", release);
       window.removeEventListener("touchcancel", release);
     };
-  }, [active, atBottomRef, elRef, onEnter]);
+  }, [active, elRef, onEnter]);
 }
 
 // Pasting an image beats the save-to-disk-then-pick dance: copy the cover on a

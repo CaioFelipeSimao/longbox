@@ -125,6 +125,7 @@ cyan on the hub and on "Todas", the publisher's hue (`hsl(--ed-hue 100% 50%)`) w
 | Cover grid mount | fade + `translateY(8px)`, 300ms ease-out, 30ms stagger, first 12 items only | Hierarchy: the shelf assembles instead of snapping in |
 | Sheet / side panel | in `translateY(100%)`→0 320ms ease-drawer, out 200ms ease-out | Spatial: enters and exits along the same path |
 | Scrim | opacity 200ms | State transition |
+| Hub cover (v126) | lifts whole with the finger/wheel, then translateY(-100%) 280ms ease-drawer; returns from the top 300ms; opaque, no fade | Spatial: a cover lifted off the tab beneath |
 | Tab switch | opacity 120ms only | Used dozens of times a day, so it stays near-instant |
 | Volume sheet step (v88) | content in from the side stepped towards: opacity + translateX(16px), 160ms ease-out; none on first open | Spatial: says which way through the list you moved |
 | Toast with Desfazer (v88) | same as Toast, stays 8s instead of 3s | Time to reach the button |
@@ -166,6 +167,19 @@ spacer. Below 480px (tabs) and 560px (hub) "Novo" shows only its "+", and below 
 signal is a dot that disappears while idle (v118). Below 480px the hub footer breaks after
 Exportar, keeping Importar and Zerar together.
 
+**The hub is a cover (v126).** It is a fixed layer (`.hub-capa`, z-index 35: over the header,
+band and bottom tab bar, under the scrim, so sheets open over it) with its own scroll and its own
+header. Under it the app is fully built on a real tab, inert while the cover is down. `tab` is
+never "hub": `hubAberto` says whether the cover is down. The tab under the cover is the last one
+used, kept on the device (`localStorage["longbox:aba-base"]`, HQs on a first visit); whether the
+cover is down stays per browser tab (`sessionStorage["longbox:aba"]`, "hub" or the tab), so a new
+visit opens on the hub and a reload keeps you where you were. The unlock lifts the whole cover,
+opaque, no fade, and the tab is revealed where it was scrolled; the wordmark or 0 drops it back
+from the top. The unlock only counts when the gesture **starts** at the hub's end (a touch that
+begins there, or a wheel turn after a 250ms pause); a flick needs 40px of travel as well as speed.
+The hub never takes the publisher colour: its header carries no hue and the cover resets the
+`--ed-*` accents.
+
 Each tab gets a **different layout family**, which is what actually fixes the sameness:
 
 1. **HQs** - cover grid, `repeat(auto-fill, minmax(104px, 1fr))`, grouped by personagem
@@ -185,7 +199,11 @@ Each tab gets a **different layout family**, which is what actually fixes the sa
    titled "Séries · Nome" and holds only that character's séries. HQs and Séries
    filters are separate on purpose.
 
-Detail view: bottom sheet under 768px, right side panel above it. Large cover with the
+Detail view: bottom sheet under 768px, right side panel above it. On a phone the bottom sheet
+closes by pulling it down (v126): 1:1 with the finger, closes past 120px or on a flick
+(0.5px/ms with 40px of travel), otherwise settles back in 220ms ease-drawer. The drag starts only
+with nothing scrolled between the finger and the sheet and only on a clearly downward first move;
+the side panel has no drag. Large cover with the
 upload affordance, title in display, metadata as a label/value grid (no chained `·`),
 3-way status segmented control, notes, linked issues grouped by series.
 

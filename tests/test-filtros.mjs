@@ -220,7 +220,11 @@ check("sessão limpa quando nenhum filtro sobra", m4.salvo() === null, m4.salvo(
 const app4 = m4.root.querySelector(".app");
 check("editora com cor tinge a página fora do hub", app4.dataset.edTint === "true" && app4.style.getPropertyValue("--ed-hue") === "358", app4.dataset.edTint + " " + app4.style.getPropertyValue("--ed-hue"));
 m4.root.querySelector('[aria-label="Voltar ao início"]').click(); await sleep(80);
-check("o hub nunca pega o tom da editora", !m4.root.querySelector(".app[data-ed-tint]"));
+// v126: the hub is a cover over the tinted app; its own header carries no hue and
+// the cover resets the publisher accents (styles.css, .hub-capa).
+const capa4 = m4.root.querySelector(".hub-capa");
+check("o hub nunca pega o tom da editora", !!capa4 && !capa4.querySelector("[data-ed-hue]") &&
+  /\.hub-capa \{[^}]*--ed-accent: var\(--accent\)/.test(fs.readFileSync("src/styles.css", "utf8")));
 
 console.log("=== quinta montagem: valores inválidos na sessão ===");
 const m5 = await montar({ sessao: { "longbox:aba": "volumes", "longbox:filtros-hqs": "{nao e json" } });

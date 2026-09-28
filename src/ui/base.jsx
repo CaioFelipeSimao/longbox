@@ -54,6 +54,93 @@ function prenderTab(e) {
   else if (!e.shiftKey && (document.activeElement === ultimo || !dentro)) { e.preventDefault(); primeiro.focus(); }
 }
 
+// v126: on a phone the sheet rises from the bottom, and pulling it back down
+// closes it, as on iOS. It follows the finger 1:1 and closes past 120px or on a
+// flick with some travel; otherwise it settles back. The drag only starts at the
+// top of the content (nothing between the finger and the sheet is scrolled), so
+// pulling down a scrolled list still scrolls it, and only once the finger clearly
+// moves down: a sideways swipe stays the volume sheet's navigation. Native
+// listeners because React's touchmove is passive and the page must not scroll
+// (or bounce) under a sheet being dragged. The tablet and the PC get a side
+// panel, where sideways already means "next volume", so no drag there.
+const FECHAR_PX = 120;
+const FECHAR_FLICK_V = 0.5; // px per ms
+const FECHAR_FLICK_MIN_PX = 40;
+
+function useArrastarParaFechar(ref, ativo, onClose) {
+  const fechar = useRef(onClose);
+  fechar.current = onClose;
+  useEffect(() => {
+    const el = ref.current;
+    if (!ativo || !el) return undefined;
+    let ini = null;      // { x, y } where the finger landed, when the drag may start
+    let arrastando = false;
+    let dy = 0, ultimoY = 0, ultimoT = 0, vel = 0;
+
+    const noTopo = (alvo) => {
+      for (let n = alvo; n && n !== el; n = n.parentElement) if (n.scrollTop > 0) return false;
+      return true;
+    };
+    const soltar = (fechou) => {
+      el.style.transition = fechou ? "" : "transform 220ms var(--ease-drawer)";
+      el.style.transform = "";
+      if (!fechou) setTimeout(() => { if (!arrastando) el.style.transition = ""; }, 240);
+    };
+
+    const inicio = (e) => {
+      arrastando = false;
+      ini = null;
+      if (e.touches.length !== 1 || !window.matchMedia("(max-width: 767px)").matches) return;
+      if (!noTopo(e.target)) return;
+      const t = e.touches[0];
+      ini = { x: t.clientX, y: t.clientY };
+      ultimoY = t.clientY;
+      ultimoT = Date.now();
+      vel = 0;
+    };
+    const mover = (e) => {
+      if (!ini || e.touches.length !== 1) return;
+      const t = e.touches[0];
+      const ddx = t.clientX - ini.x, ddy = t.clientY - ini.y;
+      if (!arrastando) {
+        if (Math.abs(ddx) < 8 && Math.abs(ddy) < 8) return;
+        // Decided once, on the first clear movement.
+        if (ddy <= 0 || Math.abs(ddx) > ddy) { ini = null; return; }
+        arrastando = true;
+        el.style.transition = "none";
+      }
+      const agora = Date.now();
+      vel = (t.clientY - ultimoY) / Math.max(1, agora - ultimoT);
+      ultimoY = t.clientY;
+      ultimoT = agora;
+      dy = Math.max(0, ddy);
+      el.style.transform = "translateY(" + dy + "px)";
+      if (e.cancelable) e.preventDefault();
+    };
+    const fim = () => {
+      if (!arrastando) { ini = null; return; }
+      arrastando = false;
+      ini = null;
+      const fecha = dy >= FECHAR_PX || (vel > FECHAR_FLICK_V && dy >= FECHAR_FLICK_MIN_PX);
+      // Closing hands the sheet back to its own exit transition, which carries
+      // on from where the finger left it.
+      soltar(fecha);
+      if (fecha) fechar.current();
+    };
+
+    el.addEventListener("touchstart", inicio, { passive: true });
+    el.addEventListener("touchmove", mover, { passive: false });
+    el.addEventListener("touchend", fim);
+    el.addEventListener("touchcancel", fim);
+    return () => {
+      el.removeEventListener("touchstart", inicio);
+      el.removeEventListener("touchmove", mover);
+      el.removeEventListener("touchend", fim);
+      el.removeEventListener("touchcancel", fim);
+    };
+  }, [ativo]);
+}
+
 // nav (v88) is an optional row under the subtitle, used by the volume sheet for
 // its ‹ 3 de 22 › stepping; it lives there rather than among the actions so the
 // title keeps the header's width.
@@ -70,6 +157,7 @@ export function Sheet({ open, onClose, title, subtitle, actions, nav, children, 
   const ref = useRef(null);
   const id = useId();
   useFocoDialogo(ref, mounted && open, (el) => el.querySelector(".sheet-body"));
+  useArrastarParaFechar(ref, mounted && open && !recede, onClose);
   if (!mounted) return null;
   return (
     <>

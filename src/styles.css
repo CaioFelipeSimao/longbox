@@ -1517,13 +1517,40 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   .gm::after { background: linear-gradient(to bottom, rgba(251, 251, 252, 0.74), rgba(251, 251, 252, 0.9)); }
 }
 
-/* The unlock in reverse: returning drops the hub back in from the top. */
+/* v126: the hub is a cover over the app, with its own scroll. It sits above the
+   header, band and tab bar and below the scrim, so sheets still open over it. It
+   is opaque and lifts whole (no fade), and the shadow under its bottom edge only
+   shows while it is being lifted, so it reads as a layer and not a page. */
+.hub-capa {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  overflow-y: auto;
+  overflow-x: clip;
+  /* The unlock gesture owns the end of the hub; bounce or scroll chaining into the
+     tab underneath would fight it. */
+  overscroll-behavior: none;
+  background: var(--bg);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  /* The hub never takes the publisher's colour; the app under it keeps it. */
+  --ed-accent: var(--accent);
+  --ed-accent-text: var(--accent-text);
+  --ed-borda: var(--border-strong);
+  --ed-rolagem: var(--border-strong);
+}
+/* The publisher gradient belongs to the app's own header, never the hub's. */
+.app .hub-capa > .topbar { background-image: none; }
+
+/* The unlock in reverse: returning drops the cover back in from the top. */
 @media (prefers-reduced-motion: no-preference) {
-  .hub[data-returning="true"] { animation: hubReturn 280ms var(--ease-drawer); }
+  .hub-capa[data-returning="true"] { animation: hubReturn 300ms var(--ease-drawer); }
   @keyframes hubReturn {
-    from { transform: translateY(-100%); opacity: 0; }
+    from { transform: translateY(-100%); }
   }
 }
+
+.app-base { display: contents; }
 
 .suggest {
   display: flex;

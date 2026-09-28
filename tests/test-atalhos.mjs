@@ -52,6 +52,7 @@ async function montar(aba) {
   };
   const NOMES = { "HQs": "volumes", "Coleções": "colecoes", "Séries": "series" };
   const abaAtiva = () => {
+    if (root.querySelector(".hub-capa")) return "hub"; // v126: the hub covers the tab
     const b = root.querySelector('.segmented button[data-active="true"]');
     return b ? NOMES[b.textContent.trim()] : "hub";
   };

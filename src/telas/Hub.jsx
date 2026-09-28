@@ -83,7 +83,7 @@ export function buildBackdrop(volumes, count, seed) {
 
 export function Hub({
   lib, stats, docUsage, edicoesPorSerie, ownedIds,
-  onOpenVolume, onOpenSerie, onNovo, onEnter, sentinelRef, rootRef, returning, backup, onBackup, onRecorte,
+  onOpenVolume, onOpenSerie, onNovo, onEnter, backup, onBackup, onRecorte,
 }) {
   const vazia = lib.volumes.length === 0 && lib.series.length === 0;
   const cores = useCores();
@@ -104,7 +104,7 @@ export function Hub({
 
   if (vazia) {
     return (
-      <div className="hub" ref={rootRef} data-returning={returning ? "true" : "false"}>
+      <div className="hub">
         <EmptyState icon={BookOpen} title="Sua caixa está vazia">
           Comece catalogando um volume. Depois dá para cadastrar as séries e marcar quais
           edições cada volume coleta.
@@ -119,7 +119,7 @@ export function Hub({
   }
 
   return (
-    <div className="hub" ref={rootRef} data-returning={returning ? "true" : "false"}>
+    <div className="hub">
       {/* v109: the backdrop is sized by this block, the suggestion only, so it has
           faded out before "Falta pouco" on any screen and in either theme. */}
       <div className="hub-topo">
@@ -251,8 +251,6 @@ export function Hub({
         Abrir minha coleção
         <ChevronDown size={15} />
       </button>
-
-      <div ref={sentinelRef} style={{ height: 1, marginTop: -1 }} aria-hidden="true" />
     </div>
   );
 }
