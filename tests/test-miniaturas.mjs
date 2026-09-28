@@ -84,6 +84,8 @@ check("miniatura remota não força download antecipado", root.querySelector('im
 // v124: the page is hidden (phone locked) while the batch still waits its 3 s:
 // the records must reach the library at once, not when the page wakes.
 for (let i = 0; i < 100 && enviados.length < 3; i++) await sleep(50);
+// Meanwhile another device edits a volume, so the batch save has to merge.
+docs.set("library/volumes", { items: docs.get("library/volumes").items.map((v) => (v.id === "v0" ? { ...v, notas: "de outro aparelho" } : v)) });
 Object.defineProperty(window.document, "visibilityState", { value: "hidden", configurable: true });
 window.document.dispatchEvent(new window.Event("visibilitychange"));
 await sleep(200);
@@ -99,6 +101,10 @@ check("capa trocada ganha miniatura nova", salvos.v1 && salvos.v1.capa === id32(
 check("volume sem miniatura ganha uma", salvos.v2 && salvos.v2.capa === id32("c2"), JSON.stringify(salvos.v2));
 check("os dois volumes da mesma capa apontam para a mesma miniatura", salvos.v3 && salvos.v2 && salvos.v3.id === salvos.v2.id);
 check("o registro existente fica como estava", salvos.v0 && salvos.v0.id === id32("m0"));
+check("a edição do outro aparelho sobrevive à mescla", docs.get("library/volumes").items.find((v) => v.id === "v0").notas === "de outro aparelho");
+// v125: a save that merged schedules a follow-up with nothing left to write; the
+// indicator used to stay on "Salvando…" for good.
+check("o aviso não fica preso em Salvando", root.querySelector(".salvamento")?.dataset.estado !== "salvando", root.querySelector(".salvamento")?.dataset.estado);
 check("sem erros", erros.length === 0, erros[0]);
 
 console.log("\n" + passes + " passaram, " + falhas + " falharam");

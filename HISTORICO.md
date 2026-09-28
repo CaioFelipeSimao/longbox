@@ -2320,3 +2320,12 @@ directly. The lost record: a phone suspends a hidden page, timers included, so a
 `visibilitychange` to hidden. `test-miniaturas.mjs` gained a minimal IndexedDB stub, a fetch that
 refuses `blob:` like the real frame, and a hide check (13 checks; each new one seen failing
 first). It also stopped reading the hub suggestion's cover by mistake, which made it flaky.
+
+**v125 "Salvando…" no longer sticks.** Right after v124 uploaded and recorded all 163 thumbnails
+(34 library writes, every record valid), the indicator stayed on "Salvando…" for minutes. Since v113
+a save that had to merge with a change made elsewhere hands the merged library back to the screen,
+which schedules a follow-up save before the "Salvo" check runs; the follow-up finds nothing to write
+and returned without a word. Now the module remembers the last state it reported, and an empty
+follow-up closes a "Salvando…" left open. Only the indicator was wrong; the data was saved.
+`test-miniaturas.mjs` has another device edit a volume mid-upload (the edit survives the merge) and
+checks the indicator (15 checks; the indicator one failed first).

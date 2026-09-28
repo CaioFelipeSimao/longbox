@@ -145,6 +145,11 @@ export function flushLibrary(lib) {
   return vez;
 }
 
+function avisarEstado(e) {
+  store.estado = e;
+  if (store.onEstado) store.onEstado(e);
+}
+
 async function flushAgora(lib) {
   const db = store.db;
   if (!db) return;
@@ -164,13 +169,18 @@ async function flushAgora(lib) {
     if (!shards.has(sid)) writes.push({ chave: "ed:" + sid, ref: db.collection("edicoes").doc(sid), local: [], json: "[]", remover: true });
   });
 
-  if (!writes.length) return;
+  // v125: a save that merged schedules this follow-up, which usually finds nothing
+  // left to write; it closes the "Salvando…" the merging save left open.
+  if (!writes.length) {
+    if (store.estado === "salvando" && store.inFlight === 0 && store.timer === null) avisarEstado("salvo");
+    return;
+  }
   const mescladas = [];
   store.inFlight++;
   // v113: "Salvando…" / "Salvo" beside the wordmark. Only real writes report; a
   // save with nothing changed stays silent, and a failure leaves it to the toast.
   let ok = true;
-  if (store.onEstado) store.onEstado("salvando");
+  avisarEstado("salvando");
   try {
     for (const w of writes) {
       try {
@@ -206,7 +216,7 @@ async function flushAgora(lib) {
   } finally {
     store.inFlight--;
     if (mescladas.length && store.aoMesclar) store.aoMesclar(mescladas, "ao-salvar");
-    if (store.onEstado && store.inFlight === 0 && store.timer === null) store.onEstado(ok ? "salvo" : null);
+    if (store.inFlight === 0 && store.timer === null) avisarEstado(ok ? "salvo" : null);
   }
 }
 
