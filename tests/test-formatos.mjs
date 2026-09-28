@@ -59,13 +59,19 @@ async function montar({ sessao = {}, editoraSel = "__todas__", nomeMarvel = "Mar
     await sleep(150);
   };
   const modal = () => root.querySelector(".modal");
-  // The form's native selects, found by their field label.
-  const campo = (rotulo) => [...(modal()?.querySelectorAll(".field") || [])]
-    .find((f) => f.querySelector("label")?.textContent === rotulo)?.querySelector("select");
-  const opcoesDe = (sel) => [...(sel?.options || [])].map((o) => o.value || o.textContent);
-  const escolher = async (sel, valor) => {
-    Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set.call(sel, valor);
-    sel.dispatchEvent(new window.Event("change", { bubbles: true }));
+  // v139: the form's pickers are the Longbox combobox (OpcaoFiltro), found by name.
+    const campo = (rotulo) => modal()?.querySelector('[role=combobox][aria-label="' + rotulo + '"]');
+  const valor = (el) => { const t = el?.textContent; return t === "Sem editora" ? "" : t; };
+  const opcoesDe = async (el) => {
+    if (!el) return [];
+    el.click(); await sleep(40);
+    const lista = [...el.closest(".pfiltro").querySelectorAll("[role=option]")].map((o) => o.textContent);
+    el.click(); await sleep(40);
+    return lista;
+  };
+  const escolher = async (el, v) => {
+    el.click(); await sleep(40);
+    [...el.closest(".pfiltro").querySelectorAll("[role=option]")].find((o) => o.textContent === (v || "Sem editora"))?.click();
     await sleep(80);
   };
   const dicaDe = (rotulo) => [...(modal()?.querySelectorAll(".field") || [])]
@@ -79,7 +85,7 @@ async function montar({ sessao = {}, editoraSel = "__todas__", nomeMarvel = "Mar
     await sleep(60);
     return fora.join(",");
   };
-  return { window, root, erros, docs, tecla, modal, campo, opcoesDe, escolher, dicaDe, tiposDoFiltro };
+  return { window, root, erros, docs, tecla, modal, campo, valor, opcoesDe, escolher, dicaDe, tiposDoFiltro };
 }
 
 console.log("=== formulário de volume ===");
@@ -87,25 +93,25 @@ const m = await montar({ editoraSel: "dc-comics" });
 await m.tecla("n");
 check("Novo abre o formulário", !!m.modal());
 const editora = m.campo("Editora");
-check("editora é uma lista", !!editora && editora.tagName === "SELECT");
+check("editora é o seletor do Longbox, sem select nativo", !!editora && !m.modal().querySelector("select"));
 // "Editora Abril" is there because the app registers every publisher a stored
 // volume already names (semearEditoras), which is what keeps old records whole.
-check("lista traz Sem editora e as cadastradas", m.opcoesDe(editora).join(",") === "Sem editora,DC Comics,Marvel Comics,Editora Abril", m.opcoesDe(editora).join(","));
-check("vem com a editora da faixa", editora.value === "DC Comics", editora.value);
+check("lista traz Sem editora e as cadastradas", (await m.opcoesDe(editora)).join(",") === "Sem editora,DC Comics,Marvel Comics,Editora Abril", (await m.opcoesDe(editora)).join(","));
+check("vem com a editora da faixa", m.valor(editora) === "DC Comics", m.valor(editora));
 const ordem = [...m.modal().querySelectorAll(".field label")].map((l) => l.textContent);
 check("editora vem antes do tipo", ordem.indexOf("Editora") < ordem.indexOf("Tipo"), ordem.join(","));
-check("DC oferece os formatos da DC", m.opcoesDe(m.campo("Tipo")).join(",") === DC_LISTA, m.opcoesDe(m.campo("Tipo")).join(","));
+check("DC oferece os formatos da DC", (await m.opcoesDe(m.campo("Tipo"))).join(",") === DC_LISTA, (await m.opcoesDe(m.campo("Tipo"))).join(","));
 await m.escolher(m.campo("Tipo"), "DC Finest");
 await m.escolher(m.campo("Editora"), "Marvel Comics");
-check("Marvel oferece os formatos da Marvel", m.opcoesDe(m.campo("Tipo")).join(",") === MARVEL_LISTA, m.opcoesDe(m.campo("Tipo")).join(","));
-check("DC Finest volta para Trade Paperback", m.campo("Tipo").value === "Trade Paperback", m.campo("Tipo").value);
+check("Marvel oferece os formatos da Marvel", (await m.opcoesDe(m.campo("Tipo"))).join(",") === MARVEL_LISTA, (await m.opcoesDe(m.campo("Tipo"))).join(","));
+check("DC Finest volta para Trade Paperback", m.valor(m.campo("Tipo")) === "Trade Paperback", m.valor(m.campo("Tipo")));
 check("e o formulário avisa", /DC Finest não existe na Marvel Comics/.test(m.dicaDe("Tipo")), m.dicaDe("Tipo"));
 await m.escolher(m.campo("Tipo"), "Omnibus");
 check("aviso some ao escolher outro tipo", m.dicaDe("Tipo") === "", m.dicaDe("Tipo"));
 await m.escolher(m.campo("Editora"), "DC Comics");
-check("formato comum sobrevive à troca", m.campo("Tipo").value === "Omnibus" && m.dicaDe("Tipo") === "", m.campo("Tipo").value);
+check("formato comum sobrevive à troca", m.valor(m.campo("Tipo")) === "Omnibus" && m.dicaDe("Tipo") === "", m.valor(m.campo("Tipo")));
 await m.escolher(m.campo("Editora"), "");
-check("sem editora, só os quatro comuns", m.opcoesDe(m.campo("Tipo")).join(",") === "Trade Paperback,Omnibus,Hardcover,Outro", m.opcoesDe(m.campo("Tipo")).join(","));
+check("sem editora, só os quatro comuns", (await m.opcoesDe(m.campo("Tipo"))).join(",") === "Trade Paperback,Omnibus,Hardcover,Outro", (await m.opcoesDe(m.campo("Tipo"))).join(","));
 await m.tecla("Escape");
 await sleep(250);
 
@@ -115,8 +121,8 @@ const t = await montar();
 await sleep(200);
 await t.tecla("e");
 check("edição abre o formulário", !!t.modal());
-check("editora do volume antigo continua na lista", t.campo("Editora")?.value === "Editora Abril" && t.opcoesDe(t.campo("Editora")).includes("Editora Abril"), t.campo("Editora")?.value);
-check("tipo antigo continua na lista", t.campo("Tipo")?.value === "Formatinho" && t.opcoesDe(t.campo("Tipo")).includes("Formatinho"), t.campo("Tipo")?.value);
+check("editora do volume antigo continua na lista", t.valor(t.campo("Editora")) === "Editora Abril" && (await t.opcoesDe(t.campo("Editora"))).includes("Editora Abril"), t.valor(t.campo("Editora")));
+check("tipo antigo continua na lista", t.valor(t.campo("Tipo")) === "Formatinho" && (await t.opcoesDe(t.campo("Tipo"))).includes("Formatinho"), t.valor(t.campo("Tipo")));
 t.modal().querySelector(".btn-primary").click();
 await sleep(700);
 const salvo = t.docs.get("library/volumes").items.find((v) => v.id === "b");
@@ -141,7 +147,7 @@ check("editora cadastrada só como Marvel ganha os formatos da Marvel", (await f
 console.log("=== formulário de série ===");
 const s = await montar({ sessao: { "longbox:aba": "series" } });
 await s.tecla("n");
-check("série: editora é uma lista", s.campo("Editora")?.tagName === "SELECT" && s.opcoesDe(s.campo("Editora")).join(",") === "Sem editora,DC Comics,Marvel Comics,Editora Abril", s.opcoesDe(s.campo("Editora")).join(","));
+check("série: editora é uma lista", !!s.campo("Editora") && !s.modal().querySelector("select") && (await s.opcoesDe(s.campo("Editora"))).join(",") === "Sem editora,DC Comics,Marvel Comics,Editora Abril", (await s.opcoesDe(s.campo("Editora"))).join(","));
 
 check("sem erros", [m, t, f1, f2, f3, f4, s].every((x) => x.erros.length === 0), [m, t, f1, f2, f3, f4, s].map((x) => x.erros[0]).find(Boolean));
 console.log("\n" + passes + " passaram, " + falhas + " falharam");

@@ -4,6 +4,7 @@ import { Plus, X, ImagePlus, ChevronDown } from "lucide-react";
 import { STATUS, STATUS_ORDER, tiposDaEditora } from "../lib/constantes";
 import { usePasteImage } from "../lib/hooks";
 import { Field, Modal } from "../ui/base";
+import { OpcaoFiltro } from "../ui/Filtros";
 
 // v95: the publisher is picked from the registered ones (Gerenciar editoras), so a
 // typo cannot leave a volume under a publisher of its own with no formats. A value
@@ -15,12 +16,18 @@ function opcoesEditora(editoras, atual) {
   return [...nomes, ...extra];
 }
 
-function SeletorEditora({ editoras, valor, onChange }) {
+// v139: the Longbox picker instead of a native select, whose open list the OS draws
+// (white border, wider than the field) where no stylesheet reaches.
+function SeletorEditora({ id, editoras, valor, onChange }) {
   return (
-    <select className="select" value={valor || ""} onChange={(e) => onChange(e.target.value)}>
-      <option value="">Sem editora</option>
-      {opcoesEditora(editoras, valor).map((n) => <option key={n} value={n}>{n}</option>)}
-    </select>
+    <OpcaoFiltro
+      id={id}
+      rotulo="Editora"
+      valor={valor || ""}
+      todos="Sem editora"
+      opcoes={opcoesEditora(editoras, valor).map((n) => ({ valor: n, rotulo: n }))}
+      onChange={onChange}
+    />
   );
 }
 
@@ -104,13 +111,17 @@ export function FormVolume({
             />
           </Field>
           <Field label="Editora">
-            <SeletorEditora editoras={editoras} valor={volumeForm.editora} onChange={trocarEditora} />
+            <SeletorEditora id="form-volume-editora" editoras={editoras} valor={volumeForm.editora} onChange={trocarEditora} />
           </Field>
           <div className="grid-2">
             <Field label="Tipo" hint={avisoTipo || undefined}>
-              <select className="select" value={volumeForm.tipo} onChange={(e) => { setAvisoTipo(null); setVolumeForm((f) => ({ ...f, tipo: e.target.value })); }}>
-                {tiposComAtual.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
+              <OpcaoFiltro
+                id="form-volume-tipo"
+                rotulo="Tipo"
+                valor={volumeForm.tipo}
+                opcoes={tiposComAtual.map((t) => ({ valor: t, rotulo: t }))}
+                onChange={(tipo) => { setAvisoTipo(null); setVolumeForm((f) => ({ ...f, tipo })); }}
+              />
             </Field>
             <Field label="Ano">
               <input className="input" value={volumeForm.ano} onChange={(e) => setVolumeForm((f) => ({ ...f, ano: e.target.value }))} />
@@ -284,7 +295,7 @@ export function FormSerie({
             </button>
           </Field>
           <Field label="Editora">
-            <SeletorEditora editoras={editoras} valor={serieForm.editora} onChange={(editora) => setSerieForm((f) => ({ ...f, editora }))} />
+            <SeletorEditora id="form-serie-editora" editoras={editoras} valor={serieForm.editora} onChange={(editora) => setSerieForm((f) => ({ ...f, editora }))} />
           </Field>
           <div className="grid-3">
             <Field label="Ano início">

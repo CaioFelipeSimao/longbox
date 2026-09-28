@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Pencil, Trash2, ArrowUp, ArrowDown, ChevronDown } from "lucide-react";
 
-import { STATUS, STATUS_ORDER } from "../lib/constantes";
 import { PALETA_CROMATICA, PALETA_NEUTRA, coverColors, useCores } from "../lib/cores";
-import { dobrar } from "../lib/sessao";
+import { CampoBusca, OpcaoFiltro, OPCOES_STATUS, daEditora } from "../ui/Filtros";
 import { Field, Sheet } from "../ui/base";
 import { Swatch } from "../ui/CorPersonagem";
 import { CoverArt } from "../ui/VolumeCard";
@@ -20,6 +19,10 @@ export function ColecaoSheet({
   const colecaoId = openColecao ? openColecao.id : null;
   useEffect(() => { setEditando(false); }, [colecaoId]);
   const variosPersonagens = openColecao ? personagensDaColecao(openColecao).length > 1 : false;
+  // v139: the publisher(s) its volumes already carry lock what can be added.
+  const editorasDaColecao = openColecao ? [...new Map(openColecao.membros
+    .map((vid) => (lib.volumes.find((x) => x.id === vid)?.editora || "").trim()).filter(Boolean)
+    .map((e) => [e.toLowerCase(), e])).values()] : [];
 
   // Alt+↑ / Alt+↓ on a focused row moves that volume; focus follows to the same
   // button in the row it lands on.
@@ -95,14 +98,15 @@ export function ColecaoSheet({
                   {!editando && v.status === "lida" && (
                     /* v115: a volume already read can be set back (a "Lidas até aqui" pressed
                        by mistake, or one being reread) right here. */
-                    <select
+                    <OpcaoFiltro
+                      id={"status-" + v.id}
                       className="ordem-status"
-                      value={v.status}
-                      onChange={(e) => onStatus(v.id, e.target.value)}
-                      aria-label={"Status de leitura de " + v.titulo}
-                    >
-                      {STATUS_ORDER.map((k) => <option key={k} value={k}>{STATUS[k].label}</option>)}
-                    </select>
+                      listaClassName="ed-lista"
+                      valor={v.status}
+                      opcoes={OPCOES_STATUS}
+                      onChange={(s) => onStatus(v.id, s)}
+                      rotulo={"Status de leitura de " + v.titulo}
+                    />
                   )}
                   {/* v114: reading a saga in order, mark this one and every one before it. */}
                   {!editando && v.status !== "lida" && (
@@ -163,6 +167,7 @@ export function ColecaoSheet({
               key={openColecao.id}
               volumes={lib.volumes.filter((v) => !openColecao.membros.includes(v.id))}
               personagens={personagensDaColecao(openColecao)}
+              editoras={editorasDaColecao}
               onAdicionar={(ids) => adicionarMembros(openColecao.id, ids)}
             />
           </Field>
@@ -173,117 +178,41 @@ export function ColecaoSheet({
 }
 
 /* v138: the native select opened a list drawn by the operating system (white,
-   wider than the field) and took one volume per trip through the alphabet. This
-   is a search in the look of the character filter that picks several: each tap
-   marks a volume with the place it will take, the list stays open, and one button
-   adds them all in the order tapped. The collection's own characters come first. */
-function AdicionarVolumes({ volumes, personagens, onAdicionar }) {
-  const [aberta, setAberta] = useState(false);
-  const [texto, setTexto] = useState("");
+   wider than the field) and took one volume per trip through the alphabet. Now a
+   search that picks several, added in the order tapped, the collection's own
+   characters first. v139: only volumes of the collection's publisher. */
+function AdicionarVolumes({ volumes, personagens, editoras, onAdicionar }) {
   const [escolhidos, setEscolhidos] = useState([]);
-  const [idx, setIdx] = useState(0);
-  const raiz = useRef(null);
-  const listaRef = useRef(null);
   const cores = useCores();
 
-  const lista = useMemo(() => {
-    const q = dobrar(texto.trim());
-    const achados = q ? volumes.filter((v) => dobrar(v.titulo + " " + (v.personagem || "")).includes(q)) : volumes;
+  const opcoes = useMemo(() => {
     const deles = new Set(personagens);
     const nome = (a, b) => a.titulo.localeCompare(b.titulo, "pt-BR", { numeric: true });
-    return [...achados.filter((v) => deles.has(v.personagem)).sort(nome), ...achados.filter((v) => !deles.has(v.personagem)).sort(nome)];
-  }, [texto, volumes, personagens]);
-
-  useEffect(() => {
-    if (!aberta) return undefined;
-    const fora = (e) => { if (raiz.current && !raiz.current.contains(e.target)) setAberta(false); };
-    document.addEventListener("pointerdown", fora);
-    return () => document.removeEventListener("pointerdown", fora);
-  }, [aberta]);
-
-  // The field is the sheet's last control, so the list opens below the fold; bring
-  // it into view the way a dropdown would be.
-  useEffect(() => {
-    if (aberta && listaRef.current && listaRef.current.scrollIntoView) listaRef.current.scrollIntoView({ block: "nearest" });
-  }, [aberta]);
-
-  const alternar = (v) => {
-    if (!v) return;
-    setEscolhidos((xs) => (xs.includes(v.id) ? xs.filter((x) => x !== v.id) : [...xs, v.id]));
-  };
-  const adicionar = () => {
-    onAdicionar(escolhidos);
-    setEscolhidos([]);
-    setTexto("");
-    setAberta(false);
-  };
-
-  const tecla = (e) => {
-    if (e.key === "Escape") { if (aberta) { e.preventDefault(); setAberta(false); } return; }
-    if (!aberta) {
-      if (e.key === "ArrowDown" || e.key === "Enter") { e.preventDefault(); setAberta(true); }
-      return;
-    }
-    if (e.key === "ArrowDown") { e.preventDefault(); setIdx((i) => Math.min(i + 1, lista.length - 1)); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); setIdx((i) => Math.max(i - 1, 0)); }
-    else if (e.key === "Enter") { e.preventDefault(); alternar(lista[idx]); }
-  };
+    const cabem = volumes.filter(daEditora(editoras));
+    return [...cabem.filter((v) => deles.has(v.personagem)).sort(nome), ...cabem.filter((v) => !deles.has(v.personagem)).sort(nome)].map((v) => ({
+      id: v.id,
+      titulo: v.titulo,
+      meta: [v.personagem, v.ano].filter(Boolean).join(" · "),
+      busca: v.titulo + " " + (v.personagem || ""),
+      inicio: <span className="cover sug-cover" style={{ "--edge": coverColors(v, cores).edge }}><CoverArt volume={v} /></span>,
+    }));
+  }, [volumes, personagens, editoras, cores]);
 
   const n = escolhidos.length;
   return (
-    <div className="add-vol" ref={raiz}>
-      <input
-        className="select pfiltro-input"
-        value={texto}
-        onChange={(e) => { setTexto(e.target.value); setIdx(0); setAberta(true); }}
-        onFocus={() => setAberta(true)}
-        onClick={() => setAberta(true)}
-        onKeyDown={tecla}
-        placeholder="Buscar por título ou personagem"
-        aria-label="Adicionar volumes"
-        role="combobox"
-        aria-expanded={aberta ? "true" : "false"}
-        aria-controls="add-vol-lista"
-        aria-autocomplete="list"
-        aria-activedescendant={aberta && lista[idx] ? "add-vol-" + lista[idx].id : undefined}
-        autoComplete="off"
-        spellCheck={false}
+    <div>
+      <CampoBusca
+        id="add-vol"
+        rotulo="Adicionar volumes"
+        placeholder={editoras.length ? "Buscar volumes da " + editoras.join(" e ") : "Buscar por título ou personagem"}
+        opcoes={opcoes}
+        escolhidos={escolhidos}
+        onEscolher={(vid) => setEscolhidos((xs) => (xs.includes(vid) ? xs.filter((x) => x !== vid) : [...xs, vid]))}
+        vazio={"Nenhum volume " + (editoras.length ? "da " + editoras.join(" e ") + " " : "") + "fora desta coleção."}
       />
-      {aberta && (
-        <div className="sug add-lista" id="add-vol-lista" role="listbox" aria-multiselectable="true" aria-label="Volumes" ref={listaRef} onMouseDown={(e) => e.preventDefault()}>
-          {lista.length === 0 ? (
-            <p className="sug-empty">{volumes.length ? "Nenhum volume com \"" + texto.trim() + "\"." : "Todos os volumes já estão nesta coleção."}</p>
-          ) : lista.map((v, i) => {
-            const pos = escolhidos.indexOf(v.id);
-            return (
-              <button
-                key={v.id}
-                id={"add-vol-" + v.id}
-                type="button"
-                tabIndex={-1}
-                className="sug-row"
-                role="option"
-                aria-selected={pos >= 0 ? "true" : "false"}
-                data-on={i === idx ? "true" : "false"}
-                onMouseEnter={() => setIdx(i)}
-                onClick={() => alternar(v)}
-              >
-                <span className="cover sug-cover" style={{ "--edge": coverColors(v, cores).edge }}>
-                  <CoverArt volume={v} />
-                </span>
-                <span className="sug-text">
-                  <span className="sug-title truncate">{v.titulo}</span>
-                  <span className="sug-meta truncate">{[v.personagem, v.ano].filter(Boolean).join(" · ")}</span>
-                </span>
-                {pos >= 0 && <span className="add-ordem num" aria-hidden="true">{pos + 1}</span>}
-              </button>
-            );
-          })}
-        </div>
-      )}
       {n > 0 && (
         <div className="add-acoes">
-          <button type="button" className="btn btn-primary" onClick={adicionar}>
+          <button type="button" className="btn btn-primary" onClick={() => { onAdicionar(escolhidos); setEscolhidos([]); }}>
             {"Adicionar " + n + (n === 1 ? " volume" : " volumes")}
           </button>
           <button type="button" className="btn btn-ghost" onClick={() => setEscolhidos([])}>Limpar</button>

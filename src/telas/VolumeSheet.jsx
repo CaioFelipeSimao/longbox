@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { Pencil, Trash2, Link2, ImagePlus, ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
+import { Pencil, Trash2, Link2, ImagePlus, ChevronLeft, ChevronRight, Copy, Library } from "lucide-react";
 
 import { STATUS, STATUS_ORDER } from "../lib/constantes";
 import { parseNum } from "../lib/util";
@@ -8,11 +8,13 @@ import { useCorDaCapa } from "../lib/capas";
 import { specForCharacter, useCores } from "../lib/cores";
 import { Field, Sheet } from "../ui/base";
 import { CoverArt } from "../ui/VolumeCard";
+import { CampoBusca, daEditora } from "../ui/Filtros";
+import { personagensDaSerie } from "../lib/biblioteca";
 
 export function VolumeSheet({
   volume, onClose, onEdit, onDuplicate, onDelete, onStatus, colecoes, grupos,
   canUpload, uploading, onCoverPick, series, edicoesPorSerie,
-  linkSerieId, setLinkSerieId, linkPickSerie, setLinkPickSerie,
+  linkSerieId, setLinkSerieId,
   rangeDe, setRangeDe, rangeAte, setRangeAte, avulsoNum, setAvulsoNum,
   onRange, onAvulsa, onToggle, onOpenEdicaoNaSerie, recede,
   anterior, proximo, posicao, total, onNavegar, direcao,
@@ -31,6 +33,25 @@ export function VolumeSheet({
   const cores = useCores();
   const spec = v ? specForCharacter(v.personagem || v.titulo, cores) : null;
   const tinta = v ? corCapa || "hsl(" + (spec.longbox ? 188 : spec.h || 0) + " 50% 45%)" : null;
+
+  // v139: séries on offer for "Vincular edições": the volume's publisher only, the
+  // volume's character first.
+  const opcoesSerie = useMemo(() => {
+    if (!v) return [];
+    const ord = (a, b) => a.nome.localeCompare(b.nome, "pt-BR", { numeric: true });
+    const cabem = series.filter(daEditora([v.editora]));
+    const dele = (x) => personagensDaSerie(x).some((p) => p.nome === v.personagem);
+    return [...cabem.filter(dele).sort(ord), ...cabem.filter((x) => !dele(x)).sort(ord)].map((x) => {
+      const nomes = personagensDaSerie(x).map((p) => p.nome).join(", ");
+      return {
+        id: x.id,
+        titulo: x.nome,
+        meta: [nomes, x.anoInicio].filter(Boolean).join(" · "),
+        busca: x.nome + " " + nomes,
+        inicio: <span className="sug-cover sug-icone"><Library size={15} /></span>,
+      };
+    });
+  }, [series, v]);
 
   // v88: ← → step to the neighbouring volume. Not while typing, not with a
   // modifier held (those belong to the browser and the text field), not while a
@@ -184,7 +205,7 @@ export function VolumeSheet({
                     <button
                       className="btn btn-ghost"
                       style={{ padding: 0, fontSize: "0.75rem", color: "var(--accent-text)" }}
-                      onClick={() => { setLinkSerieId(g.serie.id); setLinkPickSerie(g.serie.id); }}
+                      onClick={() => setLinkSerieId(g.serie.id)}
                     >
                       Gerenciar
                     </button>
@@ -214,28 +235,25 @@ export function VolumeSheet({
               <button
                 className="btn btn-quiet"
                 style={{ width: "100%", marginTop: 4 }}
-                onClick={() => { setLinkSerieId("__pick__"); setLinkPickSerie(""); }}
+                onClick={() => setLinkSerieId("__pick__")}
               >
                 <Link2 size={14} /> Vincular edições de uma série
               </button>
             ) : linkSerieId === "__pick__" ? (
               <div className="linked-serie">
+                {/* v139: a search locked to the volume's publisher, its character's
+                    séries first; a tap goes straight to linking. */}
                 <Field label="Série">
-                  <select className="select" value={linkPickSerie} onChange={(e) => setLinkPickSerie(e.target.value)}>
-                    <option value="">Escolha a série</option>
-                    {series.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
-                  </select>
+                  <CampoBusca
+                    id="vincular-serie"
+                    rotulo="Buscar série"
+                    placeholder={v.editora ? "Buscar séries da " + v.editora : "Buscar série"}
+                    opcoes={opcoesSerie}
+                    onEscolher={setLinkSerieId}
+                    vazio={"Nenhuma série" + (v.editora ? " da " + v.editora : "") + " cadastrada."}
+                  />
                 </Field>
-                <div className="row" style={{ marginTop: 10 }}>
-                  <button className="btn btn-quiet" style={{ flex: 1 }} onClick={() => setLinkSerieId(null)}>Cancelar</button>
-                  <button
-                    className="btn btn-primary"
-                    style={{ flex: 1 }}
-                    onClick={() => { if (linkPickSerie) setLinkSerieId(linkPickSerie); }}
-                  >
-                    Continuar
-                  </button>
-                </div>
+                <button className="btn btn-quiet" style={{ width: "100%", marginTop: 10 }} onClick={() => setLinkSerieId(null)}>Cancelar</button>
               </div>
             ) : (
               <LinkPanel

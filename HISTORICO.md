@@ -2508,3 +2508,17 @@ collection's own characters come first. A tap marks a volume with the place it w
 and keeps the list open, a second tap unmarks; "Adicionar N volumes" adds them all in the order
 tapped (the user's pick over year order), in one save with Desfazer. `adicionarMembros` replaced
 `adicionarMembro` and the `addMemberSel` state. test-colecoes gained 15 checks, shown failing first.
+
+**v139 No native select left; pickers locked to a publisher.** The user asked that a collection
+not mix publishers and that "Vincular edições" offer only the volume's publisher, then found the
+white-bordered OS list in four more places (volume Tipo and Editora, série Editora, the reading
+order's status). The v138 picker became the shared `CampoBusca` in ui/Filtros.jsx (inline list,
+multi-pick with numbers or single-pick) with `daEditora`: a collection adds only volumes of the
+publisher(s) its volumes carry (none locked while empty); the volume sheet's série search shows the
+volume's publisher only, its character's séries first, and a tap goes straight to linking (the
+"Continuar" step and `linkPickSerie` are gone); the série sheet's "Vincular a um volume" (also a
+native select, found while looking) shows the série's publisher only. An item with no publisher is
+never hidden. Tipo, Editora and the status use OpcaoFiltro; inside a form its list scrolls into view
+(it opened under the footer on PC) and keeps the field's width (the phone rule grew Tipo's list
+off the modal's left edge). test-colecoes +14 checks shown failing first; test-formatos, test-lote5
+and test-foco now drive the comboboxes.

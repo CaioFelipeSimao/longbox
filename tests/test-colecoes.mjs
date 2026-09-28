@@ -200,7 +200,8 @@ console.log("=== quinta montagem: adicionar vários ===");
 {
   const bat = (id) => ({ id, titulo: "Batman " + id, personagem: "Batman", tipo: "Trade Paperback", editora: "DC Comics", ano: "2020", status: "nao_lida", notas: "", edicoesColetadasIds: [] });
   const outro = (id, titulo, personagem) => ({ ...bat(id), titulo, personagem });
-  const vols = [outro("fl", "Flash: Renascimento", "Flash"), outro("su", "Superman: Ação", "Superman"), ...Array.from({ length: 6 }, (_, i) => bat("b" + i))];
+  const vols = [outro("fl", "Flash: Renascimento", "Flash"), outro("su", "Superman: Ação", "Superman"), ...Array.from({ length: 6 }, (_, i) => bat("b" + i)),
+    { ...outro("dd", "Demolidor por Bendis", "Daredevil"), editora: "Marvel" }];
   const m5 = await montar({ sessao: { "longbox:aba": "colecoes" }, docsIniciais: [
     ["library/volumes", { items: vols }],
     ["library/colecoes", { items: [{ id: "c", nome: "Saga", descricao: "", membros: ["b0", "b1"] }] }],
@@ -219,11 +220,16 @@ console.log("=== quinta montagem: adicionar vários ===");
     campo.dispatchEvent(new W.Event("input", { bubbles: true }));
     await sleep(80);
   };
-  const linhas = () => [...R.querySelectorAll(".sheet .add-lista [role=option]")];
+  const linhas = () => [...R.querySelectorAll(".sheet .escolha-lista [role=option]")];
   const nomes = () => linhas().map((l) => l.querySelector(".sug-title").textContent);
   const tocar = async (nome) => { linhas().find((l) => l.querySelector(".sug-title").textContent === nome)?.click(); await sleep(80); };
   campo?.focus(); campo?.click(); await sleep(80);
-  check("lista abre com os que faltam", linhas().length === 6, linhas().length);
+  check("lista abre com os que faltam, só da editora", linhas().length === 6, linhas().length);
+  // v139: a collection is locked to its volumes' publisher.
+  check("campo diz a editora", /DC Comics/.test(campo?.placeholder), campo?.placeholder);
+  await digitar("demol");
+  check("Marvel fica fora de coleção DC", linhas().length === 0, nomes().join());
+  await digitar("");
   check("personagem da coleção primeiro", nomes().length > 0 && nomes().slice(0, 4).every((n) => n.startsWith("Batman")), nomes().join(","));
   await digitar("acao");
   check("busca sem acento", nomes().join() === "Superman: Ação", nomes().join());
@@ -233,7 +239,7 @@ console.log("=== quinta montagem: adicionar vários ===");
   await digitar("");
   await tocar("Batman b4");
   check("lista continua aberta", linhas().length > 0);
-  const ordem = (nome) => linhas().find((l) => l.querySelector(".sug-title").textContent === nome)?.querySelector(".add-ordem")?.textContent;
+  const ordem = (nome) => linhas().find((l) => l.querySelector(".sug-title").textContent === nome)?.querySelector(".escolha-ordem")?.textContent;
   check("número na ordem do toque", ordem("Superman: Ação") === "1" && ordem("Flash: Renascimento") === "2" && ordem("Batman b4") === "3");
   const botaoAdd = () => [...R.querySelectorAll(".sheet button")].find((b) => /^Adicionar \d/.test(b.textContent));
   check("botão conta 3", botaoAdd()?.textContent === "Adicionar 3 volumes", botaoAdd()?.textContent);
@@ -250,6 +256,56 @@ console.log("=== quinta montagem: adicionar vários ===");
   R.querySelector(".toast button")?.click(); await sleep(150);
   check("Desfazer tira os dois", titulosOrdem().length === 2, titulosOrdem().join());
   check("sem erros (5)", m5.erros.length === 0, m5.erros[0]);
+}
+
+// v139: the last native selects go (their open list is the OS's, white-bordered):
+// a read volume's status in the reading order, the série picker in a volume's
+// "Vincular edições", and Tipo and Editora in the volume form. The série picker is
+// a search locked to the volume's publisher, its character's séries first.
+console.log("=== sexta montagem: sem selects nativos ===");
+{
+  const vol = (id, titulo, personagem, editora, status) => ({ id, titulo, personagem, tipo: "Trade Paperback", editora, ano: "2020", status, notas: "", edicoesColetadasIds: [] });
+  const serie = (id, nome, personagem, editora) => ({ id, nome, personagens: [{ nome: personagem, de: null, ate: null }], editora, anoInicio: "2016", anoFim: "", totalEdicoes: 10, ordem: null });
+  const m6 = await montar({ sessao: { "longbox:aba": "colecoes" }, docsIniciais: [
+    ["library/volumes", { items: [vol("b0", "Batman: Ano Um", "Batman", "DC Comics", "lida"), vol("dd", "Demolidor", "Daredevil", "Marvel", "nao_lida")] }],
+    ["library/colecoes", { items: [{ id: "c", nome: "Saga", descricao: "", membros: ["b0"] }] }],
+    ["library/series", { items: [serie("s1", "Superman (2018)", "Superman", "DC Comics"), serie("s2", "Batman (2016)", "Batman", "DC Comics"), serie("s3", "Daredevil (1998)", "Daredevil", "Marvel")] }],
+    ["library/cores", { mapa: {} }],
+  ] });
+  const R = m6.root;
+  const W = m6.window;
+  const opcoes = (el) => [...(el?.closest(".pfiltro, .escolha") || R).querySelectorAll("[role=option]")];
+
+  await m6.gerenciar("Saga");
+  check("status na ordem sem select nativo", R.querySelectorAll(".sheet select").length === 0, R.querySelectorAll(".sheet select").length);
+  const st = R.querySelector('.sheet [role=combobox][aria-label="Status de leitura de Batman: Ano Um"]');
+  check("status é o seletor do Longbox", st?.textContent === "Lida", st?.textContent);
+  st?.click(); await sleep(80);
+  opcoes(st).find((o) => o.textContent.startsWith("Lendo"))?.click(); await sleep(150);
+  check("trocar o status funciona", !!R.querySelector(".sheet .ordem-ate"), R.querySelector(".sheet .ordem-linha")?.textContent);
+  await m6.fechar();
+
+  [...R.querySelectorAll(".coll .vol")].find((b) => /Batman: Ano Um/.test(b.textContent))?.click(); await sleep(200);
+  [...R.querySelectorAll(".sheet button")].find((b) => /Vincular edições/.test(b.textContent))?.click(); await sleep(120);
+  check("série sem select nativo", R.querySelectorAll(".sheet select").length === 0);
+  const busca = R.querySelector('.sheet input[aria-label="Buscar série"]');
+  check("busca de série existe", !!busca);
+  busca?.focus(); busca?.click(); await sleep(80);
+  const nomesS = () => opcoes(busca).map((o) => o.querySelector(".sug-title").textContent);
+  check("só séries da editora do volume, personagem primeiro", nomesS().join() === "Batman (2016),Superman (2018)", nomesS().join());
+  check("campo diz a editora", /DC Comics/.test(busca?.placeholder), busca?.placeholder);
+  opcoes(busca).find((o) => /Batman/.test(o.textContent))?.click(); await sleep(120);
+  check("tocar na série abre o vínculo", /Batman \(2016\)/.test(R.querySelector(".sheet .linked-serie")?.textContent || ""), R.querySelector(".sheet .linked-serie")?.textContent);
+
+  R.querySelector('.sheet [aria-label="Editar"]')?.click(); await sleep(200);
+  check("formulário sem select nativo", R.querySelectorAll(".modal select").length === 0, R.querySelectorAll(".modal select").length);
+  const tipo = R.querySelector('.modal [role=combobox][aria-label="Tipo"]');
+  const editora = R.querySelector('.modal [role=combobox][aria-label="Editora"]');
+  check("tipo e editora são o seletor do Longbox", tipo?.textContent === "Trade Paperback" && editora?.textContent === "DC Comics", (tipo?.textContent) + " / " + (editora?.textContent));
+  tipo?.click(); await sleep(80);
+  opcoes(tipo).find((o) => o.textContent === "Hardcover")?.click(); await sleep(80);
+  check("trocar o tipo funciona", tipo?.textContent === "Hardcover", tipo?.textContent);
+  check("sem erros (6)", m6.erros.length === 0, m6.erros[0]);
 }
 
 console.log("\n" + passes + " passaram, " + falhas + " falharam");

@@ -4,6 +4,9 @@ import { Search, Plus, X, Pencil, Trash2, Upload, Check, Copy } from "lucide-rea
 import { sortKey } from "../lib/util";
 import { anoRange, personagensDaSerie, textoFaltantes } from "../lib/biblioteca";
 import { Sheet } from "../ui/base";
+import { CampoBusca, daEditora } from "../ui/Filtros";
+import { CoverArt } from "../ui/VolumeCard";
+import { coverColors, useCores } from "../lib/cores";
 
 export function SerieSheet({
   serie, contexto, verTudo, setVerTudo, edicoes, ownedIds, volumesQueColetam,
@@ -14,14 +17,21 @@ export function SerieSheet({
   if (serie) kept.current = serie;
   const s = serie || kept.current;
 
-  const [doPersonagem, outros] = useMemo(() => {
+  // v139: only volumes of the série's publisher, its characters first, as a search
+  // in the Longbox look (the native select opened the OS's white list).
+  const cores = useCores();
+  const opcoesVolume = useMemo(() => {
     const nomes = new Set(s ? personagensDaSerie(s).map((p) => p.nome) : []);
     const ord = (a, b) => a.titulo.localeCompare(b.titulo, "pt-BR", { numeric: true });
-    return [
-      volumes.filter((v) => nomes.has(v.personagem)).sort(ord),
-      volumes.filter((v) => !nomes.has(v.personagem)).sort(ord),
-    ];
-  }, [volumes, s]);
+    const cabem = volumes.filter(daEditora(s ? [s.editora] : []));
+    return [...cabem.filter((v) => nomes.has(v.personagem)).sort(ord), ...cabem.filter((v) => !nomes.has(v.personagem)).sort(ord)].map((v) => ({
+      id: v.id,
+      titulo: v.titulo,
+      meta: [v.personagem, v.ano].filter(Boolean).join(" · "),
+      busca: v.titulo + " " + (v.personagem || ""),
+      inicio: <span className="cover sug-cover" style={{ "--edge": coverColors(v, cores).edge }}><CoverArt volume={v} /></span>,
+    }));
+  }, [volumes, s, cores]);
 
   const edsTotal = useMemo(() => (
     edicoes.slice().sort((a, b) => {
@@ -266,24 +276,17 @@ export function SerieSheet({
                       leaving for the volume sheet to find it again. The série's own
                       characters come first; crossovers live under "Outros volumes". */}
                   {volumesQueColetam(selecionada.id).length === 0 && volumes.length > 0 && (
-                    <select
-                      className="select vincular-aqui"
-                      aria-label={"Vincular o nº " + selecionada.numero + " a um volume"}
-                      value=""
-                      onChange={(e) => { if (e.target.value) onVincular(e.target.value, selecionada.id); }}
-                    >
-                      <option value="">Vincular a um volume…</option>
-                      {doPersonagem.length > 0 && (
-                        <optgroup label="Do personagem">
-                          {doPersonagem.map((v) => <option key={v.id} value={v.id}>{v.titulo}</option>)}
-                        </optgroup>
-                      )}
-                      {outros.length > 0 && (
-                        <optgroup label={doPersonagem.length > 0 ? "Outros volumes" : "Volumes"}>
-                          {outros.map((v) => <option key={v.id} value={v.id}>{v.titulo}</option>)}
-                        </optgroup>
-                      )}
-                    </select>
+                    <div className="vincular-aqui">
+                      <CampoBusca
+                        key={selecionada.id}
+                        id="vincular-aqui"
+                        rotulo={"Vincular o nº " + selecionada.numero + " a um volume"}
+                        placeholder={s.editora ? "Vincular a um volume da " + s.editora : "Vincular a um volume"}
+                        opcoes={opcoesVolume}
+                        onEscolher={(vid) => onVincular(vid, selecionada.id)}
+                        vazio={"Nenhum volume" + (s.editora ? " da " + s.editora : "") + "."}
+                      />
+                    </div>
                   )}
                 </div>
               )}

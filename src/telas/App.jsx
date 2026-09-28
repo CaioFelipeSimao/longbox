@@ -963,7 +963,6 @@ export function App() {
 
   /* ---------- linking ---------- */
   const [linkSerieId, setLinkSerieId] = useState(null);
-  const [linkPickSerie, setLinkPickSerie] = useState("");
   const [rangeDe, setRangeDe] = useState("");
   const [rangeAte, setRangeAte] = useState("");
   const [avulsoNum, setAvulsoNum] = useState("");
@@ -2008,8 +2007,6 @@ export function App() {
         edicoesPorSerie={edicoesPorSerie}
         linkSerieId={linkSerieId}
         setLinkSerieId={setLinkSerieId}
-        linkPickSerie={linkPickSerie}
-        setLinkPickSerie={setLinkPickSerie}
         rangeDe={rangeDe} setRangeDe={setRangeDe}
         rangeAte={rangeAte} setRangeAte={setRangeAte}
         avulsoNum={avulsoNum} setAvulsoNum={setAvulsoNum}

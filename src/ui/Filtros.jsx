@@ -25,8 +25,15 @@ export function OpcaoFiltro({ id, valor, todos, opcoes, onChange, rotulo, acao, 
   }, [todos, opcoes, acao]);
   const atual = lista.find((o) => o.valor === valor) || lista[0];
   const comCor = opcoes.some((o) => o.cor);
+  const listaRef = useRef(null);
 
   const fechar = useCallback(() => setAberta(false), []);
+  // v139: in a form (Tipo, Editora) the list can open under the modal's footer;
+  // scroll the form so it shows. Elsewhere the page is left where it is.
+  useEffect(() => {
+    const el = listaRef.current;
+    if (aberta && el && el.closest(".modal-body") && el.scrollIntoView) el.scrollIntoView({ block: "nearest" });
+  }, [aberta]);
   useEffect(() => {
     if (!aberta) return;
     const fora = (e) => { if (raiz.current && !raiz.current.contains(e.target)) fechar(); };
@@ -81,6 +88,7 @@ export function OpcaoFiltro({ id, valor, todos, opcoes, onChange, rotulo, acao, 
       {aberta && (
         <div
           className={"sug pfiltro-lista " + listaClassName}
+          ref={listaRef}
           id={id + "-lista"}
           role="listbox"
           aria-label={rotulo}
@@ -238,4 +246,113 @@ export function PersonagemFiltro({ id = "filtro-personagem", valor, opcoes, onCh
       )}
     </div>
   );
+}
+
+/* v139: a search over a long list in the character filter's look, for pickers inside a
+   sheet (volumes for a collection, a série for a volume). The list flows under the
+   field instead of floating, since these fields sit at a sheet's end. With `escolhidos`
+   a tap marks a row with the place it will take and the list stays open; without it,
+   a tap picks and closes. Each option: { id, titulo, meta, busca, inicio }. */
+export function CampoBusca({ id, rotulo, placeholder, opcoes, escolhidos, onEscolher, vazio }) {
+  const [aberta, setAberta] = useState(false);
+  const [texto, setTexto] = useState("");
+  const [idx, setIdx] = useState(0);
+  const raiz = useRef(null);
+  const listaRef = useRef(null);
+  const multi = Array.isArray(escolhidos);
+
+  const lista = useMemo(() => {
+    const q = dobrar(texto.trim());
+    return q ? opcoes.filter((o) => dobrar(o.busca || o.titulo).includes(q)) : opcoes;
+  }, [texto, opcoes]);
+
+  useEffect(() => {
+    if (!aberta) return undefined;
+    const fora = (e) => { if (raiz.current && !raiz.current.contains(e.target)) setAberta(false); };
+    document.addEventListener("pointerdown", fora);
+    return () => document.removeEventListener("pointerdown", fora);
+  }, [aberta]);
+
+  // These fields end a sheet, so the list opens below the fold; bring it into view.
+  useEffect(() => {
+    if (aberta && listaRef.current && listaRef.current.scrollIntoView) listaRef.current.scrollIntoView({ block: "nearest" });
+  }, [aberta]);
+
+  const escolher = (o) => {
+    if (!o) return;
+    if (!multi) { setAberta(false); setTexto(""); }
+    onEscolher(o.id);
+  };
+
+  const tecla = (e) => {
+    if (e.key === "Escape") { if (aberta) { e.preventDefault(); setAberta(false); } return; }
+    if (!aberta) {
+      if (e.key === "ArrowDown" || e.key === "Enter") { e.preventDefault(); setAberta(true); }
+      return;
+    }
+    if (e.key === "ArrowDown") { e.preventDefault(); setIdx((i) => Math.min(i + 1, lista.length - 1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setIdx((i) => Math.max(i - 1, 0)); }
+    else if (e.key === "Enter") { e.preventDefault(); escolher(lista[idx]); }
+  };
+
+  const optId = (o) => id + "-" + o.id;
+  return (
+    <div className="escolha" ref={raiz}>
+      <input
+        id={id}
+        className="select pfiltro-input"
+        value={texto}
+        onChange={(e) => { setTexto(e.target.value); setIdx(0); setAberta(true); }}
+        onFocus={() => setAberta(true)}
+        onClick={() => setAberta(true)}
+        onKeyDown={tecla}
+        placeholder={placeholder}
+        aria-label={rotulo}
+        role="combobox"
+        aria-expanded={aberta ? "true" : "false"}
+        aria-controls={id + "-lista"}
+        aria-autocomplete="list"
+        aria-activedescendant={aberta && lista[idx] ? optId(lista[idx]) : undefined}
+        autoComplete="off"
+        spellCheck={false}
+      />
+      {aberta && (
+        <div className="sug escolha-lista" id={id + "-lista"} role="listbox" aria-multiselectable={multi ? "true" : undefined} aria-label={rotulo} ref={listaRef} onMouseDown={(e) => e.preventDefault()}>
+          {lista.length === 0 ? (
+            <p className="sug-empty">{opcoes.length ? "Nada com \"" + texto.trim() + "\"." : vazio}</p>
+          ) : lista.map((o, i) => {
+            const pos = multi ? escolhidos.indexOf(o.id) : -1;
+            return (
+              <button
+                key={o.id}
+                id={optId(o)}
+                type="button"
+                tabIndex={-1}
+                className="sug-row"
+                role="option"
+                aria-selected={pos >= 0 ? "true" : "false"}
+                data-on={i === idx ? "true" : "false"}
+                onMouseEnter={() => setIdx(i)}
+                onClick={() => escolher(o)}
+              >
+                {o.inicio}
+                <span className="sug-text">
+                  <span className="sug-title truncate">{o.titulo}</span>
+                  {o.meta && <span className="sug-meta truncate">{o.meta}</span>}
+                </span>
+                {pos >= 0 && <span className="escolha-ordem num" aria-hidden="true">{pos + 1}</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// v139: pickers are locked to a publisher. An item with no publisher stays on offer,
+// since nothing says it belongs elsewhere; with no reference publisher, nothing is locked.
+export function daEditora(editoras) {
+  const chaves = new Set(editoras.map((e) => (e || "").trim().toLowerCase()).filter(Boolean));
+  return (item) => !chaves.size || !(item.editora || "").trim() || chaves.has(item.editora.trim().toLowerCase());
 }

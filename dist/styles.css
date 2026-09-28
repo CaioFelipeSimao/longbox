@@ -1097,6 +1097,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    is too narrow for a name and its count, does it grow past it, leftwards. */
 .pfiltro-lista { max-height: 320px; }
 @media (max-width: 639px) { .pfiltro-lista { left: auto; min-width: 240px; } }
+/* v139: in a form (Tipo, Editora) the list keeps the field's own width: the phone rule
+   above grows it leftwards, which pushed Tipo, the left column, off the modal. */
+.modal-body .pfiltro-lista { left: 0; right: 0; min-width: 0; }
 .pfiltro-row { gap: 10px; padding: 8px 10px; }
 .pfiltro-row .sug-title { flex: 1; min-width: 0; }
 .pfiltro-todos {
@@ -1112,10 +1115,10 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 /* v138: "Adicionar volumes" in the collection sheet. The field is the sheet's last
    control, so its list flows under it instead of floating past the sheet's end,
    as wide as the field. A picked row carries the place it will take. */
-.add-lista { position: static; margin-top: 6px; max-height: 320px; box-shadow: none; }
-.add-lista .sug-row { min-height: 52px; }
-.add-lista .sug-row[aria-selected="true"] .sug-title { color: var(--ed-accent-text); }
-.add-ordem {
+.escolha-lista { position: static; margin-top: 6px; max-height: 320px; box-shadow: none; }
+.escolha-lista .sug-row { min-height: 52px; }
+.escolha-lista .sug-row[aria-selected="true"] .sug-title { color: var(--ed-accent-text); }
+.escolha-ordem {
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -2823,7 +2826,9 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 }
 /* v115: status of a read volume in a collection's reading order, to set it back. */
 .ordem-status {
-  flex-shrink: 0; height: 30px; padding: 0 6px; font: 500 0.75rem var(--font-body);
-  color: var(--read); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm);
+  flex-shrink: 0; height: 30px; padding: 0 26px 0 8px; font: 500 0.75rem var(--font-body);
+  color: var(--read); background-color: var(--surface-2); background-position: right 7px center; background-size: 12px 12px;
+  border: 1px solid var(--border); border-radius: var(--r-sm);
 }
+.pfiltro:has(> .ordem-status) { flex-shrink: 0; }
 @media (pointer: coarse) { .ordem-status { height: 44px; } }

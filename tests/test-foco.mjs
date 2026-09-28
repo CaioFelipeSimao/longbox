@@ -142,10 +142,13 @@ tiles.find((t) => t.getAttribute("aria-label") === "Nº 3, falta")?.click();
 await sleep(150);
 const sel = s.root.querySelector(".vincular-aqui");
 check("número faltante oferece vincular", !!sel, s.root.querySelector(".edicao-pinned")?.textContent);
-check("volumes do personagem vêm primeiro", sel?.querySelector("optgroup")?.label === "Do personagem");
-const setter = Object.getOwnPropertyDescriptor(s.window.HTMLSelectElement.prototype, "value").set;
-setter.call(sel, "b3");
-sel.dispatchEvent(new s.window.Event("change", { bubbles: true }));
+// v139: a search in the Longbox look instead of a native select.
+const campoV = sel?.querySelector("input[role=combobox]");
+check("vincular é uma busca, sem select nativo", !!campoV && !sel.querySelector("select"));
+campoV?.click(); await sleep(80);
+const opcoesV = () => [...sel.querySelectorAll("[role=option]")];
+check("volumes do personagem vêm primeiro", /Batman/.test(opcoesV()[0]?.textContent || ""), opcoesV()[0]?.textContent);
+opcoesV().find((o) => o.querySelector(".sug-title")?.textContent === "Batman b3")?.click();
 await sleep(700);
 check("vincula no banco", s.docs.get("library/volumes").items.find((x) => x.id === "b3").edicoesColetadasIds.includes("e3"));
 check("o número vira possuído", [...s.root.querySelectorAll(".tile")].some((t) => t.getAttribute("aria-label") === "Nº 3, possuída"));
