@@ -423,7 +423,19 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 
 .ed-right { display: flex; align-items: center; gap: 10px; margin-left: auto; min-width: 0; }
 .ed-note { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; } /* v132: the UI face, not the code one */
-@media (max-width: 520px) { .ed-note { display: none; } }
+/* v133: on a phone the band is one row doing three jobs: the publisher on the left,
+   the count beside it (it used to vanish under 520px, leaving the left half empty),
+   and the fold-all icon at the right, where "Esconder todas" had a row of its own.
+   A publisher logo takes the count's room. */
+.ed-dobra { display: none; }
+@media (max-width: 767px) {
+  .ed-right { margin-left: 0; flex: 1; }
+  .ed-right .ed-select { order: 0; }
+  .ed-right .ed-note { order: 1; margin-left: auto; }
+  .ed-dobra { display: inline-flex; order: 2; flex-shrink: 0; }
+  .ed-bar:has(.ed-logo) .ed-note { display: none; }
+  .aba .fold-all { display: none; } /* .aba: outweighs the base .fold-all rule further down */
+}
 .ed-select { width: auto; min-width: 0; max-width: 190px; padding: 7px 9px; font-size: 0.8125rem; }
 
 .ed-card {
@@ -769,6 +781,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .ed-segmented { padding: 0 4px; }
 .ed-segmented button { height: 46px; }
 .ed-select { height: 43px; }
+@media (pointer: coarse) { .ed-select { height: 44px; } } /* v133: the touch floor */
 
 /* ---------- controls ---------- */
 
@@ -1817,11 +1830,15 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 
 .label-wide { display: none; }
-@media (max-width: 559px) { .novo-hub { padding-inline: 12px; } .novo-hub .novo-rotulo { display: none; } }
-/* On the tabs "Novo" keeps its word down to 480px; below that the search needs the room. */
-@media (max-width: 479px) {
-  .topbar-inner .btn-primary:has(.novo-rotulo) { padding-inline: 12px; }
-  .novo-rotulo { display: none; }
+@media (max-width: 559px) { .novo-hub { padding-inline: 12px; min-width: 44px; justify-content: center; } .novo-hub .novo-rotulo { display: none; } }
+/* v133: on the tabs "Novo" keeps its word on a phone too, now that the search lives
+   in the tab bar: it was an icon-only square beside the filter's identical square
+   (critique 4), and the user chose the named button. Only a very narrow screen
+   (under 360px) folds it back to its "+", at the 44px touch floor. */
+.topbar-inner .btn-primary svg { flex-shrink: 0; }
+@media (max-width: 359px) {
+  .topbar-inner .btn-primary:has(.novo-rotulo) { padding-inline: 12px; min-width: 44px; justify-content: center; }
+  .topbar-inner .btn-primary .novo-rotulo { display: none; }
 }
 @media (min-width: 560px) { .label-wide { display: inline; } }
 
@@ -2092,6 +2109,9 @@ button.retrato-linha { cursor: pointer; }
 .run i[data-owned="true"] { background: var(--read); }
 
 .tiles { display: flex; flex-wrap: wrap; gap: 6px; }
+/* v133: on a phone the tiles share the row out evenly, so the map fills the sheet
+   instead of stopping ~20px short of the right edge. */
+@media (max-width: 767px) { .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); } }
 .tile {
   min-width: 34px;
   padding: 5px 7px;
@@ -2204,6 +2224,15 @@ button.retrato-linha { cursor: pointer; }
   gap: 12px;
   padding: 10px 16px 12px;
   border-bottom: 1px solid var(--border);
+}
+/* v133: on a phone the title gets the whole width and the actions drop to the row
+   of the subtitle and the ‹ 1 de 22 › stepper, so "Batman: Ano Um" no longer breaks
+   around four icons. display: contents lets the title column's children join the grid. */
+@media (max-width: 767px) {
+  .sheet-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: center; }
+  .sheet-head > div:first-child { display: contents; }
+  .sheet-head .dialog-titulo { grid-column: 1 / -1; }
+  .sheet-head .sheet-actions { grid-column: 2; grid-row: 2 / span 2; align-self: end; }
 }
 .sheet-body { padding: 16px; overflow-y: auto; overflow-x: hidden; flex: 1; display: flex; flex-direction: column; gap: 18px; }
 /* v100: dialog titles are headings now (h2), sized by .t-display as before; the

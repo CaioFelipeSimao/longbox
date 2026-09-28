@@ -2433,3 +2433,16 @@ only when Tab reaches it, focuses the tab's first item; série counts read "55 d
 one while the série card is in front (listed in the ? panel); the map's instruction is a sentence in
 normal case; the band count uses the UI face; "Esconder todas" points up, "Mostrar todas" down.
 `tests/test-acessibilidade.mjs` (17 checks, 15 failed first).
+
+**v133 Critique 4, batch 2: the phone.** From a preview of real captures the user approved: under
+768px the publisher band is one row (publisher left, the count beside it, which had vanished under
+520px, and the tab's fold-all as a ChevronsDownUp/UpDown icon at the right, passed by the page only
+on a phone and hidden while searching or under the séries character filter); the tabs' own
+"Esconder todas" row is hidden there, so covers start ~110px higher. Sheet headers become a grid:
+the title takes the whole width and the actions sit end-aligned on the subtitle/stepper rows, so
+"Batman: Ano Um" and "Nightwing (Volume 2)" no longer break around the icons. The série map's tiles
+share the row (grid, minmax 44px) instead of stopping ~20px short. Touch floor: the icon-only New
+buttons get min-width 44px, the publisher select 44px tall on coarse pointers. The twin cyan squares
+(filter and "+"): of two options (A filter outlined, B "+" named) the user chose B, so "Novo
+volume / Nova coleção / Nova série" keeps its word on a phone (the search left the header in v129)
+and only folds to "+" under 360px. `test-barra-busca.mjs` 30 checks.

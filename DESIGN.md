@@ -167,6 +167,9 @@ the home-indicator inset; `--tabbar-h` 78px is the room content keeps) with a sl
 active tab, and the search is a glass circle beside it that grows into the field while the capsule
 folds into a circle holding the tab's icon; suggestions open above the bar, which rides above the
 keyboard (visualViewport). The phone header has no search.
+v133: on a phone the publisher band is one row (publisher, count, fold-all icon) and the tabs' own
+"Esconder todas" row is hidden; "Novo ..." keeps its label down to 360px; sheet titles take the full width
+with the actions on the stepper row; the série map's tiles share the row.
 The search is the bar's flexible item (44px to 456px, pushed right); only the hub keeps a
 spacer. Below 480px (tabs) and 560px (hub) "Novo" shows only its "+", and below 520px the save
 signal is a dot that disappears while idle (v118). Below 480px the hub footer breaks after

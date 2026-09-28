@@ -105,6 +105,25 @@ console.log("=== celular ===");
   check("sem erros", m.erros.length === 0, m.erros[0]);
 }
 
+console.log("=== v133: topo do celular numa linha ===");
+{
+  const m = await montar();
+  const dobra = m.$(".ed-band .ed-dobra");
+  check("o dobrar tudo vira ícone na faixa da editora", !!dobra && dobra.getAttribute("aria-label") === "Esconder todas", dobra?.getAttribute("aria-label"));
+  await m.clicar(dobra);
+  check("e dobra os grupos", m.hqsNaAba() === 0 && m.$(".ed-band .ed-dobra")?.getAttribute("aria-label") === "Mostrar todas", m.hqsNaAba());
+  await m.clicar(m.$(".ed-band .ed-dobra"));
+  check("e mostra de novo", m.hqsNaAba() === 3, m.hqsNaAba());
+  check("a contagem continua na faixa", /3 HQs/.test(m.$(".ed-band .ed-note")?.textContent || ""), m.$(".ed-band .ed-note")?.textContent);
+  const pc = await montar({ fone: false });
+  check("no PC não há ícone na faixa", !pc.$(".ed-band .ed-dobra"));
+  const css = fs.readFileSync("src/styles.css", "utf8");
+  check("celular esconde a linha própria do Esconder todas", css.includes(".aba .fold-all { display: none; }"));
+  check("o mapa da série divide a linha no celular", css.includes("grid-template-columns: repeat(auto-fill, minmax(44px, 1fr))"));
+  check("o título do card ganha a largura toda", css.includes(".sheet-head .dialog-titulo { grid-column: 1 / -1; }"));
+  check("o Novo mantém o nome no celular (opção B)", !/@media \(max-width: 479px\) \{[^}]*\.novo-rotulo \{ display: none; \}/.test(css) && css.includes("@media (max-width: 359px)"));
+}
+
 console.log("=== v130: o vidro fica numa camada vazia ===");
 {
   const css = fs.readFileSync("src/styles.css", "utf8");

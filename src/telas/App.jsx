@@ -1560,6 +1560,25 @@ export function App() {
     abrirVolume(s.id, { tipo: "todas" });
   }
   const abaAtual = TABS.find((t) => t.key === tab) || TABS[0];
+  // v133: the phone shows the tab's fold-all as an icon in the publisher band; the
+  // same rules as the tabs' own button (hidden while searching, and on Séries
+  // under the character filter).
+  const dobraDaAba = (() => {
+    if (!celular || loading || buscando) return null;
+    if (tab === "volumes" && volumesFiltrados.length) {
+      const aberto = volumesFiltrados.every((g) => !gruposFechados.has(g.personagem));
+      return { aberto, alternar: () => alternarTodosVolumes(volumesFiltrados, !aberto) };
+    }
+    if (tab === "series" && !filtroSerie && seriesFiltradas.length) {
+      const aberto = seriesFiltradas.every((g) => gruposAbertos.has(g.personagem));
+      return { aberto, alternar: () => alternarTodos(seriesFiltradas, !aberto) };
+    }
+    if (tab === "colecoes" && colecoesFiltradas.length) {
+      const aberto = colecoesFiltradas.every((c) => !colecoesFechadas.has(c.id));
+      return { aberto, alternar: () => alternarTodasColecoes(colecoesFiltradas, !aberto) };
+    }
+    return null;
+  })();
   const IconeAbaAtual = abaAtual.icon;
 
   // Both in the app's header and in the hub cover's (v126).
@@ -1671,6 +1690,7 @@ export function App() {
           tab={tab}
           onTab={switchTab}
           edCroma={edCroma}
+          dobra={dobraDaAba}
           contagem={
             loading ? ""
               : tab === "volumes" ? volumesFiltrados.reduce((s, g) => s + g.itens.length, 0) + " HQs"

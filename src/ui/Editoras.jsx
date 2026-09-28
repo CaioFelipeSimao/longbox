@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { Plus, Trash2, ImagePlus, ChevronDown } from "lucide-react";
+import { Plus, Trash2, ImagePlus, ChevronDown, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 
 import { ACCENT_HEX, ED_SEM, ED_TODAS } from "../lib/constantes";
 import {
@@ -20,7 +20,7 @@ export function EditoraLogo({ editora, size }) {
 }
 
 export function EditoraBar({
-  editoras, selecionada, onSelect, onManage, buscando, tabs, tab, onTab, contagem, edCroma,
+  editoras, selecionada, onSelect, onManage, buscando, tabs, tab, onTab, contagem, edCroma, dobra,
 }) {
   const edHue = edCroma ? edCroma.h : null;
   const atual = editoras.find((e) => e.id === selecionada) || null;
@@ -86,6 +86,18 @@ export function EditoraBar({
           onChange={onSelect}
           acao={acaoGerenciar}
         />
+        {/* v133: on a phone the tab's "Esconder todas / Mostrar todas" rides in this
+            row as an icon (the page passes it only there), instead of a row of its own. */}
+        {dobra && (
+          <button
+            type="button"
+            className="btn-icon ed-dobra"
+            onClick={dobra.alternar}
+            aria-label={dobra.aberto ? "Esconder todas" : "Mostrar todas"}
+          >
+            {dobra.aberto ? <ChevronsDownUp size={18} /> : <ChevronsUpDown size={18} />}
+          </button>
+        )}
       </div>
     </div>
     </div>
