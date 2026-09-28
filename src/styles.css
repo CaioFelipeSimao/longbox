@@ -1695,7 +1695,11 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 /* The publisher gradient belongs to the app's own header, never the hub's. */
 .app .hub-capa > .topbar { background-image: none; }
-.hub-capa > .topbar { top: env(safe-area-inset-top, 0px); }
+/* v135: the sticky header keeps top: 0. Inside a padded scroller a sticky offset is
+   measured from the content edge, so v134's extra top: env(inset) pushed it down a
+   second time, to the middle of the screen in the Claude app. With the padding alone
+   it rests and sticks just below the app's bar (measured: 110 at rest and scrolled,
+   against 220 with both). */
 
 /* The unlock in reverse: returning drops the cover back in from the top. */
 @media (prefers-reduced-motion: no-preference) {

@@ -2461,3 +2461,10 @@ automatic focus move as keyboard focus, and with :focus-visible only the link hi
 It now shows on any focus (a click works) and does not exist on touch-only screens (no Tab there;
 VoiceOver uses the v132 headings). The safe-area fix is unverifiable here: the user checks on device.
 `test-acessibilidade.mjs` 22 checks.
+
+**v135 The hub header, counted once.** v134 made the Claude-app hub worse: the user's photo showed
+the hub header in the middle of the screen, over the suggestion. The cover got `padding-top:
+env(safe-area-inset-top)` AND its sticky header `top: env(...)`; inside a padded scroller a sticky
+offset is measured from the content edge, so the inset counted twice. Measured in Chrome with a
+110px pad: top 0 rests and sticks at 110, top 110 at 220 (both at rest and scrolled). The sticky top
+went back to 0; the padding stays.
