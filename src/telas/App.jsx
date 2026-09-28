@@ -1465,6 +1465,17 @@ export function App() {
 
   // v121: the button says what it makes; the hub's makes a volume (its own button, v126).
   const rotuloNovo = tab === "colecoes" ? "Nova coleção" : tab === "series" ? "Nova série" : "Novo volume";
+  function novaEdicao(serie) {
+    setEdicaoForm({ id: null, serieId: serie.id, numero: "", mes: "", ano: "", posicao: "" });
+    setShowEdicaoForm(true);
+  }
+  // v132: N while the série card is in front makes an edição of it (the card's
+  // "Nova edição"); with any other card open N still does nothing.
+  function novaEdicaoNaFicha() {
+    if (!openSerie || corPersonagem || showEditoras) return false;
+    novaEdicao(openSerie);
+    return true;
+  }
   function novoNaAba() {
     if (isHub) openNovoVolume();
     else if (tab === "colecoes") openNovaColecao();
@@ -1523,11 +1534,18 @@ export function App() {
     focarBusca,
     abrirAba: switchTab,
     novo: novoNaAba,
+    novaEdicaoNaFicha,
     marcarStatus: marcarStatusTecla,
   });
 
   /* ============================ render ============================ */
 
+  function pularParaConteudo(e) {
+    e.preventDefault();
+    const aba = document.querySelector('.aba[data-ativa="true"]');
+    const alvo = aba && (aba.querySelector('.vol[tabindex="0"]') || aba.querySelector("button, a[href]"));
+    if (alvo) alvo.focus();
+  }
   function escolherSugestao(s) {
     if (s.tipo === "colecao") { setOpenColecaoId(s.id); return; }
     if (s.tipo === "serie") {
@@ -1583,6 +1601,10 @@ export function App() {
           they open over the hub too. display: contents keeps the sticky header and
           band working as before. */}
       <div className="app-base" inert={isHub ? "" : undefined}>
+      {/* v132: the keyboard way past the header to the tab's first item. */}
+      <a className="pular" href="#conteudo" onClick={pularParaConteudo}>
+        {tab === "series" ? "Pular para as séries" : tab === "colecoes" ? "Pular para as coleções" : "Pular para as capas"}
+      </a>
       <header
         className="topbar"
         data-scrolled={scrolled ? "true" : "false"}
@@ -1657,7 +1679,8 @@ export function App() {
           }
         />
 
-      <main className="content" ref={conteudoRef} data-lattice={comMalha ? "true" : "false"}>
+      <main className="content" id="conteudo" ref={conteudoRef} data-lattice={comMalha ? "true" : "false"}>
+        <h1 className="sr-only">{"Longbox, " + abaAtual.label}</h1>
         {comMalha && (
           <CursorGrid
             pointerTarget={typeof window === "undefined" ? null : window}
@@ -1826,6 +1849,7 @@ export function App() {
       <nav
         className="tabbar"
         ref={tabbarRef}
+        aria-label="Seções"
         data-buscando={buscaNaBarra ? "true" : "false"}
         data-trocando={trocandoAba ? "true" : undefined}
         style={{ "--aba-i": TABS.indexOf(abaAtual) }}
@@ -1890,6 +1914,7 @@ export function App() {
             </div>
           </header>
           <main className="content hub-conteudo">
+            <h1 className="sr-only">Longbox, início</h1>
             {avisoMemoria}
             {loading ? (
               <>
@@ -2013,7 +2038,7 @@ export function App() {
         onEdit={() => openEditarSerie(openSerie)}
         onDelete={() => remover({ type: "serie", id: openSerie.id })}
         onImport={() => { setImportSerieId(openSerie.id); setImportText(""); setShowImportModal(true); }}
-        onNovaEdicao={() => { setEdicaoForm({ id: null, serieId: openSerie.id, numero: "", mes: "", ano: "", posicao: "" }); setShowEdicaoForm(true); }}
+        onNovaEdicao={() => novaEdicao(openSerie)}
         onEditEdicao={(ed) => { setEdicaoForm({ ...ed, posicao: ed.posicao !== null && ed.posicao !== undefined ? String(ed.posicao) : "" }); setShowEdicaoForm(true); }}
         onDeleteEdicao={(ed) => remover({ type: "edicao", id: ed.id })}
         avisar={showToast}

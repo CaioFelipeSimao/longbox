@@ -74,7 +74,7 @@ export function EditoraBar({
         {buscando ? (
           <span className="ed-note">Buscando em todo o acervo</span>
         ) : (
-          <span className="num ed-note">{contagem}</span>
+          <span className="ed-note">{contagem}</span>
         )}
         <OpcaoFiltro
           id="filtro-editora"

@@ -42,6 +42,7 @@ export function useAtalhos(acoes) {
         if (a.marcarStatus({ j: "nao_lida", k: "lendo", l: "lida" }[k.toLowerCase()], alvo)) e.preventDefault();
         return;
       }
+      if ((k === "n" || k === "N") && a.novaEdicaoNaFicha && a.novaEdicaoNaFicha()) { e.preventDefault(); return; }
       if (a.fichaAberta) return;
       if (k === "/") { e.preventDefault(); a.focarBusca(); return; }
       if (k === "0" || k === "1" || k === "2" || k === "3") {

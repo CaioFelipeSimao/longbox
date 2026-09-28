@@ -422,7 +422,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 @media (min-width: 768px) { .ed-segmented { display: flex; } }
 
 .ed-right { display: flex; align-items: center; gap: 10px; margin-left: auto; min-width: 0; }
-.ed-note { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+.ed-note { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; } /* v132: the UI face, not the code one */
 @media (max-width: 520px) { .ed-note { display: none; } }
 .ed-select { width: auto; min-width: 0; max-width: 190px; padding: 7px 9px; font-size: 0.8125rem; }
 
@@ -1541,6 +1541,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   margin-bottom: 10px;
 }
 .fold-all .btn { gap: 7px; }
+/* v132: up to fold everything away, down to open it all (it was the same arrow both ways). */
+.fold-all svg { transition: transform 120ms var(--ease-out); }
+.fold-all svg[data-rot="false"] { transform: rotate(180deg); }
 
 /* ---------- hub ---------- */
 
@@ -2497,6 +2500,22 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 
 /* Read aloud, never drawn. Clipped rather than hidden, because display:none and
    visibility:hidden both take it out of the accessibility tree too. */
+/* v132: the keyboard way past the header, shown only when Tab reaches it. */
+.pular {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 60;
+  padding: 10px 14px;
+  border-radius: var(--r);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-160%);
+}
+.pular:focus-visible { transform: none; }
+
 .sr-only {
   position: absolute;
   width: 1px;

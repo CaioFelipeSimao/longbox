@@ -170,7 +170,7 @@ export function SerieSheet({
             </div>
             <div className="row">
               <button className="btn btn-quiet" onClick={onImport}><Upload size={13} /> Importar</button>
-              <button className="btn btn-quiet" onClick={onNovaEdicao}><Plus size={13} /> Edição</button>
+              <button className="btn btn-quiet" onClick={onNovaEdicao}><Plus size={13} /> Nova edição</button>
             </div>
           </div>
 
@@ -197,8 +197,9 @@ export function SerieSheet({
                 </div>
               )}
               <div className="mapa-topo">
-                <p className="t-micro" style={{ margin: 0 }}>
-                  Escolha um número para ver se você tem e em qual volume
+                {/* v132: a sentence, so sentence case; the uppercase micro style is for labels. */}
+                <p className="t-small muted" style={{ margin: 0 }}>
+                  Escolha um número para ver se você tem e em qual volume.
                 </p>
                 {/* v121: what the two tile looks mean, said once. */}
                 <p className="mapa-legenda t-small muted" aria-hidden="true">
@@ -217,7 +218,7 @@ export function SerieSheet({
                     return (
                       <details className="bucket" key={serieId + ":" + g.key} open={aberto}>
                         <summary>
-                          {g.label} <span className="muted">{owned}/{g.itens.length}</span>
+                          {g.label} <span className="muted"><span aria-hidden="true">{owned}/{g.itens.length}</span><span className="sr-only">{owned} de {g.itens.length} possuídas</span></span>
                         </summary>
                         <div className="tiles">{g.itens.map(renderTile)}</div>
                       </details>

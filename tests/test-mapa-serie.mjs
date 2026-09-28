@@ -41,7 +41,9 @@ async function montar(series, edicoes, owned) {
 }
 const serie = (id, nome) => ({ id, nome, personagens: [{ nome: "Batman", de: null, ate: null }], editora: "DC Comics", anoInicio: "1940", anoFim: "", totalEdicoes: null, ordem: null });
 const eds = (sid, de, ate) => Array.from({ length: ate - de + 1 }, (_, i) => ({ id: sid + "-" + (de + i), serieId: sid, numero: String(de + i), mes: "", ano: "", posicao: null }));
-const blocos = (root) => [...root.querySelectorAll(".sheet .bucket")].map((d) => d.querySelector("summary").textContent.replace(/\s+/g, " ").trim() + (d.open ? " [aberto]" : " [fechado]"));
+// What the eye reads: v132 added a screen-reader-only "N de M possuídas" beside each count.
+const visivel = (el) => { const c = el.cloneNode(true); c.querySelectorAll(".sr-only").forEach((s) => s.remove()); return c.textContent; };
+const blocos = (root) => [...root.querySelectorAll(".sheet .bucket")].map((d) => visivel(d.querySelector("summary")).replace(/\s+/g, " ").trim() + (d.open ? " [aberto]" : " [fechado]"));
 
 console.log("=== 1-99 mais um #100 solto ===");
 {

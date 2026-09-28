@@ -2421,3 +2421,15 @@ it in the Longbox: `data-trocando` on the tab bar for 700ms after any tab or hub
 glass layers to a 96% solid, then a 250ms fade restores the glass. Applies everywhere (the user
 agent was not compared; in Safari it is only a brief solid moment). v128's nudge removed.
 `test-capa-hub.mjs` 40 checks.
+
+**v132 Critique 4, batch 1: accessibility and copy.** Critique 4 scored v131 31/40 (27 -> 28 -> 29 ->
+31; snapshot committed). Its phone-sheet P1 (status below the fold) was an artefact of the 390x844
+emulation; on the user's iPhone the status shows without scrolling, so it was dropped. This batch:
+`lang="pt-BR"` set at mount (the host skeleton's <html> has none, so VoiceOver used an English
+voice); one hidden h1 per surface ("Longbox, início" in the hub cover, "Longbox, <tab>" under it);
+the phone tab bar is named "Seções"; a skip link ("Pular para as capas/coleções/séries"), visible
+only when Tab reaches it, focuses the tab's first item; série counts read "55 de 100 possuídas"
+(rows and the sheet's blocks; the eye still sees 55/100); "+ Edição" says "Nova edição" and N makes
+one while the série card is in front (listed in the ? panel); the map's instruction is a sentence in
+normal case; the band count uses the UI face; "Esconder todas" points up, "Mostrar todas" down.
+`tests/test-acessibilidade.mjs` (17 checks, 15 failed first).

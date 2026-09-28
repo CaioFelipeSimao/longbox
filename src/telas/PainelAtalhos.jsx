@@ -20,6 +20,7 @@ const GRUPOS = [
   ]],
   ["Com uma ficha aberta", [
     [["E"], "Editar o que ela mostra"],
+    [["N"], "Nova edição (ficha de série)"],
     [["J", "K", "L"], "Não lida, lendo ou lida (ficha de volume)"],
     [["←", "→"], "Volume anterior e próximo"],
     [["Ctrl+V"], "Colar uma capa (ficha de volume)"],

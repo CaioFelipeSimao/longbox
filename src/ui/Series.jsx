@@ -19,8 +19,10 @@ export const SerieLinha = React.memo(function SerieLinha({ serie: s, faixa, eds,
     >
       <div className="serie-top">
         <span className="t-title truncate">{s.nome}</span>
+        {/* v132: the eye reads "55/100"; a screen reader gets the words. */}
         <span className="num t-small muted" style={{ flexShrink: 0 }}>
-          {owned}/{s.totalEdicoes || eds.length}
+          <span aria-hidden="true">{owned}/{s.totalEdicoes || eds.length}</span>
+          <span className="sr-only">{owned} de {s.totalEdicoes || eds.length} possuídas</span>
         </span>
       </div>
       <div className="serie-meta truncate">
