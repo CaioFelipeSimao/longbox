@@ -105,8 +105,7 @@ export function useHubUnlock(active, elRef, onEnter) {
     let tracking = false;
     let comecouNoFim = false;
     let startY = 0;
-    let lastY = 0;
-    let lastT = 0;
+    let amostras = []; // the finger's last ~100ms, for its speed at release
     let velocity = 0;
     let committed = false;
     let armed = false;
@@ -120,26 +119,54 @@ export function useHubUnlock(active, elRef, onEnter) {
       el.style.transform = v <= 0 ? "" : "translateY(" + -v + "px)";
     };
 
-    const commit = () => {
+    // v126: a throw carries on at the finger's speed. The curve starts at twice its
+    // average speed, so a duration of 2 x distance / speed begins exactly as fast as
+    // the finger was going, then settles; before, a strong swipe met a fixed 280ms
+    // curve and visibly changed speed at the hand-off. The layer keeps its
+    // will-change through the throw, and the tab only takes over once the cover is
+    // gone: swapping mid-throw put React's unmount of the hub inside the animation.
+    const commit = (vel = 0) => {
       if (committed) return;
       committed = true;
-      el.style.willChange = "";
       if (reduce) {
         el.style.transition = "opacity 150ms var(--ease-out)";
         el.style.opacity = "0";
         setTimeout(onEnter, 130);
         return;
       }
-      el.style.transition = "transform 280ms var(--ease-drawer)";
+      let dur = 280;
+      let curva = "var(--ease-drawer)";
+      if (vel > UNLOCK_FLICK_V) {
+        dur = Math.round(Math.min(360, Math.max(180, (2 * (el.clientHeight - offset)) / vel)));
+        curva = "cubic-bezier(0.25, 0.5, 0.3, 1)";
+      }
+      el.style.willChange = "transform";
+      el.style.transition = "transform " + dur + "ms " + curva;
       el.style.transform = "translateY(-100%)";
-      setTimeout(onEnter, 260);
+      let feito = false;
+      const fim = () => {
+        if (feito) return;
+        feito = true;
+        onEnter();
+      };
+      el.addEventListener("transitionend", fim, { once: true });
+      setTimeout(fim, dur + 40);
+    };
+
+    const velocidadeAgora = () => {
+      const agora = Date.now();
+      const ult = amostras[amostras.length - 1];
+      if (!ult || agora - ult.t > 100) return 0; // the finger stopped before letting go
+      const pri = amostras.find((a) => ult.t - a.t <= 100) || ult;
+      return ult.t > pri.t ? (pri.y - ult.y) / (ult.t - pri.t) : 0;
     };
 
     const release = () => {
+      if (tracking) velocity = velocidadeAgora();
       tracking = false;
       comecouNoFim = false;
       if (committed) return;
-      if (offset >= UNLOCK_COMMIT_PX || (velocity > UNLOCK_FLICK_V && offset >= UNLOCK_FLICK_MIN_PX)) { commit(); return; }
+      if (offset >= UNLOCK_COMMIT_PX || (velocity > UNLOCK_FLICK_V && offset >= UNLOCK_FLICK_MIN_PX)) { commit(velocity); return; }
       if (offset === 0) return;
       el.style.transition = "transform 220ms var(--ease-drawer)";
       paint(0);
@@ -152,8 +179,7 @@ export function useHubUnlock(active, elRef, onEnter) {
 
     const onTouchStart = (e) => {
       if (!armed || committed || e.touches.length > 1) return;
-      lastY = e.touches[0].clientY;
-      lastT = Date.now();
+      amostras = [{ y: e.touches[0].clientY, t: Date.now() }];
       velocity = 0;
       tracking = false;
       comecouNoFim = noFim();
@@ -163,10 +189,8 @@ export function useHubUnlock(active, elRef, onEnter) {
       if (!armed || committed || !comecouNoFim || e.touches.length > 1) return;
       const y = e.touches[0].clientY;
       const now = Date.now();
-      const dt = Math.max(1, now - lastT);
-      velocity = (lastY - y) / dt;
-      lastY = y;
-      lastT = now;
+      amostras.push({ y, t: now });
+      while (amostras.length > 2 && now - amostras[0].t > 150) amostras.shift();
       if (!tracking) {
         tracking = true;
         startY = y;

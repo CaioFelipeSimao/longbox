@@ -2353,3 +2353,17 @@ is scrolled, and only once the finger clearly moves down, so scrolling a list ba
 sideways navigation are untouched. Tablet and PC keep the side panel with no drag (sideways there
 already means the next volume). `tests/test-arrastar-folha.mjs` (14 checks, 4 failed first); also
 driven with real touch events in an emulated iPhone.
+
+**v127 One scrollbar on the hub, and a steadier throw on iOS.** v126's cover scrolls itself, so the
+hub showed two bars side by side: its own (the browser's default) and the page's, which belonged to
+the tab underneath and stood still while the hub scrolled. The cover's bar now takes the app's thin
+inner style (resting colour only, the accent while grabbed: the pointer is always over the hub), and
+the page's bar is transparent while the cover is down (`html[data-capa]`); a transparent bar keeps
+its width, so the tab does not shift (1425px either way, measured). The user found the iOS throw
+uneven on a strong swipe. Three causes addressed: the throw now starts at the finger's speed (speed
+over the last 100ms; duration 2 x distance / speed, 180-360ms, on a curve whose start is twice its
+average), the layer keeps its will-change through the throw, and the tab takes over only once the
+cover has left (transitionend) instead of 20ms before the end, which put React's unmount of the hub
+inside the animation. And GridMotion, the hub backdrop, queued four new GSAP tweens on every frame
+forever, even with the pointer still (always, on a phone); it now does nothing until the pointer
+moves. `test-capa-hub.mjs` 35 checks.

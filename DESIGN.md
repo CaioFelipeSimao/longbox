@@ -177,6 +177,10 @@ visit opens on the hub and a reload keeps you where you were. The unlock lifts t
 opaque, no fade, and the tab is revealed where it was scrolled; the wordmark or 0 drops it back
 from the top. The unlock only counts when the gesture **starts** at the hub's end (a touch that
 begins there, or a wheel turn after a 250ms pause); a flick needs 40px of travel as well as speed.
+A flick is thrown at the finger's speed (v127: duration 2 x remaining / speed, 180-360ms,
+cubic-bezier(0.25, 0.5, 0.3, 1)); a slow drag past 120px uses 280ms ease-drawer. The tab takes over
+on transitionend. The cover has the thin inner scrollbar; the page's own bar is transparent while
+the cover is down, so only one bar shows and the width does not change.
 The hub never takes the publisher colour: its header carries no hue and the cover resets the
 `--ed-*` accents.
 

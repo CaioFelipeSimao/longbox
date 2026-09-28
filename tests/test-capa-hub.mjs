@@ -144,5 +144,48 @@ console.log("=== gesto de destravar ===");
   check("sem erros", m.erros.length === 0, m.erros[0]);
 }
 
+console.log("=== arremesso ===");
+{
+  const m = await montar();
+  check("barra da página marcada enquanto a capa está", m.window.document.documentElement.dataset.capa === "true");
+  const el = m.capa();
+  Object.defineProperty(el, "clientHeight", { get: () => 700, configurable: true });
+  Object.defineProperty(el, "scrollHeight", { get: () => 700, configurable: true });
+  const toque = (tipo, y) => {
+    const ev = new m.window.Event(tipo, { bubbles: true });
+    Object.defineProperty(ev, "touches", { value: tipo === "touchend" ? [] : [{ clientY: y, clientX: 100 }] });
+    m.window.dispatchEvent(ev);
+  };
+  await sleep(400);
+  // A strong flick: 100px every 16ms (Node's timers stretch that a little).
+  toque("touchstart", 700);
+  for (let y = 600; y >= 400; y -= 100) { await sleep(16); toque("touchmove", y); }
+  toque("touchend", 400);
+  const tr = el.style.transition;
+  const ms = Number((tr.match(/(\d+)ms/) || [])[1]);
+  check("o arremesso segue a velocidade do dedo", tr.includes("cubic-bezier(0.25, 0.5, 0.3, 1)") && ms >= 180 && ms < 360, tr);
+  check("mantém a camada pronta durante o arremesso", el.style.willChange === "transform", el.style.willChange);
+  await sleep(120);
+  check("a aba só assume depois que a capa saiu", !!m.capa());
+  await sleep(400);
+  check("e então assume", !m.capa());
+  check("barra da página volta ao normal", m.window.document.documentElement.dataset.capa === "false");
+
+  // Past the threshold but slowly: the fixed 280ms drawer curve, as before.
+  await m.clicar(m.root.querySelector("button.brand"));
+  await sleep(400);
+  const el2 = m.capa();
+  Object.defineProperty(el2, "clientHeight", { get: () => 700, configurable: true });
+  Object.defineProperty(el2, "scrollHeight", { get: () => 700, configurable: true });
+  toque("touchstart", 700);
+  for (let y = 680; y >= 540; y -= 20) { await sleep(40); toque("touchmove", y); }
+  await sleep(150);
+  toque("touchend", 540);
+  check("arrasto lento que passa do limite usa a curva de sempre", el2.style.transition.includes("280ms"), el2.style.transition);
+  await sleep(450);
+  check("e também destrava", !m.capa());
+  check("sem erros", m.erros.length === 0, m.erros[0]);
+}
+
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas === 0 ? 0 : 1);

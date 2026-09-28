@@ -1346,6 +1346,11 @@ export function App() {
 
   const entrarNaColecao = useCallback(() => setHubAberto(false), []);
 
+  // The page's own scrollbar is made transparent under the cover (styles.css).
+  useEffect(() => {
+    document.documentElement.dataset.capa = hubAberto ? "true" : "false";
+  }, [hubAberto]);
+
   // From a volume's "Edições coletadas" tile: open that edição's série card
   // stacked on top of the volume sheet, without touching the active tab or
   // closing the volume underneath it — closing the série sheet reveals the

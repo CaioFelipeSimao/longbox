@@ -2081,19 +2081,28 @@ button.retrato-linha { cursor: pointer; }
    the border colour at rest, the accent while the pointer is over the area. Only
    the ::-webkit rules, because Chrome 121+ skips all of them once scrollbar-width
    or scrollbar-color is set (the v60 lesson). Firefox, which has no ::-webkit
-   scrollbars, gets the standard thin bar instead. The page's own bar is untouched. */
-.sug::-webkit-scrollbar, .sheet-body::-webkit-scrollbar, .modal-body::-webkit-scrollbar { width: 10px; }
-.sug::-webkit-scrollbar-track, .sheet-body::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track { background: transparent; }
-.sug::-webkit-scrollbar-button, .sheet-body::-webkit-scrollbar-button, .modal-body::-webkit-scrollbar-button { display: none; }
-.sug::-webkit-scrollbar-thumb, .sheet-body::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb {
+   scrollbars, gets the standard thin bar instead. The page's own bar is untouched,
+   except under the hub cover (v126): the cover has its own bar, styled here, and the
+   page's is made transparent so only one shows. A transparent bar keeps its width, so
+   the tab under the cover does not shift. scrollbar-color inherits, and a set value
+   switches Chrome off the ::-webkit rules, so body puts it back to auto for the rest. */
+html[data-capa="true"] { scrollbar-color: transparent transparent; }
+html[data-capa="true"] body { scrollbar-color: auto; }
+.sug::-webkit-scrollbar, .sheet-body::-webkit-scrollbar, .modal-body::-webkit-scrollbar, .hub-capa::-webkit-scrollbar { width: 10px; }
+.sug::-webkit-scrollbar-track, .sheet-body::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track, .hub-capa::-webkit-scrollbar-track { background: transparent; }
+.sug::-webkit-scrollbar-button, .sheet-body::-webkit-scrollbar-button, .modal-body::-webkit-scrollbar-button, .hub-capa::-webkit-scrollbar-button { display: none; }
+.sug::-webkit-scrollbar-thumb, .sheet-body::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb, .hub-capa::-webkit-scrollbar-thumb {
   background: var(--ed-rolagem);
   border: 3px solid transparent;
   background-clip: padding-box;
   border-radius: 999px;
 }
 .sug:hover::-webkit-scrollbar-thumb, .sheet-body:hover::-webkit-scrollbar-thumb, .modal-body:hover::-webkit-scrollbar-thumb { background-color: var(--ed-accent); }
+/* The pointer is always over the hub, so its bar keeps the resting colour and only
+   lights up while grabbed. */
+.hub-capa::-webkit-scrollbar-thumb:active { background-color: var(--ed-accent); }
 @supports not selector(::-webkit-scrollbar) {
-  .sug, .sheet-body, .modal-body { scrollbar-width: thin; scrollbar-color: var(--ed-rolagem) transparent; }
+  .sug, .sheet-body, .modal-body, .hub-capa { scrollbar-width: thin; scrollbar-color: var(--ed-rolagem) transparent; }
 }
 .sheet-actions { display: flex; gap: 6px; flex-shrink: 0; }
 /* v101: Remover leads the row, a clear gap away from Editar/Duplicar, and Fechar

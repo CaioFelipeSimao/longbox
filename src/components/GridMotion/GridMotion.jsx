@@ -5,7 +5,8 @@
 // item counts as an image when it is a URL or an app-relative path, because
 // covers arrive as "/_blob/<assetId>" and the upstream http check would have
 // printed that path as text. A data URI counts too, so the grid can be driven
-// from inlined art without a store behind it. The motion is upstream's, untouched.
+// from inlined art without a store behind it. The motion is upstream's; only its
+// per-frame work is skipped while the pointer is still (v126).
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 
@@ -32,7 +33,14 @@ export default function GridMotion({ items = [], gradientColor = "black", rows =
 
     const handleMouseMove = (e) => { mouseXRef.current = e.clientX; };
 
+    // v126: upstream queued four new tweens on every frame, forever, even with the
+    // pointer still, and on a phone it never moves. That steady churn is garbage
+    // collected in bursts, which showed up as hitches in the hub's unlock on iOS.
+    // Only a pointer that moved (and the first frame) queues new tweens now.
+    let ultimoX = null;
     const updateMotion = () => {
+      if (mouseXRef.current === ultimoX) return;
+      ultimoX = mouseXRef.current;
       const maxMoveAmount = 300;
       const baseDuration = 0.8;
       const inertiaFactors = [0.6, 0.4, 0.3, 0.2];
