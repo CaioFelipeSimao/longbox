@@ -69,9 +69,9 @@ function seedLibrary() {
     { id: "v4", titulo: "Demolidor por Bendis", personagem: "Demolidor", tipo: "Omnibus", editora: "Marvel", ano: "2022", status: "lida", notas: "", edicoesColetadasIds: Array.from({ length: 100 }, (_, i) => "e3-" + (i + 1)) },
     { id: "v5", titulo: "Volume sem editora", personagem: "Constantine", tipo: "Outro", editora: "", ano: "", status: "nao_lida", notas: "", edicoesColetadasIds: [] },
   ];
-  // Deliberately lopsided, so the shelf's proportional sampling has to work:
+  // 100 volumes, past the shelf's 84 (v140). Deliberately lopsided, so the shelf's proportional sampling has to work:
   // one character dominates and one has a single volume.
-  const extra = [["Batman", 44], ["Nightwing", 18], ["Demolidor", 12], ["Constantine", 1]];
+  const extra = [["Batman", 64], ["Nightwing", 18], ["Demolidor", 12], ["Constantine", 1]];
   extra.forEach(([pers, n]) => {
     for (let i = 1; i <= n; i++) {
       volumes.push({
@@ -243,7 +243,7 @@ if (scenario === "seeded") {
   const multi = [...perChar.entries()].filter(([, set]) => set.size > 1);
 
   console.log("\n--- shelf sampling ---");
-  console.log("  capped at 60: " + (wallCards.length === 60 ? "PASS" : "FAIL (" + wallCards.length + ")"));
+  console.log("  capped at 84: " + (wallCards.length === 84 ? "PASS" : "FAIL (" + wallCards.length + ")"));
   console.log("  every character represented: " + (perChar.size === 4 ? "PASS (4)" : "FAIL (" + [...perChar.keys()].join(", ") + ")"));
   // Two characters sharing a hue is legitimate: a chosen colour may coincide with
   // another character's automatic one. One character with two hues would be a bug.

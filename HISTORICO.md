@@ -2522,3 +2522,8 @@ never hidden. Tipo, Editora and the status use OpcaoFiltro; inside a form its li
 (it opened under the footer on PC) and keeps the field's width (the phone rule grew Tipo's list
 off the modal's left edge). test-colecoes +14 checks shown failing first; test-formatos, test-lote5
 and test-foco now drive the comboboxes.
+
+**v140 The hub shelf holds 84.** `SHELF_CAP` 60 left the third row three short on the user's PC,
+where the wall fits 21 a row; on their iPhone it fits 7. 84 fills four rows of 21 and twelve of 7
+(and rows of 4, 6, 12, 14). The proportional sampling is unchanged. test-render's seeded library
+grew to 100 volumes (Batman 64) so the cap is still exercised.
