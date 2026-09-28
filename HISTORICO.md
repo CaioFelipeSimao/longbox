@@ -2308,3 +2308,15 @@ local copies, so its tab switches are unchanged; its one-off cost is uploading t
 idle time on the first open after the update. Uploads stop for the session on the first error.
 Volumes doc was 116 KB of 256 KB before; the records add about 14 KB. `tests/test-miniaturas.mjs`
 (11 checks) failed first: a recorded thumbnail still downloaded the full cover and nothing uploaded.
+
+**v124 The shared thumbnails actually upload.** After v123 the PC, left open for minutes, uploaded
+nothing and recorded nothing; one 25 KB thumbnail reached the store with no record. A throwaway
+probe page (contract 0.2.46 like Longbox) settled it: `assets.upload` answers in ~0.6 s with or
+without a click, but `fetch()` of a `blob:` URL is refused inside the artifact frame ("Failed to
+fetch"). v123 read the PC's existing thumbnails that way, so every one failed silently; the JSDOM
+test's fetch stub allowed it. Now the Blobs are kept in memory beside their URLs and uploaded
+directly. The lost record: a phone suspends a hidden page, timers included, so a batch waiting its
+3 s (and any library save inside its 500 ms debounce) died with it. Both now go out on
+`visibilitychange` to hidden. `test-miniaturas.mjs` gained a minimal IndexedDB stub, a fetch that
+refuses `blob:` like the real frame, and a hide check (13 checks; each new one seen failing
+first). It also stopped reading the hub suggestion's cover by mistake, which made it flaky.

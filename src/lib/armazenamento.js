@@ -298,10 +298,20 @@ export async function gravarUltimoBackup(quando) {
 export function scheduleSave(lib) {
   if (!store.db) return;
   if (store.timer) clearTimeout(store.timer);
-  store.timer = setTimeout(() => {
-    store.timer = null;
-    flushLibrary(lib);
-  }, 500);
+  store.pendente = lib;
+  store.timer = setTimeout(salvarPendente, 500);
+}
+export function salvarPendente() {
+  if (store.timer) clearTimeout(store.timer);
+  store.timer = null;
+  const lib = store.pendente;
+  store.pendente = null;
+  if (lib) flushLibrary(lib);
+}
+// v124: a phone suspends a hidden page, timers included, so an edit still inside
+// the 500ms wait was never saved. It is saved as the page hides.
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && store.timer) salvarPendente(); });
 }
 
 export function storeIsBusy() { return store.timer !== null || store.inFlight > 0; }

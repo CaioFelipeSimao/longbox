@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 import { IMG_TYPES } from "./constantes";
-import { store } from "./armazenamento";
+import { store, salvarPendente } from "./armazenamento";
 import { corDosPixels } from "./util";
 
 export function coverUrl(volume) {
@@ -27,6 +27,9 @@ export const MINI_LARGURA = 360;
 export const MINI_FORMATO = "image/jpeg";
 export const MINI_BANCO = "longbox-miniaturas";
 export const miniUrls = new Map();
+// v124: the files behind those blob: URLs. The artifact frame refuses fetch() of
+// a blob: URL, so an upload needs the Blob itself.
+const miniBlobs = new Map();
 export const miniOuvintes = new Map();
 export const miniGerais = new Set();
 export let miniAviso = 0;
@@ -111,7 +114,7 @@ export const miniCacheLido = miniBanco.then((db) => new Promise((res) => {
       const c = q.result;
       if (!c) { res(); return; }
       const v = c.value;
-      if (v && v.blob && v.largura === MINI_LARGURA && v.formato === MINI_FORMATO) miniUrls.set(c.key, URL.createObjectURL(v.blob));
+      if (v && v.blob && v.largura === MINI_LARGURA && v.formato === MINI_FORMATO) { miniUrls.set(c.key, URL.createObjectURL(v.blob)); miniBlobs.set(c.key, v.blob); }
       c.continue();
     };
     q.onerror = () => res();
@@ -174,15 +177,22 @@ let envioAviso = 0;
 
 // v123: uploads are recorded in batches, so the first device to run this makes
 // a handful of library writes instead of one per cover.
+function enviarLote() {
+  if (envioAviso) clearTimeout(envioAviso);
+  envioAviso = 0;
+  const lote = enviadas;
+  enviadas = {};
+  if (Object.keys(lote).length && aoEnviarMini) aoEnviarMini(lote);
+}
 function registrarEnvio(capa, mini) {
   enviadas[capa] = mini;
   miniRemotas.set(capa, "/_blob/" + mini);
-  if (envioAviso) return;
-  envioAviso = setTimeout(() => {
-    const lote = enviadas;
-    enviadas = {}; envioAviso = 0;
-    if (aoEnviarMini) aoEnviarMini(lote);
-  }, 3000);
+  if (!envioAviso) envioAviso = setTimeout(enviarLote, 3000);
+}
+// v124: a phone suspends a hidden page, timers included, so a batch still
+// waiting there was lost with its uploads. It goes out as the page hides.
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") { enviarLote(); salvarPendente(); } });
 }
 
 export function rodarMiniFila() {
@@ -196,6 +206,7 @@ export function rodarMiniFila() {
       if (!miniUrls.has(id)) {
         blob = await gerarMini(id);
         miniUrls.set(id, URL.createObjectURL(blob));
+        miniBlobs.set(id, blob);
         avisarMini(id);
         const db = await miniBanco;
         if (db) {
@@ -203,7 +214,7 @@ export function rodarMiniFila() {
         }
       }
       if (!miniRemotas.has(id) && !envioParado && store.assets) {
-        if (!blob) blob = await (await fetch(miniUrls.get(id))).blob();
+        if (!blob) blob = miniBlobs.get(id);
         try {
           const r = await store.assets.upload(new File([blob], "miniatura.jpg", { type: MINI_FORMATO }), { type: MINI_FORMATO });
           registrarEnvio(id, r.id);
