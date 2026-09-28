@@ -1569,6 +1569,18 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   width: 36px; height: 36px; display: grid; place-items: center;
   color: var(--text-muted); pointer-events: none;
 }
+/* v141: the pin sits at the far edge beside the fold arrow, above the row's stretched
+   fold button like the colour square. Quiet until pinned, then the accent. */
+.group-pin {
+  position: relative; z-index: 2; margin-left: auto; align-self: center;
+  width: 32px; height: 32px; display: grid; place-items: center;
+  border-radius: var(--r-sm); color: var(--text-muted);
+  transition: background 120ms var(--ease-out), color 120ms var(--ease-out);
+}
+.group-pin[aria-pressed="true"] { color: var(--ed-accent-text); }
+.group-pin + .group-fold { margin-left: 0; }
+@media (hover: hover) and (pointer: fine) { .group-pin:hover { background: var(--surface-2); color: var(--text); } }
+@media (pointer: coarse) { .group-pin { width: 44px; height: 44px; margin-block: -6px; } }
 .group-fold svg { transition: transform 120ms var(--ease-out); }
 .group-fold svg[data-rot="true"] { transform: rotate(-90deg); }
 @media (pointer: coarse) { .group-fold { width: 44px; height: 44px; } }

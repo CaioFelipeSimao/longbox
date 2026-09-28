@@ -5,7 +5,7 @@ import { GroupHead } from "../ui/CorPersonagem";
 import { SEM_EDICOES, SerieLinha } from "../ui/Series";
 
 export function AbaSeries({
-  lib, setCorPersonagem, edicoesPorSerie, ownedEdicaoIds, buscando, filtrando, openSerieId,
+  lib, setCorPersonagem, fixados, alternarFixado, edicoesPorSerie, ownedEdicaoIds, buscando, filtrando, openSerieId,
   gruposAbertos, grupoAberto, alternarGrupo, alternarTodos, seriesFiltradas,
   abrirSerieNaFaixa,
 }) {
@@ -43,6 +43,8 @@ export function AbaSeries({
             onPickColor={setCorPersonagem}
             aberto={grupoAberto(grupo.personagem)}
             onAlternar={alternarGrupo}
+            fixado={fixados.includes(grupo.personagem)}
+            onFixar={alternarFixado}
           />
           {grupoAberto(grupo.personagem) && grupo.itens.map((item) => (
             <SerieLinha

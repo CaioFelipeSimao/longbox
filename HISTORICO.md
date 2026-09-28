@@ -2527,3 +2527,12 @@ and test-foco now drive the comboboxes.
 where the wall fits 21 a row; on their iPhone it fits 7. 84 fills four rows of 21 and twelve of 7
 (and rows of 4, 6, 12, 14). The proportional sampling is unchanged. test-render's seeded library
 grew to 100 volumes (Batman 64) so the cap is still exercised.
+
+**v141 Pin up to three characters.** A pin on each character heading of the HQs and Séries tabs
+(one shared list) puts that group first, pinned ones in the order they were pinned, the rest
+alphabetical as before; the volume sheet's ← → follow the same order (`porFixados` in lib/util.js
+replaces the three alphabetical sorts). A fourth pin is refused with a toast. The pin is muted until
+pinned, then the publisher band's accent (`--ed-accent-text`, cyan under Todas). Stored in its own
+document `library/fixados`, like library/meta: both devices, outside undo and backups, read once at
+load (a pin made on the other device shows on the next open). tests/test-fixados.mjs, 13 checks,
+shown failing first.

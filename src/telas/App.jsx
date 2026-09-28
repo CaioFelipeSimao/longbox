@@ -5,14 +5,14 @@ import CursorGrid from "../components/CursorGrid/CursorGrid";
 import {
   ACCENT_HEX, DOC_LIMIT, ED_SEM, ED_TODAS, EMPTY_LIB, QUASE_FECHANDO, SESSION_SEED, TABS,
   TIPOS, editoraDe, seededPick, slugify, tiposDaEditora, TIPOS_COMUNS, STATUS } from "../lib/constantes";
-import { parseNum, uid } from "../lib/util";
+import { parseNum, porFixados, uid } from "../lib/util";
 import { COR_LONGBOX, CoresContext, swatchColors, tintaSobre } from "../lib/cores";
 import {
   anoRange, bytesOf, deleteColecao, deleteEdicao, deleteSerie, deleteVolume, ensureAvulsa,
   ensureRange, normalizeLib, parseImportText, personagensDaSerie, SEM_PERSONAGEM, serieDoGrupo, semearEditoras,
 } from "../lib/biblioteca";
 import {
-  aplicarMescladas, gravarUltimoBackup, lerUltimoBackup, loadLibrary, ouvirMudancas, scheduleSave, shardEdicoes, store,
+  aplicarMescladas, gravarFixados, gravarUltimoBackup, lerFixados, lerUltimoBackup, loadLibrary, ouvirMudancas, scheduleSave, shardEdicoes, store,
 } from "../lib/armazenamento";
 import {
   assetErrorMessage, esperarMiniaturas, prepararMiniaturas, registrarMiniRemotas, uploadCover,
@@ -64,6 +64,7 @@ export function App() {
     return () => clearTimeout(t);
   }, [salvamento]);
   const [ultimoBackup, setUltimoBackup] = useState(null);
+  const [fixados, setFixados] = useState([]);
   const [corPersonagem, setCorPersonagem] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const sentinelRef = useRef(null);
@@ -109,6 +110,7 @@ export function App() {
         // Read alongside the library, never before the page shows: the hub
         // footer can fill this in a moment later (v88).
         lerUltimoBackup(db).then((quando) => { if (!cancelled) setUltimoBackup(quando); });
+        lerFixados(db).then((lista) => { if (!cancelled) setFixados(lista); });
         try {
           const loaded = await loadLibrary(db);
           const semeado = semearEditoras(loaded);
@@ -401,11 +403,11 @@ export function App() {
     if (filtroPersonagem) vs = vs.filter((v) => v.personagem === filtroPersonagem);
     const grupos = {};
     vs.forEach((v) => { (grupos[v.personagem] = grupos[v.personagem] || []).push(v); });
-    return Object.keys(grupos).sort((a, b) => a.localeCompare(b, "pt-BR")).map((p) => ({
+    return Object.keys(grupos).sort(porFixados(fixados)).map((p) => ({
       personagem: p,
       itens: ordenarGrupoVolumes(grupos[p]),
     }));
-  }, [lib.volumes, query, filtroStatus, filtroTipo, filtroPersonagem, casaEditora, textoBusca]);
+  }, [lib.volumes, query, filtroStatus, filtroTipo, filtroPersonagem, casaEditora, textoBusca, fixados]);
 
   // Reordering is restricted to the plain, unfiltered view: a search or filter
   // shows a subset of the group, and reordering only what is visible would
@@ -453,7 +455,7 @@ export function App() {
     if (!seq || !seq.includes(openVolumeId)) {
       const grupos = {};
       lib.volumes.forEach((v) => { (grupos[v.personagem] = grupos[v.personagem] || []).push(v); });
-      seq = Object.keys(grupos).sort((a, b) => a.localeCompare(b, "pt-BR"))
+      seq = Object.keys(grupos).sort(porFixados(fixados))
         .flatMap((p) => ordenarGrupoVolumes(grupos[p]).map((v) => v.id));
     }
     return seq;
@@ -847,7 +849,7 @@ export function App() {
         (grupos[p.nome] = grupos[p.nome] || []).push({ serie: s, faixa: p });
       });
     });
-    return Object.keys(grupos).sort((a, b) => a.localeCompare(b, "pt-BR")).map((p) => ({
+    return Object.keys(grupos).sort(porFixados(fixados)).map((p) => ({
       personagem: p,
       itens: grupos[p].sort((a, b) => {
         const oa = a.serie.ordem ?? null, ob = b.serie.ordem ?? null;
@@ -857,7 +859,17 @@ export function App() {
         return (parseInt(a.serie.anoInicio, 10) || 9999) - (parseInt(b.serie.anoInicio, 10) || 9999);
       }),
     }));
-  }, [lib.series, query, casaEditora, filtroSerie]);
+  }, [lib.series, query, casaEditora, filtroSerie, fixados]);
+
+  // v141: pin a character to the top of the HQs and Séries tabs, three at most.
+  function alternarFixado(personagem) {
+    let proxima;
+    if (fixados.includes(personagem)) proxima = fixados.filter((p) => p !== personagem);
+    else if (fixados.length >= 3) { showToast("Você já fixou 3. Desafixe um para fixar outro."); return; }
+    else proxima = [...fixados, personagem];
+    setFixados(proxima);
+    gravarFixados(proxima);
+  }
 
   const openSerie = lib.series.find((s) => s.id === openSerieId) || null;
 
@@ -1806,6 +1818,8 @@ export function App() {
           <AbaHqs
             lib={lib}
             setCorPersonagem={setCorPersonagem}
+            fixados={fixados}
+            alternarFixado={alternarFixado}
             openVolumeId={openVolumeId}
             buscando={buscando}
             gruposFechados={gruposFechados}
@@ -1849,6 +1863,8 @@ export function App() {
           <AbaSeries
             lib={lib}
             setCorPersonagem={setCorPersonagem}
+            fixados={fixados}
+            alternarFixado={alternarFixado}
             edicoesPorSerie={edicoesPorSerie}
             ownedEdicaoIds={ownedEdicaoIds}
             buscando={buscando}

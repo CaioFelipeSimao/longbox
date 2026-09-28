@@ -52,3 +52,13 @@ function rgbParaHsl(r, g, b) {
   const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
   return [h * 60, s, l];
 }
+
+// v141: character order on the HQs and Séries tabs: pinned ones first, in the order
+// they were pinned, then the rest alphabetically.
+export function porFixados(fixados) {
+  return (a, b) => {
+    const ia = fixados.indexOf(a), ib = fixados.indexOf(b);
+    if (ia >= 0 || ib >= 0) return (ia < 0 ? Infinity : ia) - (ib < 0 ? Infinity : ib);
+    return a.localeCompare(b, "pt-BR");
+  };
+}

@@ -5,7 +5,7 @@ import { GroupHead } from "../ui/CorPersonagem";
 import { VolumeCard, gradeTeclado } from "../ui/VolumeCard";
 
 export function AbaHqs({
-  lib, setCorPersonagem, openVolumeId, buscando, gruposFechados, grupoAbertoVolumes,
+  lib, setCorPersonagem, fixados, alternarFixado, openVolumeId, buscando, gruposFechados, grupoAbertoVolumes,
   alternarGrupoVolumes, alternarTodosVolumes, volumesFiltrados, podeReordenarVolumes,
   dragVisual, editoraCorPorNome, registrarCardNode, volDragPointerDown,
   volDragPointerMove, volDragPointerEnd, abrirVolumeCard,
@@ -51,6 +51,8 @@ export function AbaHqs({
             aberto={aberto}
             onAlternar={alternarGrupoVolumes}
             itemLabel="HQs"
+            fixado={fixados.includes(grupo.personagem)}
+            onFixar={alternarFixado}
           />
           {aberto && (
           <div className="shelf stagger" role="group" aria-label={"HQs de " + grupo.personagem} {...gradeTeclado}>

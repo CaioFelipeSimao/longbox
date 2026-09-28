@@ -305,6 +305,27 @@ export async function gravarUltimoBackup(quando) {
   }
 }
 
+// v141: up to three pinned characters, first on the HQs and Séries tabs. Its own
+// document, like library/meta: shared by both devices, outside backups and undo.
+// ponytail: read once at load, not live; a pin made on the other device shows on the next open.
+export async function lerFixados(db) {
+  try {
+    const snap = await db.doc("library/fixados").get();
+    return snap.exists ? snap.data().personagens || [] : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export async function gravarFixados(personagens) {
+  if (!store.db) return;
+  try {
+    await store.db.doc("library/fixados").set({ personagens });
+  } catch (e) {
+    if (store.onError) store.onError(dbErrorMessage(e));
+  }
+}
+
 export function scheduleSave(lib) {
   if (!store.db) return;
   if (store.timer) clearTimeout(store.timer);

@@ -1,4 +1,4 @@
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Pin } from "lucide-react";
 
 import {
   PALETA_CROMATICA, PALETA_NEUTRA, nomeDaCor, sameSpec, specForCharacter, swatchColors,
@@ -10,7 +10,7 @@ import { Sheet } from "./base";
 // tabs. So its heading is where its colour is set. onAlternar is what makes
 // the group collapsible; both tabs pass it now, each with its own fold state
 // (see lerGruposAbertos/lerGruposFechados below) and its own default.
-export function GroupHead({ personagem, count, onPickColor, aberto, onAlternar, itemLabel = "séries" }) {
+export function GroupHead({ personagem, count, onPickColor, aberto, onAlternar, itemLabel = "séries", fixado, onFixar }) {
   const cores = useCores();
   const spec = specForCharacter(personagem, cores);
   const guardado = cores && cores[(personagem || "").trim().toLowerCase()];
@@ -45,6 +45,19 @@ export function GroupHead({ personagem, count, onPickColor, aberto, onAlternar, 
         ) : personagem}
       </h2>
       <span className="group-count">{count}</span>
+      {/* v141: pins the character above the alphabetical order, three at most. */}
+      {onFixar && (
+        <button
+          type="button"
+          className="group-pin press"
+          onClick={() => onFixar(personagem)}
+          aria-label={"Fixar " + personagem + " no topo"}
+          aria-pressed={fixado ? "true" : "false"}
+          data-dica={fixado ? "Desafixar" : "Fixar no topo"}
+        >
+          <Pin size={15} fill={fixado ? "currentColor" : "none"} />
+        </button>
+      )}
       {onAlternar && (
         <span className="group-fold" aria-hidden="true">
           <ChevronDown size={16} data-rot={aberto ? "false" : "true"} />
