@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Layers, Library } from "lucide-react";
+import { Search, Layers, Library, X } from "lucide-react";
 
 import { coverColors, useCores } from "../lib/cores";
 import { CoverArt } from "./VolumeCard";
@@ -47,26 +47,72 @@ export function ordenarPorNome(itens, termoBruto, secundario) {
 
 /* The suggestions never obey the publisher filter or the status and type filters:
    looking for a volume you half remember should not depend on what you happen to be
-   browsing. Under 768px the field takes the whole screen when focused, because the
-   on-screen keyboard would otherwise leave a dropdown two rows tall. */
-export function SearchBox({ query, setQuery, sugestoes, onPick }) {
+   browsing. (Under 768px the field used to take the whole screen when focused; since
+   v129 the phone uses the tab-bar search below instead.) */
+//
+// v129: on a phone the search lives in the floating tab bar instead (`barra`): a
+// glass circle beside the tabs that grows into a field while the tabs fold into a
+// circle, as in iOS. The page owns whether it is open (`expandida`), because the
+// tab capsule folds with it. Tapping outside only hides the suggestions: the typed
+// search stays and keeps filtering the tab, so you can scroll the results. The X,
+// the folded tab circle or picking a suggestion close it and clear the text. The
+// bar rides above the on-screen keyboard, measured with visualViewport.
+export function SearchBox({ query, setQuery, sugestoes, onPick, barra = false, expandida = false, setExpandida }) {
   const [aberta, setAberta] = useState(false);
   const [idx, setIdx] = useState(0);
-  const [full, setFull] = useState(false);
+  const [fullLocal, setFullLocal] = useState(false);
+  const full = barra ? expandida : fullLocal;
+  const setFull = barra ? setExpandida : setFullLocal;
   const raiz = useRef(null);
   const campo = useRef(null);
   const cores = useCores();
 
   useEffect(() => { setIdx(0); }, [query]);
 
-  const fechar = useCallback(() => { setAberta(false); setFull(false); }, []);
+  const fechar = useCallback(() => {
+    setAberta(false);
+    setFull(false);
+    if (barra) {
+      setQuery("");
+      if (campo.current) campo.current.blur();
+    }
+  }, [barra, setFull, setQuery]);
+
+  // Closed from outside (the folded tab circle, a tab switch): let go of the keyboard.
+  useEffect(() => {
+    if (barra && !expandida && campo.current && document.activeElement === campo.current) campo.current.blur();
+  }, [barra, expandida]);
 
   useEffect(() => {
     if (!aberta) return;
-    const fora = (e) => { if (raiz.current && !raiz.current.contains(e.target)) fechar(); };
+    const fora = (e) => {
+      if (!raiz.current || raiz.current.contains(e.target)) return;
+      if (barra) setAberta(false);
+      else fechar();
+    };
     document.addEventListener("pointerdown", fora);
     return () => document.removeEventListener("pointerdown", fora);
-  }, [aberta, fechar]);
+  }, [aberta, fechar, barra]);
+
+  useEffect(() => {
+    if (!barra || !expandida || typeof window === "undefined" || !window.visualViewport) return undefined;
+    const vv = window.visualViewport;
+    const nav = raiz.current && raiz.current.closest(".tabbar");
+    if (!nav) return undefined;
+    const medir = () => {
+      nav.style.setProperty("--teclado", Math.max(0, window.innerHeight - vv.height - vv.offsetTop) + "px");
+      nav.style.setProperty("--vv-altura", vv.height + "px");
+    };
+    medir();
+    vv.addEventListener("resize", medir);
+    vv.addEventListener("scroll", medir);
+    return () => {
+      vv.removeEventListener("resize", medir);
+      vv.removeEventListener("scroll", medir);
+      nav.style.removeProperty("--teclado");
+      nav.style.removeProperty("--vv-altura");
+    };
+  }, [barra, expandida]);
 
   const mostrando = aberta && query.trim().length > 0;
 
@@ -74,6 +120,14 @@ export function SearchBox({ query, setQuery, sugestoes, onPick }) {
     if (!v) return;
     fechar();
     onPick(v);
+  };
+
+  // Focus inside the tap itself: iOS only raises the keyboard for a focus that
+  // happens during the user's gesture.
+  const abrirNaBarra = () => {
+    setFull(true);
+    setAberta(true);
+    if (campo.current) campo.current.focus();
   };
 
   const tecla = (e) => {
@@ -96,9 +150,12 @@ export function SearchBox({ query, setQuery, sugestoes, onPick }) {
   };
 
   return (
-    <div className="search" data-full={full ? "true" : "false"} ref={raiz}>
-      <div className="search-field" data-dica="Buscar · /">
-        <Search size={15} />
+    <div className={barra ? "search search-barra" : "search"} data-full={full ? "true" : "false"} ref={raiz}>
+      <div className="search-field" data-dica={barra ? undefined : "Buscar · /"}>
+        <Search size={barra ? 20 : 15} />
+        {barra && !full && (
+          <button type="button" className="search-abrir" onClick={abrirNaBarra} aria-label="Buscar na biblioteca" />
+        )}
         <input
           ref={campo}
           id="busca-acervo"
@@ -106,8 +163,10 @@ export function SearchBox({ query, setQuery, sugestoes, onPick }) {
           onChange={(e) => { setQuery(e.target.value); setAberta(true); }}
           onFocus={() => { setAberta(true); setFull(true); }}
           onKeyDown={tecla}
-          placeholder="Buscar"
+          placeholder={barra ? "Buscar no acervo" : "Buscar"}
           aria-label="Buscar na biblioteca"
+          tabIndex={barra && !full ? -1 : undefined}
+          enterKeyHint={barra ? "search" : undefined}
           role="combobox"
           aria-expanded={mostrando ? "true" : "false"}
           aria-controls="busca-sugestoes"
@@ -116,7 +175,11 @@ export function SearchBox({ query, setQuery, sugestoes, onPick }) {
             mostrando && sugestoes[idx] ? "sug-" + sugestoes[idx].chave : undefined
           }
         />
-        <button className="search-cancel" onClick={fechar}>Cancelar</button>
+        {barra && full && (
+          <button type="button" className="search-fechar" onClick={fechar} aria-label="Fechar a busca">
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {mostrando && (

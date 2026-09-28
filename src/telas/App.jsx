@@ -17,7 +17,7 @@ import {
 import {
   assetErrorMessage, esperarMiniaturas, prepararMiniaturas, registrarMiniRemotas, uploadCover,
 } from "../lib/capas";
-import { useHubUnlock, useLarguraDaBarra, usePonteiroFino } from "../lib/hooks";
+import { useCelular, useHubUnlock, useLarguraDaBarra, usePonteiroFino } from "../lib/hooks";
 import {
   lerAbaSalva, lerColecoesFechadas, lerFiltroSeries, lerFiltros, lerGruposAbertos, lerGruposFechados,
   lerOrdemRecolhida, lerAbaBase, salvarAba, salvarAbaBase,salvarColecoesFechadas, salvarFiltroSeries, salvarFiltros, salvarGruposAbertos,
@@ -1325,8 +1325,11 @@ export function App() {
   tabRef.current = tab;
   const hubAbertoRef = useRef(hubAberto);
   hubAbertoRef.current = hubAberto;
+  const celular = useCelular();
+  const [buscaNaBarra, setBuscaNaBarra] = useState(false);
   const switchTab = useCallback((key) => {
     setQuery("");
+    setBuscaNaBarra(false);
     if (key === "hub") {
       // Coming back to the hub reverses the unlock: it drops in from the top,
       // the same path it left by.
@@ -1353,16 +1356,19 @@ export function App() {
   // again a little later, which makes WebKit sample its backdrop afresh.
   const tabbarRef = useRef(null);
   useEffect(() => {
-    const el = tabbarRef.current;
-    if (!el || typeof requestAnimationFrame !== "function") return undefined;
+    // v129: the glass is on the capsule and the search circle now, not the bar.
+    const nav = tabbarRef.current;
+    if (!nav || typeof requestAnimationFrame !== "function") return undefined;
+    const vidros = () => [...nav.querySelectorAll(".tabbar-capsula, .search-barra .search-field")];
     let ids = [];
     const cutucar = () => {
-      el.style.transform = "translateZ(0)";
-      ids.push(requestAnimationFrame(() => { el.style.transform = ""; }));
+      const els = vidros();
+      els.forEach((el) => { el.style.transform = "translateZ(0)"; });
+      ids.push(requestAnimationFrame(() => { els.forEach((el) => { el.style.transform = ""; }); }));
     };
     ids.push(requestAnimationFrame(() => { ids.push(requestAnimationFrame(cutucar)); }));
     const t = setTimeout(cutucar, 300);
-    return () => { ids.forEach(cancelAnimationFrame); clearTimeout(t); el.style.transform = ""; };
+    return () => { ids.forEach(cancelAnimationFrame); clearTimeout(t); vidros().forEach((el) => { el.style.transform = ""; }); };
   }, [tab, hubAberto]);
 
   // The page's own scrollbar is made transparent under the cover (styles.css).
@@ -1527,6 +1533,22 @@ export function App() {
 
   /* ============================ render ============================ */
 
+  function escolherSugestao(s) {
+    if (s.tipo === "colecao") { setOpenColecaoId(s.id); return; }
+    if (s.tipo === "serie") {
+      setOpenSerieId(s.id);
+      setOpenSerieContexto(null);
+      setVerTudoSerie(false);
+      setSelectedEdicaoId(null);
+      setSerieBusca("");
+      return;
+    }
+    // v115: sheets open over the tab you are on; the tab no longer changes.
+    abrirVolume(s.id, { tipo: "todas" });
+  }
+  const abaAtual = TABS.find((t) => t.key === tab) || TABS[0];
+  const IconeAbaAtual = abaAtual.icon;
+
   // Both in the app's header and in the hub cover's (v126).
   const avisoSalvamento = (
     <span className="salvamento" aria-live="polite" data-estado={salvamento || "nada"}>
@@ -1588,24 +1610,11 @@ export function App() {
           </button>
           {avisoSalvamento}
 
-          <SearchBox
-              query={query}
-              setQuery={setQuery}
-              sugestoes={sugestoes}
-              onPick={(s) => {
-                if (s.tipo === "colecao") { setOpenColecaoId(s.id); return; }
-                if (s.tipo === "serie") {
-                  setOpenSerieId(s.id);
-                  setOpenSerieContexto(null);
-                  setVerTudoSerie(false);
-                  setSelectedEdicaoId(null);
-                  setSerieBusca("");
-                  return;
-                }
-                // v115: sheets open over the tab you are on; the tab no longer changes.
-                abrirVolume(s.id, { tipo: "todas" });
-              }}
-            />
+          {/* v129: on a phone the search sits in the floating tab bar; the spacer
+              keeps the header's buttons on the right. */}
+          {celular ? <div style={{ flex: 1 }} /> : (
+            <SearchBox query={query} setQuery={setQuery} sugestoes={sugestoes} onPick={escolherSugestao} />
+          )}
           {/* v102: the way in to the shortcuts panel, which only "?" opened before.
               Hidden on touch, where there is no keyboard to use them with. */}
           <button className="btn-icon so-teclado" onClick={() => setShowAtalhos(true)} aria-label="Atalhos do teclado" data-dica="Atalhos · ?">
@@ -1815,16 +1824,44 @@ export function App() {
 
       </main>
 
-      <nav className="tabbar" ref={tabbarRef}>
-        {TABS.map((t) => {
-          const Icon = t.icon;
-          return (
-            <button key={t.key} data-active={tab === t.key ? "true" : "false"} aria-current={tab === t.key ? "page" : undefined} onClick={() => switchTab(t.key)}>
-              <Icon size={18} />
-              {t.label}
+      {/* v129: a floating glass capsule (iOS tab bar) with the search circle beside
+          it. The pill behind the active tab slides by transform; while searching,
+          the capsule folds into a circle with the tab's icon, which closes the
+          search. Phone only: from 768px the tabs are in the header. */}
+      <nav
+        className="tabbar"
+        ref={tabbarRef}
+        data-buscando={buscaNaBarra ? "true" : "false"}
+        style={{ "--aba-i": TABS.indexOf(abaAtual) }}
+      >
+        <div className="tabbar-capsula">
+          <span className="tabbar-pill" aria-hidden="true" />
+          {TABS.map((t) => {
+            const Icon = t.icon;
+            return (
+              <button key={t.key} data-active={tab === t.key ? "true" : "false"} aria-current={tab === t.key ? "page" : undefined} onClick={() => switchTab(t.key)} tabIndex={buscaNaBarra ? -1 : undefined}>
+                <Icon size={20} />
+                {t.label}
+              </button>
+            );
+          })}
+          {buscaNaBarra && (
+            <button className="tabbar-voltar" aria-label={"Fechar a busca e voltar para " + abaAtual.label} onClick={() => { setBuscaNaBarra(false); setQuery(""); }}>
+              <IconeAbaAtual size={20} />
             </button>
-          );
-        })}
+          )}
+        </div>
+        {celular && (
+          <SearchBox
+            barra
+            expandida={buscaNaBarra}
+            setExpandida={setBuscaNaBarra}
+            query={query}
+            setQuery={setQuery}
+            sugestoes={sugestoes}
+            onPick={escolherSugestao}
+          />
+        )}
       </nav>
       </div>
 

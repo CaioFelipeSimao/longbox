@@ -73,6 +73,21 @@ export function usePonteiroFino() {
   return fino;
 }
 
+// v129: the phone layout (the search moves into the floating tab bar).
+export function useCelular() {
+  const q = "(max-width: 767px)";
+  const [sim, setSim] = useState(() => typeof window !== "undefined" && !!window.matchMedia && window.matchMedia(q).matches);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return undefined;
+    const mq = window.matchMedia(q);
+    const ler = () => setSim(mq.matches);
+    ler();
+    mq.addEventListener("change", ler);
+    return () => mq.removeEventListener("change", ler);
+  }, []);
+  return sim;
+}
+
 export function prefersReducedMotion() {
   return typeof window !== "undefined" &&
     typeof window.matchMedia === "function" &&

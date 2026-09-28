@@ -162,6 +162,11 @@ Shell: translucent sticky top bar (`backdrop-filter`), 56px mobile / 64px deskto
 the wordmark, search, and the stats toggle. Content capped at 1200px.
 Tabs sit in a bottom bar under 768px (thumb reach on the tablet) and as a top segmented
 control above it.
+Since v129 the phone's bottom bar is a floating glass capsule (58px, 16px side margins, 8px above
+the home-indicator inset; `--tabbar-h` 78px is the room content keeps) with a sliding pill on the
+active tab, and the search is a glass circle beside it that grows into the field while the capsule
+folds into a circle holding the tab's icon; suggestions open above the bar, which rides above the
+keyboard (visualViewport). The phone header has no search.
 The search is the bar's flexible item (44px to 456px, pushed right); only the hub keeps a
 spacer. Below 480px (tabs) and 560px (hub) "Novo" shows only its "+", and below 520px the save
 signal is a dot that disappears while idle (v118). Below 480px the hub footer breaks after

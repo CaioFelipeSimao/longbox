@@ -28,6 +28,10 @@
   --topbar-bg: rgba(14, 15, 17, 0.5);
   --topbar-bg-solid: rgba(10, 11, 13, 0.86);
   --topbar-shadow: rgba(0, 0, 0, 0.4);
+  /* v129: the floating tab bar's glass: a light rim and the active tab's pill. */
+  --vidro-borda: rgba(255, 255, 255, 0.12);
+  --vidro-pill: rgba(255, 255, 255, 0.1);
+  --vidro-sombra: 0 10px 30px rgba(0, 0, 0, 0.4);
   --shadow-sheet: 0 -12px 48px rgba(0, 0, 0, 0.5);
   --shadow-panel: -12px 0 48px rgba(0, 0, 0, 0.5);
   --shadow-cover: 0 2px 10px rgba(0, 0, 0, 0.45);
@@ -48,7 +52,9 @@
   --font-mono: "Geist Mono", "Cascadia Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   --topbar-h: 62px;
-  --tabbar-h: 60px;
+  /* v129: the floating capsule (58px) plus the 8px it floats above the edge and
+     some air, so the last row of covers clears it. */
+  --tabbar-h: 78px;
   /* The room .app keeps under the content for the mobile tab bar. A token because
      the tab lattice has to reach the same floor, or it stops short and leaves a
      bare strip that only shows once you scroll to the very bottom. */
@@ -98,6 +104,9 @@
     --topbar-bg: rgba(251, 251, 252, 0.6);
     --topbar-bg-solid: rgba(255, 255, 255, 0.9);
     --topbar-shadow: rgba(20, 22, 26, 0.1);
+    --vidro-borda: rgba(255, 255, 255, 0.7);
+    --vidro-pill: rgba(20, 22, 26, 0.07);
+    --vidro-sombra: 0 10px 30px rgba(20, 22, 26, 0.14);
     --shadow-sheet: 0 -12px 48px rgba(20, 22, 26, 0.16);
     --shadow-panel: -12px 0 48px rgba(20, 22, 26, 0.16);
     --shadow-cover: 0 1px 6px rgba(20, 22, 26, 0.14);
@@ -482,33 +491,86 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 
 /* ---------- tabs ---------- */
 
+/* v129: the phone's tab bar is a floating glass capsule, as in iOS, with the search
+   as a glass circle beside it. It floats 8px above the home-indicator inset and
+   16px from the sides; content scrolls behind it and shows through the glass. While
+   searching the circle grows into the field and the capsule folds into a circle
+   holding the tab's icon (the two widths trade places, so it animates). With the
+   on-screen keyboard up the whole bar rides above it (--teclado, measured with
+   visualViewport by the search), minus the inset the keyboard now covers. */
 .tabbar {
+  --vidro-h: 58px;
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  left: 16px;
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
   z-index: 20;
   display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  transform: translateY(calc(-1 * max(0px, var(--teclado, 0px) - env(safe-area-inset-bottom, 0px))));
+  transition: transform 220ms var(--ease-out);
+}
+.tabbar-capsula,
+.search-barra .search-field {
+  height: var(--vidro-h);
+  border-radius: 999px;
   background: var(--topbar-bg);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-top: 1px solid var(--border);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border: 1px solid var(--vidro-borda);
+  box-shadow: var(--vidro-sombra);
 }
-.tabbar button {
+.tabbar-capsula {
+  position: relative;
+  display: flex;
+  padding: 4px;
+  flex: 0 0 calc(100% - var(--vidro-h) - 10px);
+  min-width: 0;
+  overflow: hidden;
+  transition: flex-basis 320ms var(--ease-drawer);
+}
+.tabbar-capsula > button {
+  position: relative;
+  z-index: 1;
   flex: 1;
-  height: var(--tabbar-h);
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
+  border-radius: 999px;
   color: var(--text-muted);
   font-size: 0.6875rem;
   font-weight: 500;
-  transition: color 120ms var(--ease-out);
+  transition: color 160ms var(--ease-out), opacity 160ms var(--ease-out);
 }
-.tabbar button[data-active="true"] { color: var(--accent-text); }
+.tabbar-capsula > button[data-active="true"] { color: var(--accent-text); }
+/* The pill behind the active tab: a third of the capsule, slid by the tab's index. */
+.tabbar-pill {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / 3);
+  border-radius: 999px;
+  background: var(--vidro-pill);
+  transform: translateX(calc(var(--aba-i, 0) * 100%));
+  transition: transform 320ms var(--ease-drawer), opacity 160ms var(--ease-out);
+}
+.tabbar-capsula > .tabbar-voltar {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--accent-text);
+}
+.tabbar[data-buscando="true"] .tabbar-capsula { flex-basis: var(--vidro-h); }
+.tabbar[data-buscando="true"] .tabbar-capsula > button:not(.tabbar-voltar),
+.tabbar[data-buscando="true"] .tabbar-pill { opacity: 0; pointer-events: none; }
 @media (min-width: 768px) { .tabbar { display: none; } }
 
 .segmented {
@@ -797,8 +859,6 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .search input::placeholder { color: var(--text-muted); }
 .search input:focus { border-color: var(--ed-accent); }
 
-/* Only the full-screen phone mode needs a way out that is not the keyboard. */
-.search-cancel { display: none; font-size: 0.8125rem; font-weight: 500; color: var(--text-muted); }
 
 .sug {
   position: absolute;
@@ -859,33 +919,59 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 .sug-empty { margin: 0; padding: 12px 10px; font-size: 0.8125rem; color: var(--text-muted); }
 
-/* A dropdown under the field would sit in the few rows the on-screen keyboard
-   leaves, so on a phone the search takes the screen instead. */
-@media (max-width: 767px) {
-  .search[data-full="true"] {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 10px 12px 0;
-    background: var(--bg);
-  }
-  .search[data-full="true"] .search-cancel { display: block; }
-  .search[data-full="true"] .sug {
-    position: static;
-    flex: 1;
-    max-height: none;
-    padding: 0 0 16px;
-    border: none;
-    border-radius: 0;
-    background: none;
-    box-shadow: none;
-  }
-  .search[data-full="true"] .sug-row { padding: 8px; }
-  .search[data-full="true"] .sug-cover { width: 38px; }
+/* v129: on a phone the search is the glass circle in the tab bar (see .tabbar) and
+   grows into a field there; the suggestions open above it, over the tab, which the
+   typed text filters as before. This replaced the full-screen phone search: the
+   bar rides above the keyboard, so a list above the field has the room a dropdown
+   under the header never had. 16px text, or iOS zooms the page on focus. */
+.search.search-barra {
+  position: static;
+  flex: 0 0 var(--vidro-h);
+  min-width: 0;
+  max-width: none;
+  margin-left: 0;
+  transition: flex-basis 320ms var(--ease-drawer);
 }
+.tabbar[data-buscando="true"] .search-barra { flex-basis: calc(100% - var(--vidro-h) - 10px); }
+.search-barra .search-field { overflow: hidden; }
+.search-barra .search-field > svg { left: 18px; color: var(--text); }
+.search-barra input {
+  height: 100%;
+  padding: 0 52px 0 48px;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  font-size: 16px;
+  opacity: 0;
+  pointer-events: none;
+}
+.search-barra[data-full="true"] input { opacity: 1; pointer-events: auto; transition: opacity 160ms var(--ease-out) 120ms; }
+.search-barra input:focus { border-color: transparent; outline: none; }
+.search-abrir { position: absolute; inset: 0; z-index: 1; border-radius: 999px; }
+.search-fechar {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--text-muted);
+  background: var(--vidro-pill);
+}
+.search-barra .sug {
+  top: auto;
+  bottom: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  max-height: min(440px, calc(var(--vv-altura, 100vh) - var(--vidro-h) - 150px));
+  border-radius: 22px;
+  padding: 8px;
+}
+.search-barra .sug-row { padding: 8px; }
+.search-barra .sug-cover { width: 36px; }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field > label { font-size: 0.8125rem; font-weight: 600; }
@@ -1703,7 +1789,6 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 @media (max-width: 479px) {
   .topbar-inner .btn-primary:has(.novo-rotulo) { padding-inline: 12px; }
   .novo-rotulo { display: none; }
-  .search input { padding: 0 4px 0 30px; }
 }
 @media (min-width: 560px) { .label-wide { display: inline; } }
 
@@ -2281,7 +2366,7 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--tabbar-h) + 4px + env(safe-area-inset-bottom, 0px));
   z-index: 60;
   padding: 10px 16px;
   border-radius: var(--r);
@@ -2307,8 +2392,7 @@ html[data-capa="true"] body { scrollbar-color: auto; }
    it moved or held back: the search field shows its label only while idle (focused
    it would sit over the suggestions as you type), and the toast sits at the foot
    of the screen, so its label opens above the button instead of below. */
-.search-field[data-dica]:focus-within::after,
-.search[data-full="true"] .search-field[data-dica]::after { opacity: 0; transition-delay: 0ms; }
+.search-field[data-dica]:focus-within::after { opacity: 0; transition-delay: 0ms; }
 .toast [data-dica]::after { top: auto; bottom: calc(100% + 8px); transform: translate(-50%, 3px); }
 
 /* The list opened with "?". Keys drawn as small key caps, the micro-tile radius. */
@@ -2568,7 +2652,7 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .topbar, .tabbar { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); }
+  .topbar, .tabbar-capsula, .search-barra .search-field { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); }
 }
 
 /* v114: "Lidas até aqui" in a collection's reading order, and the read mark beside the character. */

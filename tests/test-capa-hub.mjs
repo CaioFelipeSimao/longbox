@@ -190,7 +190,7 @@ console.log("=== arremesso ===");
 console.log("=== v128: vidro da barra e legenda ===");
 {
   const m = await montar({ sessao: { "longbox:aba": "volumes" } });
-  const barra = m.root.querySelector(".tabbar");
+  const barra = m.root.querySelector(".tabbar-capsula"); // v129: the glass is on the capsule
   const vistos = [];
   const obs = new m.window.MutationObserver(() => vistos.push(barra.style.transform));
   obs.observe(barra, { attributes: true, attributeFilter: ["style"] });

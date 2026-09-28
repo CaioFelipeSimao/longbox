@@ -2381,3 +2381,18 @@ it); after every switch the bar gets a throwaway `translateZ(0)` for one frame o
 painted, and again at 300ms, so WebKit samples its backdrop afresh. Unverifiable here: the user checks
 on the iPhone; next step if it persists is a denser glass (50% to ~75% background).
 `test-capa-hub.mjs` 39 checks.
+
+**v129 The phone's tab bar floats, and the search lives in it.** The v128 redraw nudge made the
+Claude-app glass glitch clear quickly but not vanish, and the user proposed a redesign after Apple's
+tab-bar guidance (iOS 26: a tab bar floats over content on Liquid Glass; search can be its own tab
+at the trailing end) and a Sketch "Prominent Tab" component. Under 768px the tabs are a floating
+glass capsule 16px from the sides and 8px above the home-indicator inset, with a pill behind the
+active tab that slides by transform, and the search is a glass circle beside it. The user chose the
+morphing search over a full-screen one: tapping the circle grows it into the field (focused inside
+the tap so iOS raises the keyboard) while the capsule folds into a circle with the tab's icon; the
+suggestions open above the bar, the tab filters behind; a tap outside only hides the suggestions;
+the X, the folded circle or a pick close and clear it; the bar rides above the keyboard via
+visualViewport. The search left the phone header (`useCelular`), and the old full-screen phone search
+and its narrow-header padding rule were deleted. The glass nudge now targets the capsule and circle.
+Tablet and PC unchanged. Honest note given to the user: smaller glass, not a guaranteed cure for the
+WebKit glitch. `tests/test-barra-busca.mjs` (19 checks); preview from real captures approved first.
