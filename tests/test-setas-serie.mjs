@@ -129,5 +129,28 @@ console.log("=== #1000000 ocupa dois quadradinhos ===");
 }
 
 
+console.log("=== v144: todo número longo ocupa dois ===");
+{
+  const lista = [...eds("s5", 20, 30),
+    { id: "s5-a", serieId: "s5", numero: "23.1", mes: "", ano: "", posicao: null },
+    { id: "s5-b", serieId: "s5", numero: "1/2", mes: "", ano: "", posicao: 25.5 },
+    { id: "s5-c", serieId: "s5", numero: "-1", mes: "", ano: "", posicao: 26.5 },
+    { id: "s5-d", serieId: "s5", numero: "0", mes: "", ano: "", posicao: 27.5 }];
+  const m = await montar([serie("s5", "Aquaman (Volume 7)")], lista, []);
+  check("23.1 é largo", m.tile("23.1")?.dataset.forma === "largo", m.tile("23.1")?.dataset.forma);
+  check("23.1 não é curto (não cabe nem no toque)", m.tile("23.1")?.dataset.curto === undefined);
+  check("1/2 é largo e curto", m.tile("1/2")?.dataset.forma === "largo" && m.tile("1/2")?.dataset.curto === "");
+  check("-1 cabe num comum", m.tile("-1")?.dataset.forma === "comum", m.tile("-1")?.dataset.forma);
+  check("0 cabe num comum", m.tile("0")?.dataset.forma === "comum", m.tile("0")?.dataset.forma);
+  check("sem erros", m.erros.length === 0, m.erros[0]);
+}
+{
+  const lista = [...eds("s6", 600, 610), { id: "s6-a", serieId: "s6", numero: "605.1", mes: "", ano: "", posicao: null }];
+  const m = await montar([serie("s6", "Fantastic Four (Volume 3)")], lista, []);
+  check("605.1 num bloco de 3 dígitos é largo", m.tile("605.1")?.dataset.forma === "largo", m.tile("605.1")?.dataset.forma);
+  check("e as de 3 dígitos são comuns", m.tile("605")?.dataset.forma === "comum");
+  check("sem erros", m.erros.length === 0, m.erros[0]);
+}
+
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);

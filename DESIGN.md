@@ -247,7 +247,7 @@ composite child as a group. Section tabs are a `tablist` with `aria-selected`; i
 "Nº 46, possuída" / "falta"; `.seg3` options carry `aria-pressed`, and the picked one is a 2px
 ring in its own text colour at weight 600.
 
-On a coarse pointer (v101) icon buttons are 44px and issue tiles at least 44×44; plain issue numbers share one tile width per block (the longest, v143) and a #1000000 among them spans two; the sheet
+On a coarse pointer (v101) icon buttons are 44px and issue tiles at least 44×44; plain issue numbers share one tile width per block (the longest, v143) and any longer number among them (#1000000, 1/2, 23.1) spans two, except three-character ones on touch (v144); the sheet
 action row drops its gap there. Remover always leads the sheet action row, 14px apart from
 Editar/Duplicar, with Fechar at the far end.
 

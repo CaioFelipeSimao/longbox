@@ -2208,6 +2208,14 @@ button.retrato-linha { cursor: pointer; }
   .tile[data-forma] { width: auto; }
   .tile[data-forma="largo"] { grid-column: span 2; }
 }
+/* v144: on touch the tiles are at least 44px, which already holds three characters
+   (1/2, 1.5), so those stay one tile there. */
+@media (pointer: coarse) {
+  .tile[data-forma="largo"][data-curto] { width: var(--tw); grid-column: auto; }
+}
+@media (pointer: coarse) and (max-width: 767px) {
+  .tile[data-forma="largo"][data-curto] { width: auto; }
+}
 .tile[data-owned="true"] { background: var(--read); border-color: var(--read); color: var(--read-ink); }
 /* v121: a missing number is what the collector hunts, so it is no longer the faintest
    thing on the sheet: a dashed empty slot with its number in the body colour. */

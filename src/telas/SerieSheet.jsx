@@ -150,18 +150,25 @@ export function SerieSheet({
   }, [!!serie]);
 
   // v143: a plain number's tile takes the width of the block's longest plain
-  // number (--nd digits), and a #1000000 among other tiles takes two of those
-  // plus the gap, so the rows stay in columns without shrinking its type. Alone
-  // in its block it is a normal tile. Other odd numbers (1/2, 23.1) keep their
-  // own width for now.
+  // number (--nd digits), and any number longer than that (#1000000, 1/2, 23.1,
+  // 605.1) takes two of those plus the gap, so the rows stay in columns without
+  // shrinking its type (v144 widened the rule from #1000000 to all of them).
+  // Alone in its block a long number is a plain tile of its own width. data-curto
+  // marks the ones that fit a 44px touch tile (three characters), which stay
+  // single there.
   const COMUM = /^-?\d+$/;
   const digitos = (lista) => Math.max(2, ...lista.filter((e) => COMUM.test(e.numero) && e.numero !== "1000000").map((e) => e.numero.length));
-  const forma = (e, lista) => (e.numero === "1000000" ? (lista.length > 1 ? "largo" : null) : COMUM.test(e.numero) ? "comum" : null);
-  const renderTile = (e, lista) => (
+  const forma = (e, lista, nd) => {
+    if (e.numero.length <= nd) return "comum";
+    return lista.length > 1 ? "largo" : null;
+  };
+  const ndPlano = digitos(edsFiltradas);
+  const renderTile = (e, lista, nd, f = forma(e, lista, nd)) => (
     <button
       key={e.id}
       data-ed={e.id}
-      data-forma={forma(e, lista) || undefined}
+      data-forma={f || undefined}
+      data-curto={f === "largo" && e.numero.length <= 3 ? "" : undefined}
       className="tile"
       data-owned={ownedIds.has(e.id) ? "true" : "false"}
       data-sel={e.id === selectedId ? "true" : "false"}
@@ -274,15 +281,15 @@ export function SerieSheet({
                         <summary>
                           {g.label} <span className="muted"><span aria-hidden="true">{owned}/{g.itens.length}</span><span className="sr-only">{owned} de {g.itens.length} possuídas</span></span>
                         </summary>
-                        <div className="tiles" style={{ "--nd": digitos(g.itens) }}>{g.itens.map((e) => renderTile(e, g.itens))}</div>
+                        {((nd) => <div className="tiles" style={{ "--nd": nd }}>{g.itens.map((e) => renderTile(e, g.itens, nd))}</div>)(digitos(g.itens))}
                       </details>
                     );
                   })
               ) : (
-                <div className="tiles" style={{ "--nd": digitos(edsFiltradas) }}>
+                <div className="tiles" style={{ "--nd": ndPlano }}>
                   {edsFiltradas.length === 0
                     ? <p className="t-small muted" style={{ margin: 0 }}>Nada encontrado para "{busca}".</p>
-                    : edsFiltradas.map((e) => renderTile(e, edsFiltradas))}
+                    : edsFiltradas.map((e) => renderTile(e, edsFiltradas, ndPlano))}
                 </div>
               )}
 

@@ -2557,3 +2557,12 @@ takes two widths plus the gap (a phone grid cell span of 2); alone in its block 
 Same type size everywhere. A short label ("1M", "½") was tried and dropped: at #726 the neighbours
 are three digits and the user wanted the full number. Other odd numbers (1/2, 23.1) keep their own
 width for now. tests/test-setas-serie.mjs, 26 checks, shown failing first.
+
+**v144 Every long number takes two tiles.** v143's rule for the #1000000 now covers any number
+longer than its block's plain numbers (`--nd`): 1/2, 23.1, 1.5, 605.1 span two tile widths plus the
+gap, so a block stays a rectangle whatever mix of odd numbers it holds. The user found Aquaman Vol 7
+(#23.1-23.2) broken while séries with four decimals looked whole only by luck of the sum. On touch
+(44px tiles) a three-character number (1/2, 1.5) fits one tile and stays single (`data-curto`). -1 and
+0 fit a plain tile. Data, same session: Batman Vol 2's "23.1: The Joker" ... "23.4: Bane" became
+"23.1"-"23.4" like the other five séries (the subtitle came from an old cadastro before the skill
+stripped it), and X-Men Vol 2 / Fantastic Four Vol 3 "½" became "1/2". test-setas-serie 35 checks.
