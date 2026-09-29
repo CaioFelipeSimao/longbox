@@ -2536,3 +2536,10 @@ pinned, then the publisher band's accent (`--ed-accent-text`, cyan under Todas).
 document `library/fixados`, like library/meta: both devices, outside undo and backups, read once at
 load (a pin made on the other device shows on the next open). tests/test-fixados.mjs, 13 checks,
 shown failing first.
+
+**v142 Pins live across devices.** `ouvirFixados` (lib/armazenamento.js) subscribes `onSnapshot` to
+`library/fixados`, next to `ouvirMudancas`, so a pin made on the other device reorders the groups in
+seconds without a reload. Own writes are remembered (`fixadosProprios`) so their echo never rolls the
+list back when two pins are made quickly; a foreign change clears that memory. No toast (the group
+just moves). Last write wins, no merge. tests/test-fixados.mjs grew to 20 checks (fake db with
+onSnapshot and an external write), shown failing first.

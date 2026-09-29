@@ -274,7 +274,7 @@ per artifact, bodies must be objects (not arrays) at the top level.
 ```
 library/volumes    {items: [...]}    all volumes
 library/colecoes   {items: [...]}    all collections
-library/fixados    {personagens: [...]}  up to 3 pinned characters, first on HQs and Séries (v141)
+library/fixados    {personagens: [...]}  up to 3 pinned characters, first on HQs and Séries (v141; live via onSnapshot since v142)
 library/series     {items: [...]}    series metadata only, small
 library/cores      {mapa: {...}}     character name -> colour spec
 library/editoras   {itens, selecionada}  publishers, and the last one browsed

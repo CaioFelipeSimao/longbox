@@ -12,7 +12,7 @@ import {
   ensureRange, normalizeLib, parseImportText, personagensDaSerie, SEM_PERSONAGEM, serieDoGrupo, semearEditoras,
 } from "../lib/biblioteca";
 import {
-  aplicarMescladas, gravarFixados, gravarUltimoBackup, lerFixados, lerUltimoBackup, loadLibrary, ouvirMudancas, scheduleSave, shardEdicoes, store,
+  aplicarMescladas, gravarFixados, ouvirFixados, gravarUltimoBackup, lerFixados, lerUltimoBackup, loadLibrary, ouvirMudancas, scheduleSave, shardEdicoes, store,
 } from "../lib/armazenamento";
 import {
   assetErrorMessage, esperarMiniaturas, prepararMiniaturas, registrarMiniRemotas, uploadCover,
@@ -121,7 +121,11 @@ export function App() {
           }
           // v96: listen only after the library is on screen, so the first
           // snapshots compare against what was just loaded and cost nothing.
-          if (!cancelled && typeof db.doc("library/volumes").onSnapshot === "function") pararDeOuvir = ouvirMudancas(db);
+          if (!cancelled && typeof db.doc("library/volumes").onSnapshot === "function") {
+            const pararLib = ouvirMudancas(db);
+            const pararPins = ouvirFixados(db, (lista) => { if (!cancelled) setFixados(lista); });
+            pararDeOuvir = () => { pararLib(); pararPins(); };
+          }
         } catch (e) {
           if (!cancelled) showToast("Não consegui carregar a biblioteca. Recarregue a página.");
         }

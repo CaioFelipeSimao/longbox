@@ -307,7 +307,26 @@ export async function gravarUltimoBackup(quando) {
 
 // v141: up to three pinned characters, first on the HQs and Séries tabs. Its own
 // document, like library/meta: shared by both devices, outside backups and undo.
-// ponytail: read once at load, not live; a pin made on the other device shows on the next open.
+// v142: live. Own writes are remembered so their echo never rolls the list back
+// (two quick pins would otherwise flicker to the first); a change from the other
+// device arrives through onSnapshot. ponytail: last write wins, no merge; a pin on
+// both devices at the same instant keeps whichever saved last.
+const fixadosProprios = new Set();
+export function ouvirFixados(db, aoMudar) {
+  let ultimo = null;
+  return db.doc("library/fixados").onSnapshot((snap) => {
+    if (snap.metadata?.hasPendingWrites) return;
+    const d = snap.exists ? snap.data() : null;
+    if (d === ultimo) return;
+    ultimo = d;
+    const lista = (d && d.personagens) || [];
+    const json = JSON.stringify(lista);
+    if (fixadosProprios.has(json)) return;
+    fixadosProprios.clear();
+    aoMudar(lista);
+  }, () => {});
+}
+
 export async function lerFixados(db) {
   try {
     const snap = await db.doc("library/fixados").get();
@@ -320,6 +339,7 @@ export async function lerFixados(db) {
 export async function gravarFixados(personagens) {
   if (!store.db) return;
   try {
+    fixadosProprios.add(JSON.stringify(personagens));
     await store.db.doc("library/fixados").set({ personagens });
   } catch (e) {
     if (store.onError) store.onError(dbErrorMessage(e));

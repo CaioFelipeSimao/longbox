@@ -16,7 +16,7 @@ const check = (nome, ok, info) => {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const PERS = ["Batman", "Flash", "Superman", "Wonder Woman", "Aquaman"];
-async function montar(abaInicial, docsExtra = []) {
+async function montar(abaInicial, docsExtra = [], vivo = false) {
   const dom = new JSDOM(`<!doctype html><html><body><div id="root"></div></body></html>`, {
     runScripts: "outside-only", pretendToBeVisual: true, url: "https://example.test/",
   });
@@ -38,16 +38,19 @@ async function montar(abaInicial, docsExtra = []) {
     ["library/cores", { mapa: {} }],
     ...docsExtra,
   ]);
+  const ouvintes = new Map();
+  const notificar = (path) => (ouvintes.get(path) || []).forEach((cb) => cb({ exists: docs.has(path), data: () => docs.get(path), metadata: { hasPendingWrites: false } }));
   const makeDoc = (path) => ({
     path,
+    ...(vivo ? { onSnapshot: (cb) => { (ouvintes.get(path) || ouvintes.set(path, []).get(path)).push(cb); cb({ exists: docs.has(path), data: () => docs.get(path), metadata: { hasPendingWrites: false } }); return () => {}; } } : {}),
     get: async () => ({ id: path.split("/").pop(), exists: docs.has(path), data: () => docs.get(path), metadata: { fromCache: false, hasPendingWrites: false } }),
-    set: async (body) => { docs.set(path, JSON.parse(JSON.stringify(body))); },
+    set: async (body) => { docs.set(path, JSON.parse(JSON.stringify(body))); notificar(path); },
     delete: async () => { docs.delete(path); },
   });
   window.claude = {
     use: async (name) => name === "db" ? {
       doc: makeDoc,
-      collection: (cpath) => ({ path: cpath, doc: (id) => makeDoc(cpath + "/" + id), get: async () => ({ docs: [], size: 0, empty: true, docChanges: () => [], metadata: {} }) }),
+      collection: (cpath) => ({ path: cpath, ...(vivo ? { onSnapshot: () => () => {} } : {}), doc: (id) => makeDoc(cpath + "/" + id), get: async () => ({ docs: [], size: 0, empty: true, docChanges: () => [], metadata: {} }) }),
     } : null,
   };
   window.eval(bundle);
@@ -56,7 +59,8 @@ async function montar(abaInicial, docsExtra = []) {
   const aba = () => root.querySelector('.aba[data-ativa="true"]') || root;
   const ordem = () => [...aba().querySelectorAll(".group-head h2")].map((h) => h.textContent);
   const fixar = async (p) => { aba().querySelector('.group-head [aria-label="Fixar ' + p + ' no topo"]')?.click(); await sleep(120); };
-  return { window, root, erros, docs, ordem, fixar, aba };
+  const externo = (lista) => { docs.set("library/fixados", { personagens: lista }); notificar("library/fixados"); };
+  return { window, root, erros, docs, ordem, fixar, aba, externo };
 }
 
 console.log("=== HQs ===");
@@ -87,6 +91,25 @@ check("fixar nas séries também vale", s.ordem().join() === "Wonder Woman,Batma
 const h = await montar("volumes", [["library/fixados", { personagens: ["Wonder Woman", "Batman"] }]]);
 check("a lista guardada vale ao abrir o HQs", h.ordem().join() === "Wonder Woman,Batman,Aquaman,Flash,Superman", h.ordem().join());
 check("sem erros (Séries)", s.erros.length === 0 && h.erros.length === 0, s.erros[0] || h.erros[0]);
+
+console.log("=== Ao vivo (v142) ===");
+const v = await montar("volumes", [["library/fixados", { personagens: ["Batman"] }]], true);
+check("começa com o que estava guardado", v.ordem().join() === "Batman,Aquaman,Flash,Superman,Wonder Woman", v.ordem().join());
+v.externo(["Flash", "Superman"]);
+await sleep(200);
+check("pin feito em outro aparelho chega sem recarregar", v.ordem().join() === "Flash,Superman,Aquaman,Batman,Wonder Woman", v.ordem().join());
+v.externo([]);
+await sleep(200);
+check("desafixar em outro aparelho também chega", v.ordem().join() === "Aquaman,Batman,Flash,Superman,Wonder Woman", v.ordem().join());
+await v.fixar("Wonder Woman");
+await v.fixar("Aquaman");
+await sleep(700);
+check("as próprias gravações não desfazem nada (eco)", v.ordem().join() === "Wonder Woman,Aquaman,Batman,Flash,Superman", v.ordem().join());
+check("o eco não regravou outra coisa", (v.docs.get("library/fixados").personagens || []).join() === "Wonder Woman,Aquaman", JSON.stringify(v.docs.get("library/fixados")));
+v.externo(["Superman"]);
+await sleep(200);
+check("pin de outro aparelho não dispara o toast da biblioteca", !/Biblioteca atualizada/.test(v.root.querySelector(".toast")?.textContent || ""), v.root.querySelector(".toast")?.textContent);
+check("sem erros (ao vivo)", v.erros.length === 0, v.erros[0]);
 
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);
