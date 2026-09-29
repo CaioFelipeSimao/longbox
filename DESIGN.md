@@ -247,12 +247,12 @@ composite child as a group. Section tabs are a `tablist` with `aria-selected`; i
 "Nº 46, possuída" / "falta"; `.seg3` options carry `aria-pressed`, and the picked one is a 2px
 ring in its own text colour at weight 600.
 
-On a coarse pointer (v101) icon buttons are 44px and issue tiles at least 44×44; the sheet
+On a coarse pointer (v101) icon buttons are 44px and issue tiles at least 44×44; plain issue numbers share one tile width per block (the longest, v143) and a #1000000 among them spans two; the sheet
 action row drops its gap there. Remover always leads the sheet action row, 14px apart from
 Editar/Duplicar, with Fechar at the far end.
 
 v102: nothing outside the hub wall renders below 11px; the storage meter shows only past 80%;
-a missing number can be linked to a volume from its panel; a keyboard button beside the search
+a missing number can be linked to a volume from its panel; with a number picked, ← → step to the neighbouring edição in map order (v143); a keyboard button beside the search
 (fine pointer only) opens the shortcuts panel.
 
 v119: J / K / L set Não lida / Lendo / Lida in the open volume sheet (the control follows, no

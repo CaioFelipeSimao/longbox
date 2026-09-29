@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 //   Ctrl+Z   undo the last removal     ?       the list of shortcuts
 //   Q        fold or unfold every group on HQs and Séries (v94)
 //   J K L    Não lida / Lendo / Lida: the open volume sheet, or the focused cover (v119)
-// Esc and ← → live with the sheets that own them (useEscape, VolumeSheet).
+// Esc and ← → live with the sheets that own them (useEscape, VolumeSheet, SerieSheet).
 // Rules: nothing fires while typing in a field or under a modal; letters and digits
 // never with Ctrl, Alt or Cmd, since Ctrl+1 and Ctrl+N are the browser's; Ctrl+Z is
 // taken only while a removal can be undone, otherwise it stays the browser's (and in

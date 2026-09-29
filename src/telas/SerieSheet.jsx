@@ -115,9 +115,53 @@ export function SerieSheet({
     return lista;
   }, [useGroups, edsFiltradas]);
 
-  const renderTile = (e) => (
+  // v143: ← → step the picked edição through the map as it is on screen (search
+  // and faixa respected, posicao first), stopping at both ends. Same guards as the
+  // volume sheet's arrows (v88): not while typing, not with a modifier, not under a
+  // modal. The next tile's hundred-block opens if folded, and focus follows the pick.
+  const mapaRef = useRef(null);
+  const passo = useRef(null);
+  passo.current = { lista: edsFiltradas, selectedId, setSelectedId };
+  useEffect(() => {
+    if (!serie) return undefined;
+    const h = (e) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      const alvo = e.target;
+      if (alvo && alvo.closest && alvo.closest("input, textarea, select, [contenteditable], [role='scrollbar']")) return;
+      if (document.querySelector(".modal")) return;
+      const { lista, selectedId: atual, setSelectedId: escolher } = passo.current;
+      const i = lista.findIndex((x) => x.id === atual);
+      if (i < 0) return;
+      const prox = lista[i + (e.key === "ArrowLeft" ? -1 : 1)];
+      e.preventDefault();
+      if (!prox) return;
+      escolher(prox.id);
+      requestAnimationFrame(() => {
+        const t = mapaRef.current?.querySelector('[data-ed="' + prox.id + '"]');
+        if (!t) return;
+        const bloco = t.closest("details");
+        if (bloco && !bloco.open) bloco.open = true;
+        t.focus();
+      });
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [!!serie]);
+
+  // v143: a plain number's tile takes the width of the block's longest plain
+  // number (--nd digits), and a #1000000 among other tiles takes two of those
+  // plus the gap, so the rows stay in columns without shrinking its type. Alone
+  // in its block it is a normal tile. Other odd numbers (1/2, 23.1) keep their
+  // own width for now.
+  const COMUM = /^-?\d+$/;
+  const digitos = (lista) => Math.max(2, ...lista.filter((e) => COMUM.test(e.numero) && e.numero !== "1000000").map((e) => e.numero.length));
+  const forma = (e, lista) => (e.numero === "1000000" ? (lista.length > 1 ? "largo" : null) : COMUM.test(e.numero) ? "comum" : null);
+  const renderTile = (e, lista) => (
     <button
       key={e.id}
+      data-ed={e.id}
+      data-forma={forma(e, lista) || undefined}
       className="tile"
       data-owned={ownedIds.has(e.id) ? "true" : "false"}
       data-sel={e.id === selectedId ? "true" : "false"}
@@ -199,7 +243,7 @@ export function SerieSheet({
               Nenhuma edição catalogada ainda. Dá pra cadastrar nº 0, anuais e fracionárias como 12.1.
             </p>
           ) : (
-            <div>
+            <div ref={mapaRef}>
               {eds.length > 20 && (
                 <div className="search" style={{ marginBottom: 12 }}>
                   <Search size={14} />
@@ -230,15 +274,15 @@ export function SerieSheet({
                         <summary>
                           {g.label} <span className="muted"><span aria-hidden="true">{owned}/{g.itens.length}</span><span className="sr-only">{owned} de {g.itens.length} possuídas</span></span>
                         </summary>
-                        <div className="tiles">{g.itens.map(renderTile)}</div>
+                        <div className="tiles" style={{ "--nd": digitos(g.itens) }}>{g.itens.map((e) => renderTile(e, g.itens))}</div>
                       </details>
                     );
                   })
               ) : (
-                <div className="tiles">
+                <div className="tiles" style={{ "--nd": digitos(edsFiltradas) }}>
                   {edsFiltradas.length === 0
                     ? <p className="t-small muted" style={{ margin: 0 }}>Nada encontrado para "{busca}".</p>
-                    : edsFiltradas.map(renderTile)}
+                    : edsFiltradas.map((e) => renderTile(e, edsFiltradas))}
                 </div>
               )}
 

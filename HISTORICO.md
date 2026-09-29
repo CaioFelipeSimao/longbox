@@ -2543,3 +2543,17 @@ seconds without a reload. Own writes are remembered (`fixadosProprios`) so their
 list back when two pins are made quickly; a foreign change clears that memory. No toast (the group
 just moves). Last write wins, no merge. tests/test-fixados.mjs grew to 20 checks (fake db with
 onSnapshot and an external write), shown failing first.
+
+**v143 ← → walk the série map; a #1000000 takes two tiles.** With an edição picked in the série
+sheet, ← → pick the previous and next one in the map's own order (posicao first, so a #1000000 or a
+Zero Hour #0 sits where its cover date puts it), over what is on screen (search, faixa), stopping at
+both ends; the hundred-block the next edição sits in opens if folded, and focus follows the pick.
+Same guards as the volume sheet's arrows (v88): not while typing, not with a modifier, not under a
+modal. Listed in the shortcuts panel. Keyboard only, by the user's choice (no swipe on the phone).
+The same session, the user saw a #1000000 break the map's columns (its seven digits stretched the
+tile). Plain numbers now take one width per block, the block's longest (`--nd` digits, set by the
+sheet; `--tw` resolves on the tile so `1ch` is its own mono digit), and a #1000000 among other tiles
+takes two widths plus the gap (a phone grid cell span of 2); alone in its block it is a normal tile.
+Same type size everywhere. A short label ("1M", "½") was tried and dropped: at #726 the neighbours
+are three digits and the user wanted the full number. Other odd numbers (1/2, 23.1) keep their own
+width for now. tests/test-setas-serie.mjs, 26 checks, shown failing first.

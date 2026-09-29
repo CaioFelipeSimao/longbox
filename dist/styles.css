@@ -2196,6 +2196,18 @@ button.retrato-linha { cursor: pointer; }
 }
 .tile:active { transform: scale(0.94); }
 @media (pointer: coarse) { .tile { min-width: 44px; min-height: 44px; } }
+/* v143: plain numbers share one width, the block's longest (--nd digits, set by the
+   série sheet), and a #1000000 spans two of them plus the gap. --tw resolves on the
+   tile, so 1ch is the tile's own mono digit. On a phone the grid already evens the
+   columns, so the wide tile just spans two cells. */
+.tiles { --tw: max(34px, calc(var(--nd, 2) * 1ch + 16px)); }
+@media (pointer: coarse) { .tiles { --tw: max(44px, calc(var(--nd, 2) * 1ch + 16px)); } }
+.tile[data-forma="comum"] { width: var(--tw); }
+.tile[data-forma="largo"] { width: calc(2 * var(--tw) + 6px); }
+@media (max-width: 767px) {
+  .tile[data-forma] { width: auto; }
+  .tile[data-forma="largo"] { grid-column: span 2; }
+}
 .tile[data-owned="true"] { background: var(--read); border-color: var(--read); color: var(--read-ink); }
 /* v121: a missing number is what the collector hunts, so it is no longer the faintest
    thing on the sheet: a dashed empty slot with its number in the body colour. */
