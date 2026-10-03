@@ -1784,7 +1784,7 @@ export function App() {
 
         {tab === "volumes" && showFiltros && (
           <div className="filtros-hqs" style={{ marginBottom: 20 }}>
-          <div className="filtros-linha">
+          <div className="filtros-linha" data-campos="3">
             <OpcaoFiltro
               id="filtro-status"
               rotulo="Filtrar por status"
@@ -1925,6 +1925,7 @@ export function App() {
             ownedEdicaoIds={ownedEdicaoIds}
             buscando={buscando}
             filtrando={!!filtroSerie}
+            filtroAutor={filtroAutor}
             openSerieId={openSerieId}
             gruposAbertos={gruposAbertos}
             grupoAberto={grupoAberto}
@@ -2117,6 +2118,8 @@ export function App() {
       {/* ===================== series detail ===================== */}
       <SerieSheet
         serie={openSerie}
+        filtroAutor={tab === "series" ? filtroAutor : ""}
+        query={tab === "series" ? query : ""}
         contexto={openSerieContexto}
         verTudo={verTudoSerie}
         setVerTudo={setVerTudoSerie}

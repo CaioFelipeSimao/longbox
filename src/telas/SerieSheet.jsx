@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Search, Plus, X, Pencil, Trash2, Upload, Check, Copy } from "lucide-react";
 
 import { sortKey } from "../lib/util";
-import { autoresDe, ehReimpressao, serieTemReimpressao } from "../lib/edicoes";
+import { autoresDe, autoresQueCasam, edicoesDoAutor, ehReimpressao, serieTemReimpressao } from "../lib/edicoes";
 import { anoRange, personagensDaSerie, textoFaltantes } from "../lib/biblioteca";
 import { Sheet } from "../ui/base";
 import { CampoBusca, daEditora } from "../ui/Filtros";
@@ -10,13 +10,22 @@ import { CoverArt } from "../ui/VolumeCard";
 import { coverColors, useCores } from "../lib/cores";
 
 export function SerieSheet({
-  serie, contexto, verTudo, setVerTudo, edicoes, ownedIds, volumesQueColetam,
+  serie, contexto, verTudo, setVerTudo, edicoes, ownedIds, volumesQueColetam, filtroAutor = "", query = "",
   busca, setBusca, selectedId, setSelectedId, onClose, onEdit, onDelete,
   onImport, onNovaEdicao, onEditEdicao, onDeleteEdicao, avisar, volumes, onVincular, coberturaDaEdicao,
 }) {
   const kept = useRef(null);
   if (serie) kept.current = serie;
   const s = serie || kept.current;
+
+  // v147: this is a reading aid for the opened sheet, so dismissing it never
+  // clears the tab's filter. A new opening or source starts a fresh highlight.
+  const [semDestaque, setSemDestaque] = useState(false);
+  useEffect(() => { setSemDestaque(false); }, [serie?.id, filtroAutor, query]);
+  const nomeDestaque = filtroAutor || query.trim();
+  const parcial = !filtroAutor;
+  const doAutor = useMemo(() => new Set(edicoesDoAutor(edicoes, ownedIds, nomeDestaque, parcial).map((e) => e.id)), [edicoes, ownedIds, nomeDestaque, parcial]);
+  const destacando = !semDestaque && !!nomeDestaque && (!!filtroAutor || doAutor.size > 0);
 
   // v139: only volumes of the série's publisher, its characters first, as a search
   // in the Longbox look (the native select opened the OS's white list).
@@ -180,7 +189,9 @@ export function SerieSheet({
       data-owned={ownedIds.has(e.id) ? "true" : "false"}
       data-sel={e.id === selectedId ? "true" : "false"}
       data-reimp={ehReimpressao(e) ? "true" : undefined}
-      aria-label={"Nº " + e.numero + (ownedIds.has(e.id) ? ", possuída" : ", falta") + (ehReimpressao(e) ? ", reimpressão" : "")}
+      data-autor={destacando && doAutor.has(e.id) ? "true" : undefined}
+      data-esmaecido={destacando && !doAutor.has(e.id) ? "true" : undefined}
+      aria-label={"Nº " + e.numero + (ownedIds.has(e.id) ? ", possuída" : ", falta") + (ehReimpressao(e) ? ", reimpressão" : "") + (destacando && doAutor.has(e.id) ? ", de " + (filtroAutor || autoresQueCasam(e, nomeDestaque, true).join(", ")) : "")}
       aria-pressed={e.id === selectedId}
       onClick={() => setSelectedId(e.id === selectedId ? null : e.id)}
     >
@@ -259,6 +270,12 @@ export function SerieSheet({
             </p>
           ) : (
             <div ref={mapaRef}>
+              {destacando && (
+                <div className="destaque-autor t-small muted">
+                  <span>{filtroAutor ? "Destacando as edições de " + filtroAutor : 'Destacando as edições de autores com "' + nomeDestaque + '"'}</span>
+                  <button className="btn btn-quiet" onClick={() => setSemDestaque(true)}>Tirar destaque</button>
+                </div>
+              )}
               {eds.length > 20 && (
                 <div className="search" style={{ marginBottom: 12 }}>
                   <Search size={14} />

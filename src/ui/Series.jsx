@@ -3,13 +3,15 @@ import React, { useMemo } from "react";
 import { QUASE_MORNO, QUASE_PRONTO } from "../lib/constantes";
 import { sortKey } from "../lib/util";
 import { anoRange } from "../lib/biblioteca";
+import { edicoesDoAutor } from "../lib/edicoes";
 
 // One row of the séries tab (v81). Memoised, so coming back to the tab redraws
 // only the rows whose série, issues or ownership changed, not all of them with
 // their run bars (about 4,000 segments across the real library).
 export const SEM_EDICOES = [];
-export const SerieLinha = React.memo(function SerieLinha({ serie: s, faixa, eds, ownedIds, aberta, onAbrir }) {
+export const SerieLinha = React.memo(function SerieLinha({ serie: s, faixa, eds, ownedIds, filtroAutor, aberta, onAbrir }) {
   const owned = useMemo(() => eds.filter((e) => ownedIds.has(e.id)).length, [eds, ownedIds]);
+  const doAutor = useMemo(() => filtroAutor ? edicoesDoAutor(eds, ownedIds, filtroAutor).length : 0, [eds, ownedIds, filtroAutor]);
   const temFaixa = faixa.de !== null || faixa.ate !== null;
   return (
     <button
@@ -30,6 +32,9 @@ export const SerieLinha = React.memo(function SerieLinha({ serie: s, faixa, eds,
         {s.editora ? " · " + s.editora : ""}
         {temFaixa ? " (edições " + (faixa.de ?? "?") + "-" + (faixa.ate ?? "?") + ")" : ""}
       </div>
+      {filtroAutor && (
+        <div className="serie-meta truncate">{doAutor} {doAutor === 1 ? "edição" : "edições"} de {filtroAutor}</div>
+      )}
       <RunBar edicoes={eds} ownedIds={ownedIds} />
     </button>
   );

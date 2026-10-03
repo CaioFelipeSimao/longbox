@@ -7,7 +7,7 @@ import { SEM_EDICOES, SerieLinha } from "../ui/Series";
 export function AbaSeries({
   lib, setCorPersonagem, fixados, alternarFixado, edicoesPorSerie, ownedEdicaoIds, buscando, filtrando, openSerieId,
   gruposAbertos, grupoAberto, alternarGrupo, alternarTodos, seriesFiltradas,
-  abrirSerieNaFaixa,
+  abrirSerieNaFaixa, filtroAutor,
 }) {
   return (
     seriesFiltradas.length === 0 ? (
@@ -53,6 +53,7 @@ export function AbaSeries({
               faixa={item.faixa}
               eds={edicoesPorSerie[item.serie.id] || SEM_EDICOES}
               ownedIds={ownedEdicaoIds}
+              filtroAutor={filtroAutor}
               aberta={item.serie.id === openSerieId}
               onAbrir={abrirSerieNaFaixa}
             />

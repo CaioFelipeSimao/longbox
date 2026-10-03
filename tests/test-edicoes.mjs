@@ -103,5 +103,16 @@ const cob2 = M2.edicoesCobertas(ind2, catalogo, todas);
 check("edicoesCobertas usa o indice recebido", cob2.has("g1") && cob2.has("g3") && !cob2.has("g2") && !cob2.has("g5"), j([...cob2]));
 check("inedita impede a cobertura", !M2.edicoesCobertas(ind2, [...catalogo, ined], new Set(["f107"])).has("i1"));
 
+// v147: counts and highlights share the owned-only, folded author match.
+const doAutor = (...args) => M2.edicoesDoAutor?.(...args);
+check("edicoesDoAutor retorna so possuidas em ordem", j(doAutor(eds, donos, "mark WAID")) === j([cheia, so]));
+check("edicoesDoAutor ignora acentos", j(doAutor(gaiman, new Set(["z"]), "Néil GAIMAN")) === j(gaiman));
+check("edicoesDoAutor exato nao casa pedaco", j(doAutor(gaiman, new Set(["z"]), "gai")) === "[]");
+check("edicoesDoAutor parcial casa pedaco", j(doAutor(gaiman, new Set(["z"]), "gai", true)) === j(gaiman));
+check("edicoesDoAutor vazio nao destaca tudo", j(doAutor(eds, donos, "  ", true)) === "[]");
+check("edicoesDoAutor sem autoria ou posse fica vazio", j(doAutor(eds, new Set(["a"]), "Mark Waid")) === "[]");
+const repetida = { id: "r", autores: { writer: ["Mark Waid"], penciler: ["Mark Waid"], inker: ["Mark Waid"] } };
+check("edicoesDoAutor conta varios papeis uma vez", j(doAutor([repetida], new Set(["r"]), "Mark Waid")) === j([repetida]));
+
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);

@@ -46,10 +46,22 @@ export function autoresPossuidos(edicoes, ownedIds) {
 
 // parcial=false: o nome inteiro (filtro). parcial=true: um pedaco do nome (busca livre).
 export function serieTemAutor(eds, ownedIds, nome, parcial = false) {
+  return eds.some((e) => ownedIds.has(e.id) && autoresQueCasam(e, nome, parcial).length > 0);
+}
+
+// v147: rows and maps count the same owned edições, once per issue even when
+// the author appears in several roles. Empty searches must never highlight all.
+export function edicoesDoAutor(eds, ownedIds, nome, parcial = false) {
+  return eds.filter((e) => ownedIds.has(e.id) && autoresQueCasam(e, nome, parcial).length > 0);
+}
+
+// v147: the partial highlight's aria names the matching people, not the typed fragment.
+export function autoresQueCasam(e, nome, parcial = false) {
   const alvo = dobrar(nome);
-  if (!alvo) return false;
+  if (!alvo) return [];
   const casa = (x) => (parcial ? dobrar(x).includes(alvo) : dobrar(x) === alvo);
-  return eds.some((e) => ownedIds.has(e.id) && FUNCOES.some((f) => autoresDe(e)[f].some(casa)));
+  const a = autoresDe(e);
+  return [...new Set(FUNCOES.flatMap((f) => a[f]).filter(casa))];
 }
 
 export const serieTemReimpressao = (eds) => eds.some(ehReimpressao);
