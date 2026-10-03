@@ -2566,3 +2566,20 @@ gap, so a block stays a rectangle whatever mix of odd numbers it holds. The user
 0 fit a plain tile. Data, same session: Batman Vol 2's "23.1: The Joker" ... "23.4: Bane" became
 "23.1"-"23.4" like the other five séries (the subtitle came from an old cadastro before the skill
 stripped it), and X-Men Vol 2 / Fantastic Four Vol 3 "½" became "1/2". test-setas-serie 35 checks.
+
+**v145 Reprints and creators on the edição.** Three optional fields on an edição in
+`edicoes/<serieId>`: `autores` ({writer, penciler, inker}, each a list), `reimpressao` and
+`origem` (free text). Old edições without them stay valid; every read goes through
+`src/lib/edicoes.js`. A reprint carries a small dot on its tile and "Reimpressão de ..." in the
+ficha; "Esconder reimpressões" takes their tiles off the map without touching owned/missing or
+the totals (user's choice: owning a reprint is owning that book only, never "covers the
+original"). The ficha lists Writer/Penciler/Inker, roles without a name are left out; the form
+edits them as comma-separated text and drops `autores` when all three are empty, and unticking
+"reimpressão" removes both fields. Data, same day: the reprint rule (the issue's FIRST story is a
+`{{StoryGrab}}` on DC Fandom; the wiki's Category:Reprints also catches new issues with a
+reprinted backup, like Flash #212) marked 8 Flash Vol 1 issues (#160 169 178 187 196 205 213 214,
+the Giants and the three gaps in the user's #197-229 run), `origem` as the full source list (user
+picked it over a short count from a throwaway preview). Creators for 2085 of the 2086 owned
+edições from the wiki, 22 of them through a year-checked title map (23.x subtitles, Nightwing
+Annuals as Vol 4, World's Best Comics #1); Spawn/Batman #1 has no credits there. The cadastro
+skill now always fills creators. Tests: test-edicoes 18, test-reimpressoes 19, test-autores 13.
