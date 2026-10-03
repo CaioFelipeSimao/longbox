@@ -2638,3 +2638,9 @@ edições originais" (inédita stories listed apart); two séries folding to one
 resolve silently: the reprint's own publisher wins, otherwise the source counts as not found.
 Codex could not build in its sandbox this time (no read access above the repo); done here. Tests:
 test-edicoes 55, test-editora-busca 10, test-render's search lines rewritten to the new rule.
+
+**v150 The volume sheet gets the tile widths too.** The user spotted #1000000 wrapping onto two
+lines in a volume's séries block ("Detective Comics (Volume 1)" with "Gerenciar"): the v143/v144
+rule (plain numbers share one width per block, a longer number spans two) only lived in the série
+map; the volume sheet had its own tile code. The rule moved to lib/edicoes.js (digitosDoBloco,
+formaDoTile) and both sheets use it. tests/test-tiles-volume.mjs 6 checks, shown failing first.

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Search, Plus, X, Pencil, Trash2, Upload, Check, Copy } from "lucide-react";
 
 import { sortKey } from "../lib/util";
-import { autoresDe, autoresQueCasam, edicoesDoAutor, ehReimpressao, serieTemReimpressao } from "../lib/edicoes";
+import { autoresDe, autoresQueCasam, digitosDoBloco, edicoesDoAutor, ehReimpressao, formaDoTile, serieTemReimpressao } from "../lib/edicoes";
 import { anoRange, personagensDaSerie, textoFaltantes } from "../lib/biblioteca";
 import { Sheet } from "../ui/base";
 import { CampoBusca, daEditora } from "../ui/Filtros";
@@ -165,26 +165,16 @@ export function SerieSheet({
     return () => window.removeEventListener("keydown", h);
   }, [!!serie]);
 
-  // v143: a plain number's tile takes the width of the block's longest plain
-  // number (--nd digits), and any number longer than that (#1000000, 1/2, 23.1,
-  // 605.1) takes two of those plus the gap, so the rows stay in columns without
-  // shrinking its type (v144 widened the rule from #1000000 to all of them).
-  // Alone in its block a long number is a plain tile of its own width. data-curto
-  // marks the ones that fit a 44px touch tile (three characters), which stay
-  // single there.
-  const COMUM = /^-?\d+$/;
-  const digitos = (lista) => Math.max(2, ...lista.filter((e) => COMUM.test(e.numero) && e.numero !== "1000000").map((e) => e.numero.length));
-  const forma = (e, lista, nd) => {
-    if (e.numero.length <= nd) return "comum";
-    return lista.length > 1 ? "largo" : null;
-  };
+  // v143/v144 tile widths; the rule lives in lib/edicoes.js (digitosDoBloco,
+  // formaDoTile) since v150, so the volume sheet draws its tiles the same way.
+  const digitos = digitosDoBloco;
   const ndPlano = digitos(edsFiltradas);
-  const renderTile = (e, lista, nd, f = forma(e, lista, nd)) => (
+  const renderTile = (e, lista, nd, f = formaDoTile(e, lista, nd)) => (
     <button
       key={e.id}
       data-ed={e.id}
-      data-forma={f || undefined}
-      data-curto={f === "largo" && e.numero.length <= 3 ? "" : undefined}
+      data-forma={f.forma || undefined}
+      data-curto={f.curto ? "" : undefined}
       className="tile"
       data-owned={ownedIds.has(e.id) ? "true" : "false"}
       data-sel={e.id === selectedId ? "true" : "false"}

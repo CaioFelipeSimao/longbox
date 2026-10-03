@@ -3,6 +3,7 @@ import { Pencil, Trash2, Link2, ImagePlus, ChevronLeft, ChevronRight, Copy, Libr
 
 import { STATUS, STATUS_ORDER } from "../lib/constantes";
 import { parseNum } from "../lib/util";
+import { digitosDoBloco, formaDoTile } from "../lib/edicoes";
 import { usePasteImage } from "../lib/hooks";
 import { useCorDaCapa } from "../lib/capas";
 import { specForCharacter, useCores } from "../lib/cores";
@@ -211,23 +212,30 @@ export function VolumeSheet({
                     </button>
                   )}
                 </div>
-                <div className="tiles" style={{ marginTop: 8 }}>
-                  {g.edicoes.map((e) => (
-                    g.serie ? (
+                {/* v150: same tile widths as the série map (#1000000 spans two tiles
+                    instead of wrapping onto two lines). */}
+                {((nd) => (
+                <div className="tiles" style={{ marginTop: 8, "--nd": nd }}>
+                  {g.edicoes.map((e) => {
+                    const f = formaDoTile(e, g.edicoes, nd);
+                    const forma = { "data-forma": f.forma || undefined, "data-curto": f.curto ? "" : undefined };
+                    return g.serie ? (
                       <button
                         type="button"
                         className="tile"
                         data-owned="true"
+                        {...forma}
                         key={e.id}
                         onClick={() => onOpenEdicaoNaSerie(g.serie.id, e.id)}
                       >
                         {e.numero}
                       </button>
                     ) : (
-                      <span className="tile" data-owned="true" key={e.id}>{e.numero}</span>
-                    )
-                  ))}
+                      <span className="tile" data-owned="true" {...forma} key={e.id}>{e.numero}</span>
+                    );
+                  })}
                 </div>
+                ))(digitosDoBloco(g.edicoes))}
               </div>
             ))}
 

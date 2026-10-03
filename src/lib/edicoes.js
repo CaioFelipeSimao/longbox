@@ -162,3 +162,19 @@ export function aplicarFormEdicao(atual, form) {
   if (!form.reimpressao && atual.reimpressao === true) fora.reimpressao = false;
   return fora;
 }
+
+// v143/v144 tile widths, shared by the série map and the volume sheet since v150 (the
+// volume sheet had its own tile code and never got the rule). A plain number's tile takes
+// the width of the block's longest plain number (--nd digits), and any number longer than
+// that (#1000000, 1/2, 23.1, 605.1) takes two of those plus the gap, so the rows stay in
+// columns without shrinking its type. Alone in its block a long number is a plain tile of
+// its own width. "curto" marks the ones that fit a 44px touch tile (three characters),
+// which stay single there.
+const NUMERO_COMUM = /^-?\d+$/;
+export const digitosDoBloco = (lista) =>
+  Math.max(2, ...lista.filter((e) => NUMERO_COMUM.test(e.numero) && e.numero !== "1000000").map((e) => e.numero.length));
+export function formaDoTile(e, lista, nd) {
+  if (e.numero.length <= nd) return { forma: "comum", curto: false };
+  if (lista.length > 1) return { forma: "largo", curto: e.numero.length <= 3 };
+  return { forma: null, curto: false };
+}
