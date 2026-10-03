@@ -2617,3 +2617,11 @@ stories alone; the catalogue index is built once instead of on every shelf chang
 the PC); "José Marzan, Jr." and the other 74 ", Jr." credits no longer split in two on save. The
 counter says "1 série", "1 coleção", "1 HQ". Eight minor review notes are left for later
 (ledger). Tests: test-edicoes 48, test-reimpressoes 32, test-filtro-autor 22, test-destaque-autor 27.
+
+**v148 The chevron closes the list.** The character and author filters (PersonagemFiltro) drew their
+chevron as the field's background, so a tap on it was a tap on the field: it opened the list and
+nothing closed it there (the user asked for it). A clear button now sits over the chevron's padding
+(32px, 44px on touch) and toggles; the text area still only opens, since that is where you type.
+Same day, data: "Image Comics" created (white, a greyscale colour, so the app keeps the Longbox
+accent under it) and Spawn/Batman moved to it; the Batman/Spawn Deluxe Edition volume stays DC.
+test-filtro-autor 32.
