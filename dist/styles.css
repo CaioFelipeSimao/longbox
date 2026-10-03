@@ -1093,19 +1093,26 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .filtros-linha[data-campos="1"] { grid-template-columns: minmax(0, 320px) auto; justify-content: start; }
 .filtros-linha[data-campos="2"] { grid-template-columns: repeat(2, minmax(0, 320px)) auto; justify-content: start; }
 @media (max-width: 639px) {
-  .filtros-linha[data-campos="2"] { grid-template-columns: minmax(0, 1fr) auto; }
-  .filtros-linha[data-campos="2"] > .pfiltro { grid-column: 1; }
+  /* v147: full-width fields keep the phone's labels readable; clearing stays
+     beside all the rows, as it already did for the two séries fields. */
+  .filtros-linha[data-campos="2"],
+  .filtros-linha[data-campos="3"] { grid-template-columns: minmax(0, 1fr) auto; }
+  .filtros-linha[data-campos="2"] > .pfiltro,
+  .filtros-linha[data-campos="3"] > .pfiltro { grid-column: 1; }
   .filtros-linha[data-campos="2"] > .filtros-limpar { grid-column: 2; grid-row: 1 / 3; }
-  .filtros-linha[data-campos="2"] .pfiltro-lista { left: 0; right: 0; min-width: 0; }
+  .filtros-linha[data-campos="3"] > .filtros-limpar { grid-column: 2; grid-row: 1 / 4; }
 }
 .filtros-limpar { gap: 6px; height: 100%; white-space: nowrap; }
 .filtros-limpar:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
-/* As wide as the field it drops from. Only on a phone, where a third of the row
-   is too narrow for a name and its count, does it grow past it, leftwards. */
+/* v147: the phone's leftmost triggers cannot grow leftwards. The viewport cap
+   keeps both publisher and filter lists within the two 16px gutters. */
 .pfiltro-lista { max-height: 320px; }
-@media (max-width: 639px) { .pfiltro-lista { left: auto; min-width: 240px; } }
-/* v139: in a form (Tipo, Editora) the list keeps the field's own width: the phone rule
-   above grows it leftwards, which pushed Tipo, the left column, off the modal. */
+@media (max-width: 639px) {
+  .pfiltro-lista { left: 0; right: auto; width: 100%; min-width: 0; max-width: calc(100vw - 32px); }
+  .ed-lista { width: max-content; min-width: min(100%, calc(100vw - 32px)); }
+}
+/* v147: in a form (Tipo, Editora) the list keeps the field's own width, so the
+   two-column modal never borrows the other field's room for its options. */
 .modal-body .pfiltro-lista { left: 0; right: 0; min-width: 0; }
 .pfiltro-row { gap: 10px; padding: 8px 10px; }
 .pfiltro-row .sug-title { flex: 1; min-width: 0; }
@@ -2243,6 +2250,10 @@ button.retrato-linha { cursor: pointer; }
    thing on the sheet: a dashed empty slot with its number in the body colour. */
 .tile:not([data-owned="true"]) { border-style: dashed; border-color: var(--text-muted); color: var(--text); }
 .mapa-topo { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+/* v147: dimming is only a reading aid; focused tiles keep their full outline. */
+.tile[data-esmaecido="true"] { opacity: 0.35; }
+.tile[data-esmaecido="true"]:focus-visible { opacity: 1; }
+.destaque-autor { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .mapa-legenda { display: flex; align-items: center; gap: 6px; margin: 0; }
 .mapa-legenda i { width: 12px; height: 12px; border-radius: 3px; border: 1px dashed var(--text-muted); }
 .mapa-legenda i[data-owned="true"] { background: var(--read); border: 1px solid var(--read); }

@@ -261,6 +261,14 @@ computed once in `ownedEdicaoIds` from physical ownership only; its ficha shows 
 histórias" or "Coberta pelas originais". Search also matches the owned edições' creators, and the
 Séries tab has "Filtrar por autor" (a second PersonagemFiltro, `semCor`).
 
+v147: with an author set, a série row adds "N edições de <autor>" and the open série lights that
+author's tiles (`data-autor`) and dims the rest (`data-esmaecido`, opacity 0.35, full on focus)
+under "Destacando as edições de <autor>" + "Tirar destaque"; a Séries search matching an author
+does the same, partially. A source `{inedita: true}` is never owned, so its reprint is never
+covered. The edição form saves onto the current edição (`aplicarFormEdicao`). Phone (<640px): the
+HQs filters stack one per row (`data-campos="3"`), and filter/publisher lists anchor left within
+the 16px gutters.
+
 v102: nothing outside the hub wall renders below 11px; the storage meter shows only past 80%;
 a missing number can be linked to a volume from its panel; with a number picked, ← → step to the neighbouring edição in map order (v143); a keyboard button beside the search
 (fine pointer only) opens the shortcuts panel.
