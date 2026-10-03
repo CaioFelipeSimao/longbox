@@ -6,6 +6,7 @@ import {
   ACCENT_HEX, DOC_LIMIT, ED_SEM, ED_TODAS, EMPTY_LIB, QUASE_FECHANDO, SESSION_SEED, TABS,
   TIPOS, editoraDe, seededPick, slugify, tiposDaEditora, TIPOS_COMUNS, STATUS } from "../lib/constantes";
 import { parseNum, porFixados, uid } from "../lib/util";
+import { autoresDe, parseAutores } from "../lib/edicoes";
 import { COR_LONGBOX, CoresContext, swatchColors, tintaSobre } from "../lib/cores";
 import {
   anoRange, bytesOf, deleteColecao, deleteEdicao, deleteSerie, deleteVolume, ensureAvulsa,
@@ -946,9 +947,13 @@ export function App() {
     if (!edicaoForm.numero.trim()) { showToast("Informe o número da edição."); return; }
     // v145: reimpressao/origem are written only while the box is ticked, so an
     // unticked edição goes back to having neither field.
-    const { reimpressao, origem, ...resto } = edicaoForm;
+    // v146: the three text fields become lists; "autores" is left out when all are empty.
+    const { reimpressao, origem, autoresWriter, autoresPenciler, autoresInker, autores: _antes, ...resto } = edicaoForm;
+    const autores = { writer: parseAutores(autoresWriter), penciler: parseAutores(autoresPenciler), inker: parseAutores(autoresInker) };
+    const temAutor = autores.writer.length || autores.penciler.length || autores.inker.length;
     const payload = {
       ...resto,
+      ...(temAutor ? { autores } : null),
       ...(reimpressao ? { reimpressao: true, origem: (origem || "").trim() } : null),
       posicao: edicaoForm.posicao.trim() !== "" && !isNaN(parseFloat(edicaoForm.posicao)) ? parseFloat(edicaoForm.posicao) : null,
     };
@@ -1490,7 +1495,7 @@ export function App() {
   // v121: the button says what it makes; the hub's makes a volume (its own button, v126).
   const rotuloNovo = tab === "colecoes" ? "Nova coleção" : tab === "series" ? "Nova série" : "Novo volume";
   function novaEdicao(serie) {
-    setEdicaoForm({ id: null, serieId: serie.id, numero: "", mes: "", ano: "", posicao: "", reimpressao: false, origem: "" });
+    setEdicaoForm({ id: null, serieId: serie.id, numero: "", mes: "", ano: "", posicao: "", reimpressao: false, origem: "", autoresWriter: "", autoresPenciler: "", autoresInker: "" });
     setShowEdicaoForm(true);
   }
   // v132: N while the série card is in front makes an edição of it (the card's
@@ -2084,7 +2089,7 @@ export function App() {
         onDelete={() => remover({ type: "serie", id: openSerie.id })}
         onImport={() => { setImportSerieId(openSerie.id); setImportText(""); setShowImportModal(true); }}
         onNovaEdicao={() => novaEdicao(openSerie)}
-        onEditEdicao={(ed) => { setEdicaoForm({ ...ed, posicao: ed.posicao !== null && ed.posicao !== undefined ? String(ed.posicao) : "" }); setShowEdicaoForm(true); }}
+        onEditEdicao={(ed) => { const a = autoresDe(ed); setEdicaoForm({ ...ed, posicao: ed.posicao !== null && ed.posicao !== undefined ? String(ed.posicao) : "", autoresWriter: a.writer.join(", "), autoresPenciler: a.penciler.join(", "), autoresInker: a.inker.join(", ") }); setShowEdicaoForm(true); }}
         onDeleteEdicao={(ed) => remover({ type: "edicao", id: ed.id })}
         avisar={showToast}
         volumes={lib.volumes}

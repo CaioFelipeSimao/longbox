@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Search, Plus, X, Pencil, Trash2, Upload, Check, Copy } from "lucide-react";
 
 import { sortKey } from "../lib/util";
-import { ehReimpressao, serieTemReimpressao } from "../lib/edicoes";
+import { autoresDe, ehReimpressao, serieTemReimpressao } from "../lib/edicoes";
 import { anoRange, personagensDaSerie, textoFaltantes } from "../lib/biblioteca";
 import { Sheet } from "../ui/base";
 import { CampoBusca, daEditora } from "../ui/Filtros";
@@ -338,6 +338,18 @@ export function SerieSheet({
                       Posição manual no checklist: {selecionada.posicao}
                     </p>
                   )}
+                  {/* v146: who made it, only the roles that have a name. */}
+                  {(() => {
+                    const a = autoresDe(selecionada);
+                    const linhas = [["Writer", a.writer], ["Penciler", a.penciler], ["Inker", a.inker]].filter(([, l]) => l.length);
+                    return linhas.length ? (
+                      <dl className="autores">
+                        {linhas.map(([rot, l]) => (
+                          <div key={rot}><dt className="t-micro">{rot}</dt><dd className="t-small">{l.join(", ")}</dd></div>
+                        ))}
+                      </dl>
+                    ) : null;
+                  })()}
                   <p className="t-micro" style={{ margin: "12px 0 6px" }}>Você tem em</p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {volumesQueColetam(selecionada.id).length === 0

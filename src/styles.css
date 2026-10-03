@@ -2203,6 +2203,11 @@ button.retrato-linha { cursor: pointer; }
   border-radius: 50%; background: currentColor; opacity: 0.75; pointer-events: none;
 }
 .reimp-toggle { margin: 0 0 12px; }
+/* v146: the edição's creators, one role per row, label over names. */
+.autores { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px 16px; margin: 10px 0 0; }
+.autores div { min-width: 0; }
+.autores dt { margin: 0 0 2px; }
+.autores dd { margin: 0; overflow-wrap: anywhere; }
 .check-linha { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
 .check-linha input { width: 18px; height: 18px; accent-color: var(--accent); }
 @media (pointer: coarse) { .tile { min-width: 44px; min-height: 44px; } }

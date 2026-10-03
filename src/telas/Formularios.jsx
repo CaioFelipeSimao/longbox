@@ -361,6 +361,18 @@ export function FormEdicao({
           >
             <input className="input" value={edicaoForm.posicao} onChange={(e) => setEdicaoForm((f) => ({ ...f, posicao: e.target.value }))} />
           </Field>
+          {/* v146: names as typed, several per role split by comma or semicolon. */}
+          <Field label="Writer" hint="Vários nomes: separe por vírgula.">
+            <input className="input" value={edicaoForm.autoresWriter || ""} onChange={(e) => setEdicaoForm((f) => ({ ...f, autoresWriter: e.target.value }))} />
+          </Field>
+          <div className="grid-2">
+            <Field label="Penciler">
+              <input className="input" value={edicaoForm.autoresPenciler || ""} onChange={(e) => setEdicaoForm((f) => ({ ...f, autoresPenciler: e.target.value }))} />
+            </Field>
+            <Field label="Inker">
+              <input className="input" value={edicaoForm.autoresInker || ""} onChange={(e) => setEdicaoForm((f) => ({ ...f, autoresInker: e.target.value }))} />
+            </Field>
+          </div>
           <label className="check-linha">
             <input
               type="checkbox"
