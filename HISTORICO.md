@@ -2625,3 +2625,16 @@ nothing closed it there (the user asked for it). A clear button now sits over th
 Same day, data: "Image Comics" created (white, a greyscale colour, so the app keeps the Longbox
 accent under it) and Spawn/Batman moved to it; the Batman/Spawn Deluxe Edition volume stays DC.
 test-filtro-autor 32.
+
+**v149 The search follows the publisher band.** The user reversed the old rule ("search ignores
+the band"): the tabs, the suggestions and the "Filtrar por autor" options now follow lib.editoraSel
+(Todas still shows everything). When the band hides every match, a notice says "Nada em <editora>.
+N resultado(s) em outras editoras." with "Ver em todas as editoras"; the band's "Buscando em todo o
+acervo" note is gone. The author options count séries, like the character filter, and a saved
+author survives a casing/accent variant. Review details done in the same version: unticking an
+edição that was a reprint stores `reimpressao: false`, the user's "no", which the cadastro skill
+never overwrites (its report lists such edições as "recusadas"); the ficha says "Você tem X de Y
+edições originais" (inédita stories listed apart); two séries folding to one name no longer
+resolve silently: the reprint's own publisher wins, otherwise the source counts as not found.
+Codex could not build in its sandbox this time (no read access above the repo); done here. Tests:
+test-edicoes 55, test-editora-busca 10, test-render's search lines rewritten to the new rule.
