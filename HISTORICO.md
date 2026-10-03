@@ -2599,3 +2599,21 @@ says "Você tem X de Y histórias" with each source as tenho / falta / fora do a
 pelas originais" with the volumes holding them (and no "Nenhum volume vinculado" under it). The 8
 Flash Vol 1 Giants got their fontes (none covered yet: the user owns from #197). Tests:
 test-edicoes 31, test-reimpressoes 29, test-autores 26, test-filtro-autor 21.
+
+**v147 Phone fixes, an author's edições lit on the map, and the final review.** From the user's
+iPhone screenshots: the publisher list and the HQs filter lists opened from the trigger's right
+edge and ran off the left of the screen; below 640px they now anchor left and never exceed the
+viewport minus the 16px gutters (measured 16..320 and 16..200 of 390). The HQs filters were three
+squeezed fields ("Todos os..."); on a phone they stack one per row with "Limpar" beside them, like
+the Séries pair. With "Filtrar por autor" set, a série row says "N edições de <autor>", and the
+open série lights that author's tiles and dims the rest (0.35, full on focus) under "Destacando as
+edições de <autor>" with "Tirar destaque"; a Séries search that matches an author's name does the
+same, partially. Built by Codex from a written brief, reviewed and re-run here. The final
+whole-branch review (fresh reviewer) found no critical issue; fixed: the edição form now saves onto
+the edição as it is now (a stale copy could erase creators or fontes that arrived while it was
+open); a story printed only in the reprint, or a source the skill cannot read, is stored as
+`{inedita: true}` and is never owned, so Flash #205 and #214 can never turn green on their reprinted
+stories alone; the catalogue index is built once instead of on every shelf change (~18 ms each on
+the PC); "José Marzan, Jr." and the other 74 ", Jr." credits no longer split in two on save. The
+counter says "1 série", "1 coleção", "1 HQ". Eight minor review notes are left for later
+(ledger). Tests: test-edicoes 48, test-reimpressoes 32, test-filtro-autor 22, test-destaque-autor 27.

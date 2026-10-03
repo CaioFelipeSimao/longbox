@@ -1753,10 +1753,11 @@ export function App() {
           edCroma={edCroma}
           dobra={dobraDaAba}
           contagem={
+            // v147: singular for one ("1 série", not "1 séries").
             loading ? ""
-              : tab === "volumes" ? volumesFiltrados.reduce((s, g) => s + g.itens.length, 0) + " HQs"
-              : tab === "colecoes" ? colecoesFiltradas.length + " coleções"
-              : seriesFiltradas.reduce((s, g) => s + g.itens.length, 0) + " séries"
+              : tab === "volumes" ? ((n) => n + (n === 1 ? " HQ" : " HQs"))(volumesFiltrados.reduce((s, g) => s + g.itens.length, 0))
+              : tab === "colecoes" ? ((n) => n + (n === 1 ? " coleção" : " coleções"))(colecoesFiltradas.length)
+              : ((n) => n + (n === 1 ? " série" : " séries"))(seriesFiltradas.reduce((s, g) => s + g.itens.length, 0))
           }
         />
 

@@ -115,6 +115,9 @@ if (autor()) { m.digitar(autor(), ""); await sleep(80); }
 await escolher(m, "filtro-autor-series", "Mark Waid");
 check("Mark Waid mostra só s1, sem s2 ou s3 não possuída", linhas(m).length === 1 && linhas(m)[0].includes("Alfa") && !linhas(m)[0].includes("Gama") && !linhas(m)[0].includes("Beta"), linhas(m));
 check("contador conta um autor", conta(m) === "1", conta(m));
+// v147: one série is "1 série", not "1 séries".
+const corpo = m.window.document.body.textContent;
+check("contador no singular com uma série", /(^|\D)1 série(?!s)/.test(corpo) && !/(^|\D)1 séries/.test(corpo), (corpo.match(/\d+ séries?/) || [""])[0]);
 check("autor salvo na sessão", m.window.sessionStorage.getItem("longbox:filtro-autor") === "Mark Waid");
 await escolher(m, "filtro-personagem-series", "Batman");
 check("autor e personagem combinam com E", linhas(m).length === 0);
