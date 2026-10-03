@@ -6,7 +6,7 @@ import {
   ACCENT_HEX, DOC_LIMIT, ED_SEM, ED_TODAS, EMPTY_LIB, QUASE_FECHANDO, SESSION_SEED, TABS,
   TIPOS, editoraDe, seededPick, slugify, tiposDaEditora, TIPOS_COMUNS, STATUS } from "../lib/constantes";
 import { parseNum, porFixados, uid } from "../lib/util";
-import { autoresDe, parseAutores, textoAutores, autoresPossuidos, serieTemAutor } from "../lib/edicoes";
+import { autoresDe, parseAutores, textoAutores, autoresPossuidos, serieTemAutor, indiceEdicoes, coberturaDe, edicoesCobertas } from "../lib/edicoes";
 import { COR_LONGBOX, CoresContext, swatchColors, tintaSobre } from "../lib/cores";
 import {
   anoRange, bytesOf, deleteColecao, deleteEdicao, deleteSerie, deleteVolume, ensureAvulsa,
@@ -219,11 +219,24 @@ export function App() {
     [lib.series]
   );
 
-  const ownedEdicaoIds = useMemo(() => {
+  // Owned on the shelf: in some volume's list.
+  const possuidasFisicas = useMemo(() => {
     const s = new Set();
     lib.volumes.forEach((v) => v.edicoesColetadasIds.forEach((id) => s.add(id)));
     return s;
   }, [lib.volumes]);
+  // v146: a reprint whose sources are all on the shelf counts as owned everywhere
+  // (tiles, counts, faltantes), the user's rule. This is the one place "owned" is
+  // computed, so every screen follows. Sources are checked against the shelf only.
+  const indiceCatalogo = useMemo(() => indiceEdicoes(lib.series, lib.edicoes), [lib.series, lib.edicoes]);
+  const ownedEdicaoIds = useMemo(() => {
+    const cobertas = edicoesCobertas(lib.series, lib.edicoes, possuidasFisicas);
+    if (!cobertas.size) return possuidasFisicas;
+    const s = new Set(possuidasFisicas);
+    cobertas.forEach((id) => s.add(id));
+    return s;
+  }, [lib.series, lib.edicoes, possuidasFisicas]);
+  const coberturaDaEdicao = useCallback((e) => coberturaDe(e, indiceCatalogo, possuidasFisicas), [indiceCatalogo, possuidasFisicas]);
 
   const volumesQueColetam = useCallback((edId) => edicaoParaVolumes[edId] || [], [edicaoParaVolumes]);
   const colecoesDoVolume = useCallback((vid) => volumeParaColecoes[vid] || [], [volumeParaColecoes]);
@@ -2107,6 +2120,7 @@ export function App() {
         edicoes={openSerie ? edicoesPorSerie[openSerie.id] || [] : []}
         ownedIds={ownedEdicaoIds}
         volumesQueColetam={volumesQueColetam}
+        coberturaDaEdicao={coberturaDaEdicao}
         busca={serieBusca}
         setBusca={setSerieBusca}
         selectedId={selectedEdicaoId}

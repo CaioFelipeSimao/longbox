@@ -43,5 +43,40 @@ check("serieTemAutor parcial casa pedaco de nome", serieTemAutor(gaiman, new Set
 check("serieTemAutor nao conta edicao nao possuida", !serieTemAutor(eds, new Set(["a"]), "Mark Waid"));
 check("serieTemReimpressao", serieTemReimpressao(eds) && !serieTemReimpressao([antiga]));
 
+// v146: a reprint lists its sources as {serie, numero}. It counts as owned when every
+// source is owned (user's rule: DC reissues the originals, never the Giants). Only
+// physically owned sources count, so a covered reprint never covers another one.
+const { indiceEdicoes, coberturaDe, edicoesCobertas } =
+  await import("data:text/javascript;base64," + Buffer.from(out.outputFiles[0].text).toString("base64"));
+const series = [{ id: "f1", nome: "The Flash (Volume 1)" }, { id: "af", nome: "All-Flash" }];
+const ed = (id, serieId, numero, extra = {}) => ({ id, serieId, numero, ...extra });
+const catalogo = [
+  ed("f107", "f1", "107"), ed("f113", "f1", "113"), ed("af32", "af", "32"),
+  ed("g1", "f1", "160", { reimpressao: true, fontes: [{ serie: "The Flash (Volume 1)", numero: "107" }, { serie: "The Flash (Volume 1)", numero: "113" }] }),
+  ed("g2", "f1", "169", { reimpressao: true, fontes: [{ serie: "The Flash (Volume 1)", numero: "107" }, { serie: "Adventure Comics (Volume 1)", numero: "123" }] }),
+  ed("g3", "f1", "178", { reimpressao: true, fontes: [{ serie: "the flash (volume 1)", numero: "107" }, { serie: "All-Flash", numero: "32" }] }),
+  ed("g4", "f1", "187", { reimpressao: true, origem: "texto antigo sem fontes" }),
+  ed("g5", "f1", "196", { reimpressao: true, fontes: [{ serie: "The Flash (Volume 1)", numero: "160" }] }),
+];
+const ind = indiceEdicoes(series, catalogo);
+const so107 = new Set(["f107"]);
+const c1 = coberturaDe(catalogo[3], ind, so107);
+check("cobertura parcial: 1 de 2", c1.total === 2 && c1.tenho.length === 1 && c1.falta.length === 1 && c1.fora.length === 0, j(c1));
+check("cobertura guarda a edicao de origem", c1.tenho[0].edicao.id === "f107" && c1.falta[0].edicao.id === "f113");
+const c2 = coberturaDe(catalogo[4], ind, so107);
+check("origem de serie fora do acervo vai para fora", c2.fora.length === 1 && c2.fora[0].serie === "Adventure Comics (Volume 1)", j(c2));
+check("nome da serie casa sem caixa", coberturaDe(catalogo[5], ind, new Set(["f107", "af32"])).tenho.length === 2);
+check("(Volume 1) no nome da origem casa serie sem o sufixo", coberturaDe(ed("x", "f1", "1", { reimpressao: true, fontes: [{ serie: "All-Flash (Volume 1)", numero: "32" }] }), ind, new Set(["af32"])).tenho.length === 1);
+check("(Volume 2) nao casa serie sem sufixo", coberturaDe(ed("y", "f1", "2", { reimpressao: true, fontes: [{ serie: "All-Flash (Volume 2)", numero: "32" }] }), ind, new Set(["af32"])).fora.length === 1);
+check("reimpressao sem fontes nao tem cobertura", coberturaDe(catalogo[6], ind, so107) === null);
+check("edicao comum nao tem cobertura", coberturaDe(catalogo[0], ind, so107) === null);
+const todas = new Set(["f107", "f113", "af32"]);
+const cob = edicoesCobertas(series, catalogo, todas);
+check("coberta quando tem todas as origens", cob.has("g1") && cob.has("g3"), j([...cob]));
+check("nao coberta com origem fora do acervo", !cob.has("g2"));
+check("nao coberta com origem faltando", !edicoesCobertas(series, catalogo, so107).has("g1"));
+check("reimpressao coberta nao cobre outra", !cob.has("g5"));
+check("possuida fisicamente nao entra no conjunto de cobertas", !edicoesCobertas(series, catalogo, new Set([...todas, "g1"])).has("g1"));
+
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);

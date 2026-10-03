@@ -12,7 +12,7 @@ import { coverColors, useCores } from "../lib/cores";
 export function SerieSheet({
   serie, contexto, verTudo, setVerTudo, edicoes, ownedIds, volumesQueColetam,
   busca, setBusca, selectedId, setSelectedId, onClose, onEdit, onDelete,
-  onImport, onNovaEdicao, onEditEdicao, onDeleteEdicao, avisar, volumes, onVincular,
+  onImport, onNovaEdicao, onEditEdicao, onDeleteEdicao, avisar, volumes, onVincular, coberturaDaEdicao,
 }) {
   const kept = useRef(null);
   if (serie) kept.current = serie;
@@ -349,6 +349,42 @@ export function SerieSheet({
                         ))}
                       </dl>
                     ) : null;
+                  })()}
+                  {/* v146: a reprint with sources says how many of its stories are on the
+                      shelf; with all of them it counts as owned ("Coberta pelas originais"). */}
+                  {(() => {
+                    const cob = coberturaDaEdicao ? coberturaDaEdicao(selecionada) : null;
+                    if (!cob) return null;
+                    const mesma = (a) => (b) => a.serie === b.serie && a.numero === b.numero;
+                    const nome = (f) => f.serie.replace(/\s*\(Volume \d+\)$/i, "") + " #" + f.numero;
+                    if (cob.tenho.length === cob.total) {
+                      const vols = [...new Map(cob.tenho.flatMap((f) => volumesQueColetam(f.edicao.id)).map((v) => [v.id, v])).values()];
+                      return (
+                        <div className="cobertura">
+                          <p className="t-small" style={{ margin: "8px 0 6px", color: "var(--read)" }}>Coberta pelas originais, que estão em</p>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                            {vols.map((v) => <span className="chip" key={v.id}><Check size={12} color="var(--read)" /> <strong>{v.titulo}</strong></span>)}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="cobertura">
+                        <p className="t-small" style={{ margin: "8px 0 6px" }}>Você tem {cob.tenho.length} de {cob.total} histórias</p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          {selecionada.fontes.map((f, i) => {
+                            const tem = cob.tenho.some(mesma(f));
+                            const fora = !tem && cob.fora.some(mesma(f));
+                            return (
+                              <span className="chip" key={i} data-tem={tem ? "true" : undefined}>
+                                {tem && <Check size={12} color="var(--read)" />} {nome(f)}
+                                {!tem && <span className="muted">{fora ? " · fora do acervo" : " · falta"}</span>}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
                   })()}
                   <p className="t-micro" style={{ margin: "12px 0 6px" }}>Você tem em</p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>

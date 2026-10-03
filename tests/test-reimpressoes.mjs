@@ -42,10 +42,16 @@ async function montar() {
       status: "nao_lida", notas: "", edicoesColetadasIds: ["s1-1", "s1-2", "s1-7"],
     }] }],
     ["library/colecoes", { items: [] }],
-    ["library/series", { items: [serie("s1", "Alfa", 8), serie("s2", "Beta", 2)] }],
+    ["library/series", { items: [serie("s1", "Alfa", 8), serie("s2", "Beta", 2), serie("s3", "Gama", 3)] }],
     ["library/cores", { mapa: {} }],
     ["edicoes/s1", { items: s1 }],
     ["edicoes/s2", { items: [ed("s2", "1"), ed("s2", "2")] }],
+    // v146: Gama's three reprints draw on Alfa (owned: 1, 2) and on a série not in the library.
+    ["edicoes/s3", { items: [
+      ed("s3", "1", { reimpressao: true, origem: "Alfa #1, #2", fontes: [{ serie: "Alfa", numero: "1" }, { serie: "Alfa", numero: "2" }] }),
+      ed("s3", "2", { reimpressao: true, origem: "Alfa #1, #3", fontes: [{ serie: "Alfa", numero: "1" }, { serie: "Alfa", numero: "3" }] }),
+      ed("s3", "3", { reimpressao: true, origem: "Alfa #1; Adventure Comics #123", fontes: [{ serie: "Alfa", numero: "1" }, { serie: "Adventure Comics (Volume 1)", numero: "123" }] }),
+    ] }],
   ]);
   const makeDoc = (path) => ({
     path,
@@ -138,6 +144,22 @@ await sleep(100);
 await sleep(900);
 check("desmarcar remove reimpressão e origem do documento", m.salvo("s1-8") && m.salvo("s1-8").reimpressao === undefined && m.salvo("s1-8").origem === undefined, JSON.stringify(m.salvo("s1-8")));
 
+console.log("=== reimpressão coberta pelas originais (v146) ===");
+await m.abrir("Gama");
+const contagemG = () => m.sheet().querySelector(".faltantes-cont .num")?.textContent.replace(/\s+/g, " ").trim();
+check("coberta conta como possuída", m.tile("s3-1")?.dataset.owned === "true");
+check("parcial continua faltando", m.tile("s3-2")?.dataset.owned === "false" && m.tile("s3-3")?.dataset.owned === "false");
+check("a contagem inclui a coberta", /1 de 3 possuídas/.test(contagemG()), contagemG());
+await m.fichaDe("s3-1");
+check("ficha da coberta diz coberta pelas originais", /Coberta pelas originais/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
+check("ficha da coberta mostra o volume das originais", /Flash vol 1/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
+await m.fichaDe("s3-2");
+check("ficha da parcial conta as histórias", /Você tem 1 de 2 histórias/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
+await m.fichaDe("s3-3");
+check("origem fora do acervo é dita", /fora do acervo/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
+check("origem mostrada sem o (Volume N)", /Adventure Comics #123/.test(m.ficha()?.textContent || "") && !/\(Volume/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
+await m.abrir("Alfa");
+check("a série de origem não muda", /3 de 8 possuídas/.test(contagemG() || ""), contagemG());
 check("a edição antiga abre a ficha sem erro", (() => { m.tile("s1-1").click(); return true; })());
 await sleep(100);
 check("ficha da edição antiga sem a linha de reimpressão", !/Reimpressão/.test(m.ficha()?.textContent || ""));
