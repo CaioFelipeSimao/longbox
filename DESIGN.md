@@ -255,7 +255,11 @@ v145: an edição may carry creators and a reprint flag (read only through `src/
 The ficha lists Writer, Penciler and Inker (empty roles left out) and "Reimpressão de <origem>";
 a reprint tile has a dot in its corner (currentColor, so it reads on owned and missing tiles);
 "Esconder reimpressões" (only on séries that have one) hides those tiles and never changes
-the counts. A reprint never counts as owning its original.
+the counts. A reprint never counts as owning its original. The reverse holds since v146: a
+reprint whose `fontes` are all on the shelf counts as owned (same green, counts, faltantes),
+computed once in `ownedEdicaoIds` from physical ownership only; its ficha shows "Você tem X de Y
+histórias" or "Coberta pelas originais". Search also matches the owned edições' creators, and the
+Séries tab has "Filtrar por autor" (a second PersonagemFiltro, `semCor`).
 
 v102: nothing outside the hub wall renders below 11px; the storage meter shows only past 80%;
 a missing number can be linked to a volume from its panel; with a number picked, ← → step to the neighbouring edição in map order (v143); a keyboard button beside the search
@@ -287,7 +291,8 @@ library/editoras   {itens, selecionada}  publishers, and the last one browsed
 edicoes/<serieId>  {items: [...]}    one document per series
                                      edição: {id, serieId, numero, mes, ano, posicao,
                                      autores?: {writer?, penciler?, inker?: string[]},
-                                     reimpressao?: true, origem?: string}  (v145)
+                                     reimpressao?: true, origem?: string,  (v145)
+                                     fontes?: [{serie, numero}]}  (v146)
 library/meta       {ultimoBackup}    when an export last succeeded (v88)
 ```
 

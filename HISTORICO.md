@@ -2583,3 +2583,19 @@ picked it over a short count from a throwaway preview). Creators for 2085 of the
 edições from the wiki, 22 of them through a year-checked title map (23.x subtitles, Nightwing
 Annuals as Vol 4, World's Best Comics #1); Spawn/Batman #1 has no credits there. The cadastro
 skill now always fills creators. Tests: test-edicoes 18, test-reimpressoes 19, test-autores 13.
+
+**v146 Search and filter by creator; a covered reprint counts as owned.** The search finds a
+volume or a série through the creators of the edições the user owns ("waid", accent and case
+blind on both sides, Busca.jsx folds too), and the Séries tab gets "Filtrar por autor" beside the
+character filter: the owned edições' creators with a count each, combined with the character
+(AND), counted on the filter button, released when its creator leaves the list.
+PersonagemFiltro gained label props whose defaults keep the HQs tab word for word. Implemented by
+Codex (gpt-6.1-sol, medium) from the plan's tasks 7-8 on the user's suggestion, reviewed and
+re-run here. Same version, user's rule: DC reissues the originals, never the Giants, so a reprint
+whose every source is on the shelf counts as owned everywhere (same green, counts, faltantes),
+computed once in ownedEdicaoIds from the shelf only (no chains). A reprint now stores
+`fontes: [{serie, numero}]` (Longbox série names, "(Volume 1)" ignored when matching); its ficha
+says "Você tem X de Y histórias" with each source as tenho / falta / fora do acervo, or "Coberta
+pelas originais" with the volumes holding them (and no "Nenhum volume vinculado" under it). The 8
+Flash Vol 1 Giants got their fontes (none covered yet: the user owns from #197). Tests:
+test-edicoes 31, test-reimpressoes 29, test-autores 26, test-filtro-autor 21.
