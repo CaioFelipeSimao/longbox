@@ -6,7 +6,7 @@ import {
   ACCENT_HEX, DOC_LIMIT, ED_SEM, ED_TODAS, EMPTY_LIB, QUASE_FECHANDO, SESSION_SEED, TABS,
   TIPOS, editoraDe, seededPick, slugify, tiposDaEditora, TIPOS_COMUNS, STATUS } from "../lib/constantes";
 import { parseNum, porFixados, uid } from "../lib/util";
-import { autoresDe, parseAutores, textoAutores, autoresPossuidos, serieTemAutor, indiceEdicoes, coberturaDe, edicoesCobertas, aplicarFormEdicao } from "../lib/edicoes";
+import { autoresDasSeries as contarAutoresDasSeries, autoresDe, parseAutores, textoAutores, autoresPossuidos, serieTemAutor, indiceEdicoes, coberturaDe, edicoesCobertas, aplicarFormEdicao } from "../lib/edicoes";
 import { COR_LONGBOX, CoresContext, swatchColors, tintaSobre } from "../lib/cores";
 import {
   anoRange, bytesOf, deleteColecao, deleteEdicao, deleteSerie, deleteVolume, ensureAvulsa,
@@ -285,16 +285,16 @@ export function App() {
     [lib.editoras, lib.editoraSel]
   );
 
-  // Search deliberately ignores the publisher filter: looking for a title you
-  // half remember should not depend on which publisher happens to be selected.
+  // v149: the search follows the publisher band too (the user's call, reversing the old
+  // rule); when the band hides every match, foraDaEditora below says how many are
+  // elsewhere and offers "Ver em todas as editoras".
   const casaEditora = useCallback((item) => {
-    if (buscando) return true;
     const sel = lib.editoraSel || ED_TODAS;
     if (sel === ED_TODAS) return true;
     const nome = editoraDe(item);
     if (sel === ED_SEM) return !nome;
     return editoraAtual ? nome.toLowerCase() === (editoraAtual.nome || "").toLowerCase() : true;
-  }, [buscando, lib.editoraSel, editoraAtual]);
+  }, [lib.editoraSel, editoraAtual]);
 
   // Searching "Detective" should find the Omnibus that collects it, not just
   // volumes with the word in the title, so the series a volume draws from are
@@ -322,7 +322,8 @@ export function App() {
   // matches, just those four volumes. Like the volumes, the tab's results ignore
   // the publisher filter.
   const sugestoes = useMemo(() => {
-    const hqs = ordenarSugestoes(lib.volumes, textoBusca, query);
+    // v149: suggestions follow the publisher band, like the tabs.
+    const hqs = ordenarSugestoes(lib.volumes.filter(casaEditora), textoBusca, query);
     const comoVolume = (v) => ({
       tipo: "volume", chave: "v-" + v.id, id: v.id, volume: v, titulo: v.titulo,
       meta: [v.personagem, v.editora].filter(Boolean).join(" · "),
@@ -340,7 +341,7 @@ export function App() {
     } else {
       // v93: with the character filter on, only that character's séries, matched
       // by name alone (the character is already fixed); the HQs below stay whole.
-      const candidatas = lib.series.filter((s) =>
+      const candidatas = lib.series.filter(casaEditora).filter((s) =>
         (!filtroSerie || serieDoGrupo(s, filtroSerie)) &&
         (!filtroAutor || serieTemAutor(edicoesPorSerie[s.id] || [], ownedEdicaoIds, filtroAutor)));
       const porPersonagem = (s) => [
@@ -359,7 +360,7 @@ export function App() {
         });
     }
     return daAba.concat(hqs.slice(0, SUGESTOES_DA_ABA).map((v) => ({ ...comoVolume(v), secao: "HQs" })));
-  }, [tab, lib.volumes, lib.colecoes, lib.series, textoBusca, query, edicoesPorSerie, ownedEdicaoIds, filtroSerie, filtroAutor]);
+  }, [tab, lib.volumes, lib.colecoes, lib.series, textoBusca, query, edicoesPorSerie, ownedEdicaoIds, filtroSerie, filtroAutor, casaEditora]);
 
   // Fold state for the HQs tab's character groups — see lerGruposFechados'
   // own comment for why this stores the closed names, inverted from the
@@ -642,7 +643,7 @@ export function App() {
     // it shows under any publisher it holds a volume from, which is what a
     // crossover saga should do.
     let cs = lib.colecoes.filter((c) => {
-      if (buscando || (lib.editoraSel || ED_TODAS) === ED_TODAS) return true;
+      if ((lib.editoraSel || ED_TODAS) === ED_TODAS) return true;
       const membros = c.membros.map((vid) => lib.volumes.find((v) => v.id === vid)).filter(Boolean);
       if (!membros.length) return (lib.editoraSel || ED_TODAS) === ED_SEM;
       return membros.some(casaEditora);
@@ -866,10 +867,12 @@ export function App() {
     if (!personagensDasSeries.some((o) => o.nome === filtroSerie)) setFiltroSerie("");
   }, [loading, filtroSerie, personagensDasSeries]);
 
-  const autoresDasSeries = useMemo(() => autoresPossuidos(lib.edicoes, ownedEdicaoIds), [lib.edicoes, ownedEdicaoIds]);
+  // v149: the band's séries only, counted by série, like the character filter.
+  const autoresDasSeries = useMemo(() => contarAutoresDasSeries(lib.series.filter(casaEditora), edicoesPorSerie, ownedEdicaoIds), [lib.series, casaEditora, edicoesPorSerie, ownedEdicaoIds]);
   useEffect(() => {
     if (loading || !filtroAutor) return;
-    if (!autoresDasSeries.some((o) => o.nome === filtroAutor)) setFiltroAutor("");
+    // v149: folded, so a casing or accent variant of the saved name keeps the filter.
+    if (!autoresDasSeries.some((o) => dobrar(o.nome) === dobrar(filtroAutor))) setFiltroAutor("");
   }, [loading, filtroAutor, autoresDasSeries]);
 
   const seriesFiltradas = useMemo(() => {
@@ -896,6 +899,28 @@ export function App() {
       }),
     }));
   }, [lib.series, query, casaEditora, filtroSerie, filtroAutor, fixados, edicoesPorSerie, ownedEdicaoIds]);
+
+  // v149: a search that the band empties says how many matches live elsewhere.
+  const foraDaEditora = useMemo(() => {
+    const sel = lib.editoraSel || ED_TODAS;
+    const q = dobrar(query.trim());
+    if (!q || sel === ED_TODAS || loading) return 0;
+    if (tab === "volumes") {
+      if (volumesFiltrados.length) return 0;
+      return lib.volumes.filter((v) => !casaEditora(v) && (textoBusca[v.id] || "").includes(q)).length;
+    }
+    if (tab === "series") {
+      if (seriesFiltradas.length) return 0;
+      return lib.series.filter((s) => !casaEditora(s) && (dobrar(s.nome).includes(q)
+        || personagensDaSerie(s).some((p) => dobrar(p.nome).includes(q))
+        || serieTemAutor(edicoesPorSerie[s.id] || [], ownedEdicaoIds, q, true))).length;
+    }
+    if (tab === "colecoes") {
+      if (colecoesFiltradas.length) return 0;
+      return lib.colecoes.filter((c) => dobrar(c.nome).includes(q)).length;
+    }
+    return 0;
+  }, [lib.editoraSel, query, loading, tab, volumesFiltrados, seriesFiltradas, colecoesFiltradas, lib.volumes, lib.series, lib.colecoes, casaEditora, textoBusca, edicoesPorSerie, ownedEdicaoIds]);
 
   // v141: pin a character to the top of the HQs and Séries tabs, three at most.
   function alternarFixado(personagem) {
@@ -1858,6 +1883,13 @@ export function App() {
 
         {/* Under the cover nothing is drawn while loading: the hub skeleton is
             what shows, and it carries the status line. */}
+        {foraDaEditora > 0 && (
+          <div className="banner busca-fora" role="status">
+            <span>Nada em {editoraAtual ? editoraAtual.nome : "Sem editora"}. {foraDaEditora} {foraDaEditora === 1 ? "resultado" : "resultados"} em outras editoras.</span>
+            <button type="button" className="btn btn-quiet" onClick={() => selecionarEditora(ED_TODAS)}>Ver em todas as editoras</button>
+          </div>
+        )}
+
         {loading && !isHub && (
           <>
             {/* The blocks themselves are hidden from a screen reader, since a

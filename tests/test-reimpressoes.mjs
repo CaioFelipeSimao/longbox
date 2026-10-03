@@ -144,7 +144,8 @@ caixa().click();
 await sleep(100);
 [...m.modal().querySelectorAll("button")].find((b) => b.textContent.trim() === "Salvar").click();
 await sleep(900);
-check("desmarcar remove reimpressão e origem do documento", m.salvo("s1-8") && m.salvo("s1-8").reimpressao === undefined && m.salvo("s1-8").origem === undefined, JSON.stringify(m.salvo("s1-8")));
+// v149: the edição was a reprint, so unticking stores reimpressao:false (the user's "no").
+check("desmarcar grava reimpressao false e tira a origem", m.salvo("s1-8") && m.salvo("s1-8").reimpressao === false && m.salvo("s1-8").origem === undefined, JSON.stringify(m.salvo("s1-8")));
 
 console.log("=== reimpressão coberta pelas originais (v146) ===");
 await m.abrir("Gama");
@@ -157,13 +158,13 @@ check("ficha da coberta diz coberta pelas originais", /Coberta pelas originais/.
 check("ficha da coberta mostra o volume das originais", /Flash vol 1/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
 check("coberta sem volume próprio não diz nenhum volume vinculado", !/Nenhum volume vinculado/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
 await m.fichaDe("s3-2");
-check("ficha da parcial conta as histórias", /Você tem 1 de 2 histórias/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
+check("ficha da parcial conta as histórias", /Você tem 1 de 2 edições originais/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
 await m.fichaDe("s3-3");
 check("origem fora do acervo é dita", /fora do acervo/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
 check("origem mostrada sem o (Volume N)", /Adventure Comics #123/.test(m.ficha()?.textContent || "") && !/\(Volume/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
 check("com história inédita não fica coberta, mesmo tendo as origens", m.tile("s3-4")?.dataset.owned === "false");
 await m.fichaDe("s3-4");
-check("a ficha diz que a história é inédita", /Você tem 2 de 3 histórias/.test(m.ficha()?.textContent || "") && /História inédita · só nesta edição/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
+check("a ficha diz que a história é inédita", /Você tem 2 de 2 edições originais/.test(m.ficha()?.textContent || "") && /História inédita · só nesta edição/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
 // v147: saving through the form keeps fontes (the form does not show them).
 await m.fichaDe("s3-1");
 m.sheet().querySelector('[aria-label="Editar edição"]').click();

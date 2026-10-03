@@ -387,7 +387,7 @@ export function SerieSheet({
                     }
                     return (
                       <div className="cobertura">
-                        <p className="t-small" style={{ margin: "8px 0 6px" }}>Você tem {cob.tenho.length} de {cob.total} histórias</p>
+                        <p className="t-small" style={{ margin: "8px 0 6px" }}>Você tem {cob.tenho.length} de {cob.total - cob.ineditas} {cob.total - cob.ineditas === 1 ? "edição original" : "edições originais"}</p>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                           {selecionada.fontes.map((f, i) => {
                             const tem = cob.tenho.some(mesma(f));

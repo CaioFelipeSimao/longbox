@@ -42,11 +42,12 @@ const SUITES = [
   { args: ["tests/test-arrastar-folha.mjs"], minimo: 14 },
   { args: ["tests/test-barra-busca.mjs"], minimo: 30 },
   { args: ["tests/test-acessibilidade.mjs"], minimo: 24 },
-  { args: ["tests/test-edicoes.mjs"], minimo: 48 },
+  { args: ["tests/test-edicoes.mjs"], minimo: 55 },
   { args: ["tests/test-reimpressoes.mjs"], minimo: 32 },
   { args: ["tests/test-autores.mjs"], minimo: 26 },
   { args: ["tests/test-filtro-autor.mjs"], minimo: 32 },
   { args: ["tests/test-destaque-autor.mjs"], minimo: 27 },
+  { args: ["tests/test-editora-busca.mjs"], minimo: 10 },
 ];
 
 // Lines that report a count which must be zero. Source and CSS dash counts are

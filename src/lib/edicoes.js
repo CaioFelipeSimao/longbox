@@ -44,6 +44,22 @@ export function autoresPossuidos(edicoes, ownedIds) {
   return Object.values(n).sort((x, y) => x.nome.localeCompare(y.nome, "pt-BR"));
 }
 
+// v149: the "Filtrar por autor" options, like the character filter's: only the séries
+// passed in (the publisher band's), counted by série, the first spelling seen kept.
+export function autoresDasSeries(series, edicoesPorSerie, ownedIds) {
+  const n = {};
+  series.forEach((s) => {
+    const nesta = new Map();
+    (edicoesPorSerie[s.id] || []).forEach((e) => {
+      if (!ownedIds.has(e.id)) return;
+      const a = autoresDe(e);
+      FUNCOES.flatMap((f) => a[f]).forEach((nome) => { const k = dobrar(nome); if (!nesta.has(k)) nesta.set(k, nome); });
+    });
+    nesta.forEach((nome, k) => { (n[k] = n[k] || { nome, n: 0 }).n++; });
+  });
+  return Object.values(n).sort((x, y) => x.nome.localeCompare(y.nome, "pt-BR"));
+}
+
 // parcial=false: o nome inteiro (filtro). parcial=true: um pedaco do nome (busca livre).
 export function serieTemAutor(eds, ownedIds, nome, parcial = false) {
   return eds.some((e) => ownedIds.has(e.id) && autoresQueCasam(e, nome, parcial).length > 0);
@@ -75,11 +91,29 @@ export const serieTemReimpressao = (eds) => eds.some(ehReimpressao);
 const chaveSerie = (nome) => dobrar(nome).replace(/\s*\(volume 1\)\s*$/, "").replace(/[^a-z0-9]/g, "");
 const chave = (serieNome, numero) => chaveSerie(serieNome) + "#" + String(numero).trim().toLowerCase();
 
+// v149: a key can hold several edições when two séries fold to the same name ("X-Men",
+// "X Men"); the index keeps them all, with each série's publisher, and `achar` decides.
 export function indiceEdicoes(series, edicoes) {
-  const nomeDe = new Map(series.map((s) => [s.id, s.nome]));
+  const deSerie = new Map(series.map((s) => [s.id, s]));
   const ind = new Map();
-  edicoes.forEach((e) => { if (nomeDe.has(e.serieId)) ind.set(chave(nomeDe.get(e.serieId), e.numero), e); });
+  ind.editoraDe = new Map(series.map((s) => [s.id, s.editora || ""]));
+  edicoes.forEach((e) => {
+    const s = deSerie.get(e.serieId);
+    if (!s) return;
+    const k = chave(s.nome, e.numero);
+    (ind.get(k) || ind.set(k, []).get(k)).push({ edicao: e, editora: s.editora || "" });
+  });
   return ind;
+}
+
+// One candidate: that edição. Several: the one from the reprint's own publisher, if exactly
+// one; otherwise ambiguous, treated as not in the library rather than guessed.
+function achar(ind, f, editora) {
+  const lista = ind.get(chave(f.serie, f.numero));
+  if (!lista || !lista.length) return null;
+  if (lista.length === 1) return lista[0].edicao;
+  const mesma = lista.filter((x) => editora && x.editora === editora);
+  return mesma.length === 1 ? mesma[0].edicao : null;
 }
 
 // null when the edição is not a reprint with sources. Otherwise the sources split into
@@ -89,9 +123,10 @@ export function indiceEdicoes(series, edicoes) {
 export function coberturaDe(e, ind, ownedIds) {
   if (!ehReimpressao(e) || !Array.isArray(e.fontes) || !e.fontes.length) return null;
   const r = { tenho: [], falta: [], fora: [], ineditas: 0, total: e.fontes.length };
+  const editora = ind.editoraDe ? ind.editoraDe.get(e.serieId) : "";
   e.fontes.forEach((f) => {
     if (f.inedita) { r.ineditas++; return; }
-    const alvo = ind.get(chave(f.serie, f.numero));
+    const alvo = achar(ind, f, editora);
     if (!alvo) r.fora.push(f);
     else (ownedIds.has(alvo.id) ? r.tenho : r.falta).push({ ...f, edicao: alvo });
   });
@@ -122,5 +157,8 @@ export function aplicarFormEdicao(atual, form) {
   const fora = { ...atual };
   DO_FORM.forEach((k) => { if (k in form) fora[k] = form[k]; else delete fora[k]; });
   if (!form.reimpressao) delete fora.fontes;
+  // v149: unticking an edição that WAS a reprint stores the user's "no", so the cadastro
+  // skill never marks it again (it only fills reimpressao when the key is absent).
+  if (!form.reimpressao && atual.reimpressao === true) fora.reimpressao = false;
   return fora;
 }

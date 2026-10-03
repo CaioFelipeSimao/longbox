@@ -71,11 +71,8 @@ export function EditoraBar({
       <SegmentedTabs tabs={tabs} tab={tab} onTab={onTab} />
 
       <div className="ed-right">
-        {buscando ? (
-          <span className="ed-note">Buscando em todo o acervo</span>
-        ) : (
-          <span className="ed-note">{contagem}</span>
-        )}
+        {/* v149: the search follows the band now, so the count always tells it. */}
+        <span className="ed-note">{contagem}</span>
         <OpcaoFiltro
           id="filtro-editora"
           rotulo="Editora"

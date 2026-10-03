@@ -774,11 +774,16 @@ if (scenario === "seeded") {
   };
 
   const search = visivel('input[aria-label="Buscar na biblioteca"]');
+  // v149 (user's call): the search follows the band. Under Marvel, "Batman" finds nothing
+  // here, says how many matches live elsewhere, and offers to show every publisher.
   await type(search, "Batman");
   const buscaChars = new Set([...visiveis(".shelf .cover-fb-foot")].map((n) => n.textContent));
-  console.log("  search ignores the filter: " +
-              (buscaChars.has("Batman") ? "PASS" : "FAIL (" + [...buscaChars].join(", ") + ")") +
-              ", and says so " + (htmlVisivel().includes("todo o acervo") ? "PASS" : "FAIL"));
+  const verTodas = [...visiveis("button")].find((b) => b.textContent.trim() === "Ver em todas as editoras");
+  console.log("  search follows the filter: " +
+              (!buscaChars.has("Batman") ? "PASS" : "FAIL (" + [...buscaChars].join(", ") + ")") +
+              ", and says where the matches are " + (/Nada em Marvel\. \d+ resultados? em outras editoras/.test(htmlVisivel().replace(/\s+/g, " ")) && verTodas ? "PASS" : "FAIL"));
+  if (verTodas) verTodas.click();
+  await new Promise((r) => setTimeout(r, 150));
 
   // Searching a series name must find the volume that collects it, even though
   // that name appears nowhere in the volume's own fields.
@@ -796,6 +801,8 @@ if (scenario === "seeded") {
   console.log("  search reaches notes: " +
               (porNota.length === 1 && porNota[0].includes("Morcegos") ? "PASS" : "FAIL (" + porNota.join(", ") + ")"));
 
+  await escolherEditora("Marvel");
+  await new Promise((r) => setTimeout(r, 150));
   await type(search, "");
   console.log("  clearing search restores the filter: " + (countCards() === soMarvel ? "PASS" : "FAIL (" + countCards() + " vs " + soMarvel + ")"));
 
@@ -830,15 +837,14 @@ if (scenario === "seeded") {
   console.log("  rows carry a cover: " +
               (visivel(".sug-row .sug-cover") ? "PASS" : "FAIL"));
 
-  // The whole point of the feature: the publisher you are browsing must not hide
-  // a volume you are looking for.
+  // v149: suggestions follow the publisher band too (the user reversed the old rule).
   if (marvelOpt) {
     await escolherEditora("Marvel");
     await new Promise((r) => setTimeout(r, 150));
     await type(search, "Bat");
     const sFiltrado = sugTitulos();
-    console.log("  ignores the publisher filter: " +
-                (sFiltrado.length === sBat.length ? "PASS" : "FAIL (" + sFiltrado.length + " vs " + sBat.length + ")"));
+    console.log("  follows the publisher filter: " +
+                (sFiltrado.length < sBat.length ? "PASS" : "FAIL (" + sFiltrado.length + " vs " + sBat.length + ")"));
     await escolherEditora("Todas as editoras");
     await new Promise((r) => setTimeout(r, 150));
     await type(search, "Bat");

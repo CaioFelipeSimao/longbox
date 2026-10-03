@@ -90,7 +90,8 @@ const salvo = M2.aplicarFormEdicao(atual, doForm);
 check("formulario muda so os campos dele", salvo.mes === "Maio" && salvo.ano === "1990", j(salvo));
 check("formulario nao apaga fontes nem campos que nao conhece", j(salvo.fontes) === j(atual.fontes) && salvo.extra === 1, j(salvo));
 const desmarcado = M2.aplicarFormEdicao(atual, { id: "q", serieId: "s", numero: "1", mes: "", ano: "", posicao: null });
-check("desmarcar reimpressao tira reimpressao, origem e fontes", !("reimpressao" in desmarcado) && !("origem" in desmarcado) && !("fontes" in desmarcado), j(desmarcado));
+// v149: the edição WAS a reprint, so unticking keeps reimpressao:false (the user's "no").
+check("desmarcar reimpressao tira origem e fontes e grava false", desmarcado.reimpressao === false && !("origem" in desmarcado) && !("fontes" in desmarcado), j(desmarcado));
 check("autores vazios no formulario tiram autores", !("autores" in desmarcado), j(desmarcado));
 check("sem edicao atual usa o formulario", j(M2.aplicarFormEdicao(undefined, doForm)) === j(doForm));
 // An unknown source (a story new to the Giant, or an unreadable grab) is never owned.
@@ -113,6 +114,30 @@ check("edicoesDoAutor vazio nao destaca tudo", j(doAutor(eds, donos, "  ", true)
 check("edicoesDoAutor sem autoria ou posse fica vazio", j(doAutor(eds, new Set(["a"]), "Mark Waid")) === "[]");
 const repetida = { id: "r", autores: { writer: ["Mark Waid"], penciler: ["Mark Waid"], inker: ["Mark Waid"] } };
 check("edicoesDoAutor conta varios papeis uma vez", j(doAutor([repetida], new Set(["r"]), "Mark Waid")) === j([repetida]));
+
+// v149 (review details).
+const M3 = await import("data:text/javascript;base64," + Buffer.from(out.outputFiles[0].text).toString("base64"));
+// 3: unticking an edição that WAS a reprint stores the user's "no".
+const eraReimp = { id: "w", serieId: "s", numero: "212", reimpressao: true, origem: "x", fontes: [{ serie: "S", numero: "1" }] };
+const naoE = M3.aplicarFormEdicao(eraReimp, { id: "w", serieId: "s", numero: "212", mes: "", ano: "", posicao: null });
+check("desmarcar uma reimpressao grava reimpressao false", naoE.reimpressao === false && !("origem" in naoE) && !("fontes" in naoE), j(naoE));
+const nunca = M3.aplicarFormEdicao({ id: "v", serieId: "s", numero: "1" }, { id: "v", serieId: "s", numero: "1", mes: "", ano: "", posicao: null });
+check("edicao que nunca foi reimpressao nao ganha a chave", !("reimpressao" in nunca), j(nunca));
+check("false nao e reimpressao", !M3.ehReimpressao(naoE));
+// 1a: creators offered by série count, only for the séries passed in.
+const serA = { id: "sa", nome: "A", editora: "DC Comics" }, serB = { id: "sb", nome: "B", editora: "Marvel" };
+const porSerie = { sa: [{ id: "a1", autores: { writer: ["Waid"] } }, { id: "a2", autores: { writer: ["Waid"] } }], sb: [{ id: "b1", autores: { writer: ["Waid", "Bendis"] } }] };
+const dono = new Set(["a1", "a2", "b1"]);
+check("autores contam series, nao edicoes", j(M3.autoresDasSeries([serA, serB], porSerie, dono)) === j([{ nome: "Bendis", n: 1 }, { nome: "Waid", n: 2 }]), j(M3.autoresDasSeries([serA, serB], porSerie, dono)));
+check("autores so das series recebidas", j(M3.autoresDasSeries([serA], porSerie, dono)) === j([{ nome: "Waid", n: 1 }]), j(M3.autoresDasSeries([serA], porSerie, dono)));
+// 5: two séries folding to one key: same publisher wins, otherwise not found.
+const sx1 = { id: "x1", nome: "X-Men", editora: "Marvel" }, sx2 = { id: "x2", nome: "X Men", editora: "DC Comics" }, sx3 = { id: "x3", nome: "X.Men", editora: "Marvel" };
+const cat5 = [ed("e1", "x1", "1"), ed("e2", "x2", "1"), ed("e3", "x3", "1")];
+const r5 = ed("r", "x2", "50", { reimpressao: true, fontes: [{ serie: "X-Men", numero: "1" }] });
+const c5 = M3.coberturaDe(r5, M3.indiceEdicoes([sx1, sx2], cat5), new Set(["e2"]), [sx1, sx2]);
+check("colisao: vence a serie da mesma editora", c5.tenho.length === 1 && c5.tenho[0].edicao.id === "e2", j(c5));
+const c5b = M3.coberturaDe(ed("r2", "x2", "51", { reimpressao: true, fontes: [{ serie: "X-Men", numero: "1" }] }), M3.indiceEdicoes([sx1, sx3], cat5), new Set(["e1", "e3"]), [sx1, sx3, sx2]);
+check("colisao sem desempate: origem fica fora do acervo", c5b.fora.length === 1 && c5b.tenho.length === 0, j(c5b));
 
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);
