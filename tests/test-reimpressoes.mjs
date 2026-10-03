@@ -153,6 +153,7 @@ check("a contagem inclui a coberta", /1 de 3 possuídas/.test(contagemG()), cont
 await m.fichaDe("s3-1");
 check("ficha da coberta diz coberta pelas originais", /Coberta pelas originais/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
 check("ficha da coberta mostra o volume das originais", /Flash vol 1/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
+check("coberta sem volume próprio não diz nenhum volume vinculado", !/Nenhum volume vinculado/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
 await m.fichaDe("s3-2");
 check("ficha da parcial conta as histórias", /Você tem 1 de 2 histórias/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
 await m.fichaDe("s3-3");

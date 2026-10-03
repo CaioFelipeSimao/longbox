@@ -386,14 +386,20 @@ export function SerieSheet({
                       </div>
                     );
                   })()}
-                  <p className="t-micro" style={{ margin: "12px 0 6px" }}>Você tem em</p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {volumesQueColetam(selecionada.id).length === 0
-                      ? <span className="chip">Nenhum volume vinculado</span>
-                      : volumesQueColetam(selecionada.id).map((v) => (
-                          <span className="chip" key={v.id}><Check size={12} color="var(--read)" /> <strong>{v.titulo}</strong></span>
-                        ))}
-                  </div>
+                  {/* A covered reprint with no volume of its own already said where its
+                      stories are; "Nenhum volume vinculado" under it would contradict that. */}
+                  {!(volumesQueColetam(selecionada.id).length === 0 && ownedIds.has(selecionada.id)) && (
+                    <>
+                      <p className="t-micro" style={{ margin: "12px 0 6px" }}>Você tem em</p>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {volumesQueColetam(selecionada.id).length === 0
+                          ? <span className="chip">Nenhum volume vinculado</span>
+                          : volumesQueColetam(selecionada.id).map((v) => (
+                              <span className="chip" key={v.id}><Check size={12} color="var(--read)" /> <strong>{v.titulo}</strong></span>
+                            ))}
+                      </div>
+                    </>
+                  )}
                   {/* v102: a missing number can be linked right here, instead of
                       leaving for the volume sheet to find it again. The série's own
                       characters come first; crossovers live under "Outros volumes". */}
