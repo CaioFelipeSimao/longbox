@@ -1076,6 +1076,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .content > .filtros-hqs,
 .content[data-lattice="true"] > .filtros-hqs { position: relative; z-index: 12; }
 .pfiltro { position: relative; min-width: 0; }
+/* v148: clear hit area over the drawn chevron (the field's padding-right), 44px on touch. */
+.pfiltro-seta { position: absolute; top: 0; right: 0; bottom: 0; width: 32px; background: transparent; cursor: pointer; }
+@media (pointer: coarse) { .pfiltro-seta { width: 44px; } }
 .pfiltro-input { cursor: pointer; text-overflow: ellipsis; }
 .pfiltro-input:focus { cursor: text; }
 .pfiltro-input::placeholder { color: var(--text); }

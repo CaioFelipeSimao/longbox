@@ -45,7 +45,7 @@ const SUITES = [
   { args: ["tests/test-edicoes.mjs"], minimo: 48 },
   { args: ["tests/test-reimpressoes.mjs"], minimo: 32 },
   { args: ["tests/test-autores.mjs"], minimo: 26 },
-  { args: ["tests/test-filtro-autor.mjs"], minimo: 22 },
+  { args: ["tests/test-filtro-autor.mjs"], minimo: 32 },
   { args: ["tests/test-destaque-autor.mjs"], minimo: 27 },
 ];
 

@@ -208,6 +208,21 @@ export function PersonagemFiltro({ id = "filtro-personagem", valor, opcoes, onCh
         autoComplete="off"
         spellCheck={false}
       />
+      {/* v148: the chevron is the field's background, so a tap on it opened the
+          list like the text did and nothing closed it there. A clear button over
+          it toggles; the text area still only opens (that is where you type). */}
+      <button
+        type="button"
+        className="pfiltro-seta"
+        tabIndex={-1}
+        aria-label={aberta ? "Fechar lista" : "Abrir lista"}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => {
+          if (aberta) { fechar(); if (campo.current) campo.current.blur(); return; }
+          if (campo.current && document.activeElement !== campo.current) campo.current.focus();
+          else abrir();
+        }}
+      />
       {aberta && (
         <div
           className="sug pfiltro-lista"

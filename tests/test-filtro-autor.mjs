@@ -117,6 +117,21 @@ check("Mark Waid mostra só s1, sem s2 ou s3 não possuída", linhas(m).length =
 check("contador conta um autor", conta(m) === "1", conta(m));
 // v147: one série is "1 série", not "1 séries".
 const corpo = m.window.document.body.textContent;
+// v148: the chevron toggles the list; the text area still only opens it.
+for (const id of ["filtro-autor-series", "filtro-personagem-series"]) {
+  const seta = () => m.root.querySelector("#" + id)?.parentElement.querySelector(".pfiltro-seta");
+  const lista = () => m.root.querySelector("#" + id + "-lista");
+  check(id + ": a setinha é um botão", seta()?.tagName === "BUTTON" && /lista/.test(seta()?.getAttribute("aria-label") || ""), seta()?.outerHTML);
+  seta()?.click(); await sleep(80);
+  check(id + ": tocar na setinha abre", !!lista());
+  seta()?.click(); await sleep(80);
+  check(id + ": tocar de novo fecha", !lista());
+  m.root.querySelector("#" + id)?.click(); await sleep(80);
+  check(id + ": tocar no texto abre", !!lista());
+  m.root.querySelector("#" + id)?.click(); await sleep(80);
+  check(id + ": tocar no texto de novo não fecha", !!lista());
+  seta()?.click(); await sleep(80);
+}
 check("contador no singular com uma série", /(^|\D)1 série(?!s)/.test(corpo) && !/(^|\D)1 séries/.test(corpo), (corpo.match(/\d+ séries?/) || [""])[0]);
 check("autor salvo na sessão", m.window.sessionStorage.getItem("longbox:filtro-autor") === "Mark Waid");
 await escolher(m, "filtro-personagem-series", "Batman");
