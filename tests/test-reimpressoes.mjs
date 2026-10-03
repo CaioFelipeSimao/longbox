@@ -42,7 +42,7 @@ async function montar() {
       status: "nao_lida", notas: "", edicoesColetadasIds: ["s1-1", "s1-2", "s1-7"],
     }] }],
     ["library/colecoes", { items: [] }],
-    ["library/series", { items: [serie("s1", "Alfa", 8), serie("s2", "Beta", 2), serie("s3", "Gama", 3)] }],
+    ["library/series", { items: [serie("s1", "Alfa", 8), serie("s2", "Beta", 2), serie("s3", "Gama", 4)] }],
     ["library/cores", { mapa: {} }],
     ["edicoes/s1", { items: s1 }],
     ["edicoes/s2", { items: [ed("s2", "1"), ed("s2", "2")] }],
@@ -51,6 +51,8 @@ async function montar() {
       ed("s3", "1", { reimpressao: true, origem: "Alfa #1, #2", fontes: [{ serie: "Alfa", numero: "1" }, { serie: "Alfa", numero: "2" }] }),
       ed("s3", "2", { reimpressao: true, origem: "Alfa #1, #3", fontes: [{ serie: "Alfa", numero: "1" }, { serie: "Alfa", numero: "3" }] }),
       ed("s3", "3", { reimpressao: true, origem: "Alfa #1; Adventure Comics #123", fontes: [{ serie: "Alfa", numero: "1" }, { serie: "Adventure Comics (Volume 1)", numero: "123" }] }),
+      // v147: owns every reprinted source but carries a story printed nowhere else.
+      ed("s3", "4", { reimpressao: true, origem: "Alfa #1, #2", fontes: [{ serie: "Alfa", numero: "1" }, { serie: "Alfa", numero: "2" }, { inedita: true }] }),
     ] }],
   ]);
   const makeDoc = (path) => ({
@@ -91,7 +93,7 @@ async function montar() {
     if (!sheet().querySelector('.tile[data-ed="' + id + '"][data-sel="true"]')) { sheet().querySelector('.tile[data-ed="' + id + '"]').click(); await sleep(100); }
   };
   const salvo = (id) => (docs.get("edicoes/s1").items || []).find((e) => e.id === id);
-  return { root, erros, sheet, tile, abrir, toggle, ficha, fichaDe, modal, digitar, salvo, window };
+  return { root, erros, sheet, tile, abrir, toggle, ficha, fichaDe, modal, digitar, salvo, window, docs };
 }
 
 console.log("=== reimpressões na série ===");
@@ -149,7 +151,7 @@ await m.abrir("Gama");
 const contagemG = () => m.sheet().querySelector(".faltantes-cont .num")?.textContent.replace(/\s+/g, " ").trim();
 check("coberta conta como possuída", m.tile("s3-1")?.dataset.owned === "true");
 check("parcial continua faltando", m.tile("s3-2")?.dataset.owned === "false" && m.tile("s3-3")?.dataset.owned === "false");
-check("a contagem inclui a coberta", /1 de 3 possuídas/.test(contagemG()), contagemG());
+check("a contagem inclui a coberta", /1 de 4 possuídas/.test(contagemG()), contagemG());
 await m.fichaDe("s3-1");
 check("ficha da coberta diz coberta pelas originais", /Coberta pelas originais/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
 check("ficha da coberta mostra o volume das originais", /Flash vol 1/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
@@ -159,6 +161,17 @@ check("ficha da parcial conta as histórias", /Você tem 1 de 2 histórias/.test
 await m.fichaDe("s3-3");
 check("origem fora do acervo é dita", /fora do acervo/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
 check("origem mostrada sem o (Volume N)", /Adventure Comics #123/.test(m.ficha()?.textContent || "") && !/\(Volume/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
+check("com história inédita não fica coberta, mesmo tendo as origens", m.tile("s3-4")?.dataset.owned === "false");
+await m.fichaDe("s3-4");
+check("a ficha diz que a história é inédita", /Você tem 2 de 3 histórias/.test(m.ficha()?.textContent || "") && /História inédita · só nesta edição/.test(m.ficha()?.textContent || ""), m.ficha()?.textContent);
+// v147: saving through the form keeps fontes (the form does not show them).
+await m.fichaDe("s3-1");
+m.sheet().querySelector('[aria-label="Editar edição"]').click();
+await sleep(200);
+[...m.modal().querySelectorAll("button")].find((b) => b.textContent.trim() === "Salvar").click();
+await sleep(900);
+const s31 = (m.docs.get("edicoes/s3").items || []).find((e) => e.id === "s3-1");
+check("salvar pelo formulário mantém as fontes", Array.isArray(s31?.fontes) && s31.fontes.length === 2, JSON.stringify(s31));
 await m.abrir("Alfa");
 check("a série de origem não muda", /3 de 8 possuídas/.test(contagemG() || ""), contagemG());
 check("a edição antiga abre a ficha sem erro", (() => { m.tile("s1-1").click(); return true; })());

@@ -6,7 +6,7 @@ import {
   ACCENT_HEX, DOC_LIMIT, ED_SEM, ED_TODAS, EMPTY_LIB, QUASE_FECHANDO, SESSION_SEED, TABS,
   TIPOS, editoraDe, seededPick, slugify, tiposDaEditora, TIPOS_COMUNS, STATUS } from "../lib/constantes";
 import { parseNum, porFixados, uid } from "../lib/util";
-import { autoresDe, parseAutores, textoAutores, autoresPossuidos, serieTemAutor, indiceEdicoes, coberturaDe, edicoesCobertas } from "../lib/edicoes";
+import { autoresDe, parseAutores, textoAutores, autoresPossuidos, serieTemAutor, indiceEdicoes, coberturaDe, edicoesCobertas, aplicarFormEdicao } from "../lib/edicoes";
 import { COR_LONGBOX, CoresContext, swatchColors, tintaSobre } from "../lib/cores";
 import {
   anoRange, bytesOf, deleteColecao, deleteEdicao, deleteSerie, deleteVolume, ensureAvulsa,
@@ -229,13 +229,15 @@ export function App() {
   // (tiles, counts, faltantes), the user's rule. This is the one place "owned" is
   // computed, so every screen follows. Sources are checked against the shelf only.
   const indiceCatalogo = useMemo(() => indiceEdicoes(lib.series, lib.edicoes), [lib.series, lib.edicoes]);
+  // v147: only these can be covered, so a shelf change walks a handful, not 12,800.
+  const reimpressoesComFontes = useMemo(() => lib.edicoes.filter((e) => e.reimpressao === true && Array.isArray(e.fontes) && e.fontes.length), [lib.edicoes]);
   const ownedEdicaoIds = useMemo(() => {
-    const cobertas = edicoesCobertas(lib.series, lib.edicoes, possuidasFisicas);
+    const cobertas = edicoesCobertas(indiceCatalogo, reimpressoesComFontes, possuidasFisicas);
     if (!cobertas.size) return possuidasFisicas;
     const s = new Set(possuidasFisicas);
     cobertas.forEach((id) => s.add(id));
     return s;
-  }, [lib.series, lib.edicoes, possuidasFisicas]);
+  }, [indiceCatalogo, reimpressoesComFontes, possuidasFisicas]);
   const coberturaDaEdicao = useCallback((e) => coberturaDe(e, indiceCatalogo, possuidasFisicas), [indiceCatalogo, possuidasFisicas]);
 
   const volumesQueColetam = useCallback((edId) => edicaoParaVolumes[edId] || [], [edicaoParaVolumes]);
@@ -987,7 +989,8 @@ export function App() {
       posicao: edicaoForm.posicao.trim() !== "" && !isNaN(parseFloat(edicaoForm.posicao)) ? parseFloat(edicaoForm.posicao) : null,
     };
     const next = payload.id
-      ? { ...lib, edicoes: lib.edicoes.map((e) => (e.id === payload.id ? payload : e)) }
+      // v147: onto the edição as it is now, not the copy taken when the form opened.
+      ? { ...lib, edicoes: lib.edicoes.map((e) => (e.id === payload.id ? aplicarFormEdicao(e, payload) : e)) }
       : { ...lib, edicoes: [...lib.edicoes, { ...payload, id: uid() }] };
     persist(next);
     setShowEdicaoForm(false);

@@ -42,8 +42,8 @@ const SUITES = [
   { args: ["tests/test-arrastar-folha.mjs"], minimo: 14 },
   { args: ["tests/test-barra-busca.mjs"], minimo: 30 },
   { args: ["tests/test-acessibilidade.mjs"], minimo: 24 },
-  { args: ["tests/test-edicoes.mjs"], minimo: 31 },
-  { args: ["tests/test-reimpressoes.mjs"], minimo: 29 },
+  { args: ["tests/test-edicoes.mjs"], minimo: 41 },
+  { args: ["tests/test-reimpressoes.mjs"], minimo: 32 },
   { args: ["tests/test-autores.mjs"], minimo: 26 },
   { args: ["tests/test-filtro-autor.mjs"], minimo: 21 },
 ];

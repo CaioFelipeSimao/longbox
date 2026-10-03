@@ -356,7 +356,7 @@ export function SerieSheet({
                     const cob = coberturaDaEdicao ? coberturaDaEdicao(selecionada) : null;
                     if (!cob) return null;
                     const mesma = (a) => (b) => a.serie === b.serie && a.numero === b.numero;
-                    const nome = (f) => f.serie.replace(/\s*\(Volume \d+\)$/i, "") + " #" + f.numero;
+                    const nome = (f) => f.inedita ? "História inédita" : f.serie.replace(/\s*\(Volume \d+\)$/i, "") + " #" + f.numero;
                     if (cob.tenho.length === cob.total) {
                       const vols = [...new Map(cob.tenho.flatMap((f) => volumesQueColetam(f.edicao.id)).map((v) => [v.id, v])).values()];
                       return (
@@ -378,7 +378,7 @@ export function SerieSheet({
                             return (
                               <span className="chip" key={i} data-tem={tem ? "true" : undefined}>
                                 {tem && <Check size={12} color="var(--read)" />} {nome(f)}
-                                {!tem && <span className="muted">{fora ? " · fora do acervo" : " · falta"}</span>}
+                                {!tem && <span className="muted">{f.inedita ? " · só nesta edição" : fora ? " · fora do acervo" : " · falta"}</span>}
                               </span>
                             );
                           })}

@@ -71,12 +71,37 @@ check("(Volume 2) nao casa serie sem sufixo", coberturaDe(ed("y", "f1", "2", { r
 check("reimpressao sem fontes nao tem cobertura", coberturaDe(catalogo[6], ind, so107) === null);
 check("edicao comum nao tem cobertura", coberturaDe(catalogo[0], ind, so107) === null);
 const todas = new Set(["f107", "f113", "af32"]);
-const cob = edicoesCobertas(series, catalogo, todas);
+const cob = edicoesCobertas(indiceEdicoes(series, catalogo), catalogo, todas);
 check("coberta quando tem todas as origens", cob.has("g1") && cob.has("g3"), j([...cob]));
 check("nao coberta com origem fora do acervo", !cob.has("g2"));
-check("nao coberta com origem faltando", !edicoesCobertas(series, catalogo, so107).has("g1"));
+check("nao coberta com origem faltando", !edicoesCobertas(indiceEdicoes(series, catalogo), catalogo, so107).has("g1"));
 check("reimpressao coberta nao cobre outra", !cob.has("g5"));
-check("possuida fisicamente nao entra no conjunto de cobertas", !edicoesCobertas(series, catalogo, new Set([...todas, "g1"])).has("g1"));
+check("possuida fisicamente nao entra no conjunto de cobertas", !edicoesCobertas(indiceEdicoes(series, catalogo), catalogo, new Set([...todas, "g1"])).has("g1"));
+
+// Final review fixes (v147).
+const M2 = await import("data:text/javascript;base64," + Buffer.from(out.outputFiles[0].text).toString("base64"));
+// "José Marzan, Jr." is one person: 74 owned edições carry a ", Jr." name.
+check("parseAutores mantem o Jr. no nome", j(M2.parseAutores("José Marzan, Jr., Mike Deodato, Jr.; Karl Story")) === j(["José Marzan, Jr.", "Mike Deodato, Jr.", "Karl Story"]), j(M2.parseAutores("José Marzan, Jr., Mike Deodato, Jr.; Karl Story")));
+check("parseAutores mantem Sr. e III", j(M2.parseAutores("A B, Sr., C D III, E F, III")) === j(["A B, Sr.", "C D III", "E F, III"]), j(M2.parseAutores("A B, Sr., C D III, E F, III")));
+// A form opened before a remote write must not erase what arrived meanwhile.
+const atual = { id: "q", serieId: "s", numero: "1", mes: "", ano: "", posicao: null, reimpressao: true, origem: "x", fontes: [{ serie: "S", numero: "1" }], autores: { writer: ["Novo"] }, extra: 1 };
+const doForm = { id: "q", serieId: "s", numero: "1", mes: "Maio", ano: "1990", posicao: null, reimpressao: true, origem: "x", autores: { writer: ["Novo"] } };
+const salvo = M2.aplicarFormEdicao(atual, doForm);
+check("formulario muda so os campos dele", salvo.mes === "Maio" && salvo.ano === "1990", j(salvo));
+check("formulario nao apaga fontes nem campos que nao conhece", j(salvo.fontes) === j(atual.fontes) && salvo.extra === 1, j(salvo));
+const desmarcado = M2.aplicarFormEdicao(atual, { id: "q", serieId: "s", numero: "1", mes: "", ano: "", posicao: null });
+check("desmarcar reimpressao tira reimpressao, origem e fontes", !("reimpressao" in desmarcado) && !("origem" in desmarcado) && !("fontes" in desmarcado), j(desmarcado));
+check("autores vazios no formulario tiram autores", !("autores" in desmarcado), j(desmarcado));
+check("sem edicao atual usa o formulario", j(M2.aplicarFormEdicao(undefined, doForm)) === j(doForm));
+// An unknown source (a story new to the Giant, or an unreadable grab) is never owned.
+const ined = ed("i1", "f1", "205", { reimpressao: true, fontes: [{ serie: "The Flash (Volume 1)", numero: "107" }, { inedita: true }] });
+const ci = M2.coberturaDe(ined, M2.indiceEdicoes(series, catalogo), new Set(["f107"]));
+check("historia inedita conta no total e nunca e tida", ci.total === 2 && ci.tenho.length === 1 && ci.ineditas === 1, j(ci));
+// The index is built once and passed in; covered reprints come only from those with fontes.
+const ind2 = M2.indiceEdicoes(series, catalogo);
+const cob2 = M2.edicoesCobertas(ind2, catalogo, todas);
+check("edicoesCobertas usa o indice recebido", cob2.has("g1") && cob2.has("g3") && !cob2.has("g2") && !cob2.has("g5"), j([...cob2]));
+check("inedita impede a cobertura", !M2.edicoesCobertas(ind2, [...catalogo, ined], new Set(["f107"])).has("i1"));
 
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);
