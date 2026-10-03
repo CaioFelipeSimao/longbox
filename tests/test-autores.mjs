@@ -34,18 +34,18 @@ async function montar() {
   const s1 = [
     ed("s1", "1", { autores: { writer: ["Mark Waid"], penciler: ["Mike Wieringo", "Paul Ryan"], inker: [] }, reimpressao: true, origem: "Flash #1 (1987)" }),
     ed("s1", "2"),
-    ed("s1", "3", { autores: { writer: ["Grant Morrison"] } }),
+    ed("s1", "3", { autores: { writer: ["Grant Morrison", "Waid Exclusivo"] } }),
   ];
   const docs = new Map([
     ["library/volumes", { items: [{
       id: "v1", titulo: "Flash vol 1", personagem: "Flash", tipo: "Trade Paperback", editora: "DC Comics", ano: "2020",
       status: "nao_lida", notas: "", edicoesColetadasIds: ["s1-1", "s1-2"],
-    }] }],
+    }, { id: "v2", titulo: "Outro volume", personagem: "Outro", tipo: "Trade Paperback", editora: "DC Comics", ano: "2020", status: "nao_lida", notas: "", edicoesColetadasIds: ["s2-1", "ausente"] }] }],
     ["library/colecoes", { items: [] }],
     ["library/series", { items: [serie("s1", "Alfa", 3), serie("s2", "Beta", 2)] }],
     ["library/cores", { mapa: {} }],
     ["edicoes/s1", { items: s1 }],
-    ["edicoes/s2", { items: [ed("s2", "1"), ed("s2", "2")] }],
+    ["edicoes/s2", { items: [ed("s2", "1"), ed("s2", "2", { autores: { writer: ["Mark Waid", "Waid Exclusivo"] } })] }],
   ]);
   const makeDoc = (path) => ({
     path,
@@ -124,6 +124,36 @@ await salvar();
 const e2 = m.salvo("s1-2");
 check("edição sem nomes continua sem a chave autores", e2 && !("autores" in e2), JSON.stringify(e2));
 check("sem erros", m.erros.length === 0, m.erros[0]);
+
+console.log("=== busca por autor ===");
+const b = await montar();
+const trocarAba = async (idx) => { b.root.querySelectorAll(".segmented button")[idx].click(); await sleep(120); };
+const buscar = async (q) => { b.digitar(b.root.querySelector("#busca-acervo"), q); await sleep(120); };
+const ativa = () => b.root.querySelector('.aba[data-ativa="true"]');
+const volumes = () => [...ativa().querySelectorAll(".vol")].map((v) => v.textContent).join(" | ");
+const series = () => [...ativa().querySelectorAll(".serie-row")].map((v) => v.textContent).join(" | ");
+await trocarAba(0);
+for (const q of ["waid", "WAID", "wáid", "Wieringo"]) {
+  await buscar(q);
+  check("HQs: autor possuído por " + q + " encontra só v1", volumes().includes("Flash vol 1") && !volumes().includes("Outro volume"), volumes());
+}
+await buscar("Waid Exclusivo");
+check("HQs: autor não possuído mostra Nada encontrado", volumes() === "" && ativa().textContent.includes("Nada encontrado"));
+await trocarAba(2);
+for (const q of ["waid", "WAID", "wáid", "Wieringo"]) {
+  await buscar(q);
+  check("Séries: autor possuído por " + q + " encontra só Alfa", series().includes("Alfa") && !series().includes("Beta"), series());
+}
+await buscar("Waid Exclusivo");
+check("Séries: autor não possuído mostra Nada encontrado", series() === "" && ativa().textContent.includes("Nada encontrado"));
+await buscar("Autor inexistente");
+check("Séries: autor desconhecido mostra Nada encontrado", ativa().textContent.includes("Nada encontrado"));
+await trocarAba(0);
+await buscar("Autor inexistente");
+check("HQs: autor desconhecido mostra Nada encontrado", ativa().textContent.includes("Nada encontrado"));
+check("busca sem erros em edição antiga ou id ausente", b.erros.length === 0, b.erros[0]);
+b.window.close();
+m.window.close();
 
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);

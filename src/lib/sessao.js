@@ -231,6 +231,27 @@ export function salvarFiltroSeries(personagem) {
   }
 }
 
+export const FILTRO_AUTOR_KEY = "longbox:filtro-autor";
+
+export function lerFiltroAutor() {
+  try {
+    if (typeof window === "undefined") return "";
+    return window.sessionStorage.getItem(FILTRO_AUTOR_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function salvarFiltroAutor(autor) {
+  try {
+    if (typeof window === "undefined") return;
+    if (!autor) window.sessionStorage.removeItem(FILTRO_AUTOR_KEY);
+    else window.sessionStorage.setItem(FILTRO_AUTOR_KEY, autor);
+  } catch {
+    // Not remembered here, and the filter still works for this page load.
+  }
+}
+
 // Accent- and case-blind, so "robin" finds "Róbin" and "asa" finds "Asa Noturna".
 export function dobrar(s) {
   return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();

@@ -3,6 +3,7 @@ import { Search, Layers, Library, X } from "lucide-react";
 
 import { coverColors, useCores } from "../lib/cores";
 import { CoverArt } from "./VolumeCard";
+import { dobrar } from "../lib/sessao";
 
 export const MAX_SUGESTOES = 8;
 
@@ -10,13 +11,13 @@ export const MAX_SUGESTOES = 8;
    almost always the one you meant, and a hit that only exists in the notes is
    almost never it, so the two cannot sit side by side unordered. */
 export function ordenarSugestoes(volumes, textoBusca, q) {
-  const termo = q.trim().toLowerCase();
+  const termo = dobrar(q.trim());
   if (!termo) return [];
   const achados = [];
   volumes.forEach((v) => {
-    if (!(textoBusca[v.id] || "").includes(termo)) return;
-    const titulo = (v.titulo || "").toLowerCase();
-    const personagem = (v.personagem || "").toLowerCase();
+    if (!dobrar(textoBusca[v.id]).includes(termo)) return;
+    const titulo = dobrar(v.titulo);
+    const personagem = dobrar(v.personagem);
     const peso = titulo.startsWith(termo) ? 0
       : titulo.includes(termo) ? 1
       : personagem.includes(termo) ? 2
@@ -32,12 +33,12 @@ export function ordenarSugestoes(volumes, textoBusca, q) {
 // What counts as a match mirrors each tab's own search filter (v73).
 export const SUGESTOES_DA_ABA = 4;
 export function ordenarPorNome(itens, termoBruto, secundario) {
-  const termo = termoBruto.trim().toLowerCase();
+  const termo = dobrar(termoBruto.trim());
   if (!termo) return [];
   const achados = [];
   itens.forEach((it) => {
-    const nome = (it.nome || "").toLowerCase();
-    const extra = secundario ? secundario(it).toLowerCase() : "";
+    const nome = dobrar(it.nome);
+    const extra = secundario ? dobrar(secundario(it)) : "";
     const peso = nome.startsWith(termo) ? 0 : nome.includes(termo) ? 1 : extra.includes(termo) ? 2 : -1;
     if (peso >= 0) achados.push({ it, peso });
   });

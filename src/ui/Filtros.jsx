@@ -125,7 +125,7 @@ export function OpcaoFiltro({ id, valor, todos, opcoes, onChange, rotulo, acao, 
 /* The character filter on the HQs tab: a field you can type into that narrows a
    list, with "Todos os personagens" always first. Closed, it shows the choice;
    open, it is a search over the choices. Keys and outside-click follow SearchBox. */
-export function PersonagemFiltro({ id = "filtro-personagem", valor, opcoes, onChange }) {
+export function PersonagemFiltro({ id = "filtro-personagem", valor, opcoes, onChange, rotulo = "Filtrar por personagem", todos = "Todos os personagens", lista: nomeLista = "Personagens", semCor = false, vazio = "Nenhum personagem com" }) {
   const [aberta, setAberta] = useState(false);
   const [texto, setTexto] = useState("");
   const [idx, setIdx] = useState(0);
@@ -184,7 +184,7 @@ export function PersonagemFiltro({ id = "filtro-personagem", valor, opcoes, onCh
     }
   };
 
-  const optId = (o) => "pf-" + (o.nome ? dobrar(o.nome).replace(/[^a-z0-9]+/g, "-") : "todos");
+  const optId = (o) => id + "-pf-" + (o.nome ? dobrar(o.nome).replace(/[^a-z0-9]+/g, "-") : "todos");
 
   return (
     <div className="pfiltro" ref={raiz}>
@@ -198,8 +198,8 @@ export function PersonagemFiltro({ id = "filtro-personagem", valor, opcoes, onCh
         onFocus={abrir}
         onClick={() => { if (!aberta) abrir(); }}
         onKeyDown={tecla}
-        placeholder={aberta && valor ? valor : "Todos os personagens"}
-        aria-label="Filtrar por personagem"
+        placeholder={aberta && valor ? valor : todos}
+        aria-label={rotulo}
         role="combobox"
         aria-expanded={aberta ? "true" : "false"}
         aria-controls={id + "-lista"}
@@ -213,11 +213,11 @@ export function PersonagemFiltro({ id = "filtro-personagem", valor, opcoes, onCh
           className="sug pfiltro-lista"
           id={id + "-lista"}
           role="listbox"
-          aria-label="Personagens"
+          aria-label={nomeLista}
           onMouseDown={(e) => e.preventDefault()}
         >
           {lista.length === 0 ? (
-            <p className="sug-empty">Nenhum personagem com "{texto.trim()}".</p>
+            <p className="sug-empty">{vazio} "{texto.trim()}".</p>
           ) : (
             lista.map((o, i) => (
               <button
@@ -231,12 +231,12 @@ export function PersonagemFiltro({ id = "filtro-personagem", valor, opcoes, onCh
                 onMouseEnter={() => setIdx(i)}
                 onClick={() => escolher(o)}
               >
-                {o.nome ? (
+                {!semCor && (o.nome ? (
                   <span className="group-swatch" style={{ background: swatchColors(specForCharacter(o.nome, cores), 0).edge }} />
                 ) : (
                   <span className="pfiltro-todos" aria-hidden="true" />
-                )}
-                <span className="sug-title truncate">{o.nome || "Todos os personagens"}</span>
+                ))}
+                <span className="sug-title truncate">{o.nome || todos}</span>
                 {o.n != null && <span className="pfiltro-n">{o.n}</span>}
                 {o.nome === valor && <Check size={14} className="pfiltro-check" />}
               </button>

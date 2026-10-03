@@ -6,7 +6,7 @@ import {
   ACCENT_HEX, DOC_LIMIT, ED_SEM, ED_TODAS, EMPTY_LIB, QUASE_FECHANDO, SESSION_SEED, TABS,
   TIPOS, editoraDe, seededPick, slugify, tiposDaEditora, TIPOS_COMUNS, STATUS } from "../lib/constantes";
 import { parseNum, porFixados, uid } from "../lib/util";
-import { autoresDe, parseAutores } from "../lib/edicoes";
+import { autoresDe, parseAutores, textoAutores, autoresPossuidos, serieTemAutor } from "../lib/edicoes";
 import { COR_LONGBOX, CoresContext, swatchColors, tintaSobre } from "../lib/cores";
 import {
   anoRange, bytesOf, deleteColecao, deleteEdicao, deleteSerie, deleteVolume, ensureAvulsa,
@@ -22,7 +22,7 @@ import { useCelular, useHubUnlock, useLarguraDaBarra, usePonteiroFino } from "..
 import {
   lerAbaSalva, lerColecoesFechadas, lerFiltroSeries, lerFiltros, lerGruposAbertos, lerGruposFechados,
   lerOrdemRecolhida, lerAbaBase, salvarAba, salvarAbaBase,salvarColecoesFechadas, salvarFiltroSeries, salvarFiltros, salvarGruposAbertos,
-  salvarGruposFechados, salvarOrdemRecolhida,
+  salvarGruposFechados, salvarOrdemRecolhida, dobrar, lerFiltroAutor, salvarFiltroAutor,
 } from "../lib/sessao";
 import { Aba, Modal, Toast } from "../ui/base";
 import { SUGESTOES_DA_ABA, SearchBox, ordenarPorNome, ordenarSugestoes } from "../ui/Busca";
@@ -244,6 +244,7 @@ export function App() {
   const [filtroTipo, setFiltroTipo] = useState(filtrosSalvos.tipo);
   const [filtroPersonagem, setFiltroPersonagem] = useState(filtrosSalvos.personagem);
   const [filtroSerie, setFiltroSerie] = useState(lerFiltroSeries);
+  const [filtroAutor, setFiltroAutor] = useState(lerFiltroAutor);
   const [showFiltros, setShowFiltros] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   // v114: a cover picked in the "Novo volume" form, uploaded once the volume exists.
@@ -259,8 +260,9 @@ export function App() {
   // filtered shelf with nothing on screen saying so.
   const filtrosAtivos = [filtroStatus, filtroTipo, filtroPersonagem].filter(Boolean).length;
   useEffect(() => { salvarFiltroSeries(filtroSerie); }, [filtroSerie]);
+  useEffect(() => { salvarFiltroAutor(filtroAutor); }, [filtroAutor]);
   // What the filter button counts: each tab has its own filters.
-  const filtrosAtivosAba = tab === "series" ? (filtroSerie ? 1 : 0) : filtrosAtivos;
+  const filtrosAtivosAba = tab === "series" ? (filtroSerie ? 1 : 0) + (filtroAutor ? 1 : 0) : filtrosAtivos;
 
   const buscando = query.trim().length > 0;
   const editoraAtual = useMemo(
@@ -284,7 +286,8 @@ export function App() {
   // part of its searchable text.
   const textoBusca = useMemo(() => {
     const serieDaEdicao = {};
-    lib.edicoes.forEach((e) => { serieDaEdicao[e.id] = e.serieId; });
+    const edicaoPorId = {};
+    lib.edicoes.forEach((e) => { serieDaEdicao[e.id] = e.serieId; edicaoPorId[e.id] = e; });
     const mapa = {};
     lib.volumes.forEach((v) => {
       const series = new Set();
@@ -292,8 +295,9 @@ export function App() {
         const s = serieById[serieDaEdicao[eid]];
         if (s) series.add(s.nome);
       });
-      mapa[v.id] = [v.titulo, v.personagem, v.editora, v.notas, ...series]
-        .filter(Boolean).join(" ").toLowerCase();
+      const autores = v.edicoesColetadasIds.map((eid) => textoAutores(edicaoPorId[eid]));
+      mapa[v.id] = dobrar([v.titulo, v.personagem, v.editora, v.notas, ...series, ...autores]
+        .filter(Boolean).join(" "));
     });
     return mapa;
   }, [lib.volumes, lib.edicoes, serieById]);
@@ -321,8 +325,13 @@ export function App() {
     } else {
       // v93: with the character filter on, only that character's séries, matched
       // by name alone (the character is already fixed); the HQs below stay whole.
-      const candidatas = filtroSerie ? lib.series.filter((s) => serieDoGrupo(s, filtroSerie)) : lib.series;
-      const porPersonagem = filtroSerie ? undefined : (s) => personagensDaSerie(s).map((p) => p.nome).join(" ");
+      const candidatas = lib.series.filter((s) =>
+        (!filtroSerie || serieDoGrupo(s, filtroSerie)) &&
+        (!filtroAutor || serieTemAutor(edicoesPorSerie[s.id] || [], ownedEdicaoIds, filtroAutor)));
+      const porPersonagem = (s) => [
+        ...(!filtroSerie ? personagensDaSerie(s).map((p) => p.nome) : []),
+        ...(edicoesPorSerie[s.id] || []).filter((e) => ownedEdicaoIds.has(e.id)).map(textoAutores),
+      ].join(" ");
       daAba = ordenarPorNome(candidatas, query, porPersonagem)
         .slice(0, SUGESTOES_DA_ABA).map((s) => {
           const eds = edicoesPorSerie[s.id] || [];
@@ -335,7 +344,7 @@ export function App() {
         });
     }
     return daAba.concat(hqs.slice(0, SUGESTOES_DA_ABA).map((v) => ({ ...comoVolume(v), secao: "HQs" })));
-  }, [tab, lib.volumes, lib.colecoes, lib.series, textoBusca, query, edicoesPorSerie, ownedEdicaoIds, filtroSerie]);
+  }, [tab, lib.volumes, lib.colecoes, lib.series, textoBusca, query, edicoesPorSerie, ownedEdicaoIds, filtroSerie, filtroAutor]);
 
   // Fold state for the HQs tab's character groups — see lerGruposFechados'
   // own comment for why this stores the closed names, inverted from the
@@ -400,7 +409,7 @@ export function App() {
   const volumesFiltrados = useMemo(() => {
     let vs = lib.volumes.filter(casaEditora);
     if (query.trim()) {
-      const q = query.toLowerCase();
+      const q = dobrar(query.trim());
       vs = vs.filter((v) => (textoBusca[v.id] || "").includes(q));
     }
     if (filtroStatus) vs = vs.filter((v) => v.status === filtroStatus);
@@ -842,15 +851,22 @@ export function App() {
     if (!personagensDasSeries.some((o) => o.nome === filtroSerie)) setFiltroSerie("");
   }, [loading, filtroSerie, personagensDasSeries]);
 
+  const autoresDasSeries = useMemo(() => autoresPossuidos(lib.edicoes, ownedEdicaoIds), [lib.edicoes, ownedEdicaoIds]);
+  useEffect(() => {
+    if (loading || !filtroAutor) return;
+    if (!autoresDasSeries.some((o) => o.nome === filtroAutor)) setFiltroAutor("");
+  }, [loading, filtroAutor, autoresDasSeries]);
+
   const seriesFiltradas = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = dobrar(query.trim());
     const grupos = {};
     lib.series.filter(casaEditora).forEach((s) => {
+      if (filtroAutor && !serieTemAutor(edicoesPorSerie[s.id] || [], ownedEdicaoIds, filtroAutor)) return;
       const ps = personagensDaSerie(s);
-      const nomeCasa = !q || s.nome.toLowerCase().includes(q);
+      const nomeCasa = !q || dobrar(s.nome).includes(q) || serieTemAutor(edicoesPorSerie[s.id] || [], ownedEdicaoIds, q, true);
       (ps.length ? ps : [{ nome: SEM_PERSONAGEM, de: null, ate: null, vazio: true }]).forEach((p) => {
         if (filtroSerie && p.nome !== filtroSerie) return;
-        if (!nomeCasa && (filtroSerie || p.vazio || !p.nome.toLowerCase().includes(q))) return;
+        if (!nomeCasa && (filtroSerie || p.vazio || !dobrar(p.nome).includes(q))) return;
         (grupos[p.nome] = grupos[p.nome] || []).push({ serie: s, faixa: p });
       });
     });
@@ -864,7 +880,7 @@ export function App() {
         return (parseInt(a.serie.anoInicio, 10) || 9999) - (parseInt(b.serie.anoInicio, 10) || 9999);
       }),
     }));
-  }, [lib.series, query, casaEditora, filtroSerie, fixados]);
+  }, [lib.series, query, casaEditora, filtroSerie, filtroAutor, fixados, edicoesPorSerie, ownedEdicaoIds]);
 
   // v141: pin a character to the top of the HQs and Séries tabs, three at most.
   function alternarFixado(personagem) {
@@ -1792,19 +1808,30 @@ export function App() {
 
         {tab === "series" && showFiltros && (
           <div className="filtros-hqs" style={{ marginBottom: 20 }}>
-          <div className="filtros-linha" data-campos="1">
+          <div className="filtros-linha" data-campos="2">
             <PersonagemFiltro
               id="filtro-personagem-series"
               valor={filtroSerie}
               opcoes={personagensDasSeries}
               onChange={setFiltroSerie}
             />
+            <PersonagemFiltro
+              id="filtro-autor-series"
+              rotulo="Filtrar por autor"
+              todos="Todos os autores"
+              lista="Autores"
+              semCor
+              vazio="Nenhum autor com"
+              valor={filtroAutor}
+              opcoes={autoresDasSeries}
+              onChange={setFiltroAutor}
+            />
             <button
               type="button"
               className="btn btn-quiet filtros-limpar"
-              disabled={!filtroSerie}
+              disabled={!filtroSerie && !filtroAutor}
               aria-label="Limpar filtros"
-              onClick={() => setFiltroSerie("")}
+              onClick={() => { setFiltroSerie(""); setFiltroAutor(""); }}
             >
               <X size={14} /> <span className="label-wide">Limpar filtros</span>
             </button>
