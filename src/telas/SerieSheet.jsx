@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Search, Plus, X, Pencil, Trash2, Upload, Check, Copy } from "lucide-react";
 
 import { sortKey } from "../lib/util";
+import { ehReimpressao, serieTemReimpressao } from "../lib/edicoes";
 import { anoRange, personagensDaSerie, textoFaltantes } from "../lib/biblioteca";
 import { Sheet } from "../ui/base";
 import { CampoBusca, daEditora } from "../ui/Filtros";
@@ -55,9 +56,14 @@ export function SerieSheet({
     });
   }, [edsTotal, faixaAtiva, contexto]);
 
-  const edsFiltradas = busca.trim()
+  // v145: "Esconder reimpressões" only takes their tiles off the map. The counts
+  // below keep reading `eds`, so owned / missing never change with it.
+  const [escondeReimp, setEscondeReimp] = useState(false);
+  const porBusca = busca.trim()
     ? eds.filter((e) => e.numero.toLowerCase().includes(busca.trim().toLowerCase()))
     : eds;
+  const temReimp = serieTemReimpressao(eds);
+  const edsFiltradas = escondeReimp ? porBusca.filter((e) => !ehReimpressao(e)) : porBusca;
   const ownedCount = eds.filter((e) => ownedIds.has(e.id)).length;
   const selecionada = eds.find((e) => e.id === selectedId);
   const useGroups = !busca.trim() && eds.length > 60;
@@ -72,6 +78,7 @@ export function SerieSheet({
   const [copiaManual, setCopiaManual] = useState(null);
   const serieId = s ? s.id : null;
   useEffect(() => { setCopiaManual(null); }, [serieId, faixaAtiva]);
+  useEffect(() => { setEscondeReimp(false); }, [serieId]);
 
   async function copiarFaltantes() {
     try {
@@ -172,7 +179,8 @@ export function SerieSheet({
       className="tile"
       data-owned={ownedIds.has(e.id) ? "true" : "false"}
       data-sel={e.id === selectedId ? "true" : "false"}
-      aria-label={"Nº " + e.numero + (ownedIds.has(e.id) ? ", possuída" : ", falta")}
+      data-reimp={ehReimpressao(e) ? "true" : undefined}
+      aria-label={"Nº " + e.numero + (ownedIds.has(e.id) ? ", possuída" : ", falta") + (ehReimpressao(e) ? ", reimpressão" : "")}
       aria-pressed={e.id === selectedId}
       onClick={() => setSelectedId(e.id === selectedId ? null : e.id)}
     >
@@ -267,6 +275,16 @@ export function SerieSheet({
                   <i data-owned="true" /> tenho <i /> falta
                 </p>
               </div>
+              {temReimp && (
+                <button
+                  type="button"
+                  className="btn btn-quiet reimp-toggle"
+                  aria-pressed={escondeReimp}
+                  onClick={() => setEscondeReimp((v) => !v)}
+                >
+                  {escondeReimp ? "Mostrar reimpressões" : "Esconder reimpressões"}
+                </button>
+              )}
 
               {useGroups ? (
                 grupos.map((g) => {
@@ -288,7 +306,7 @@ export function SerieSheet({
               ) : (
                 <div className="tiles" style={{ "--nd": ndPlano }}>
                   {edsFiltradas.length === 0
-                    ? <p className="t-small muted" style={{ margin: 0 }}>Nada encontrado para "{busca}".</p>
+                    ? <p className="t-small muted" style={{ margin: 0 }}>{busca.trim() ? "Nada encontrado para \"" + busca + "\"." : "Só há reimpressões nesta faixa."}</p>
                     : edsFiltradas.map((e) => renderTile(e, edsFiltradas, ndPlano))}
                 </div>
               )}
@@ -310,6 +328,11 @@ export function SerieSheet({
                       ? (selecionada.mes || "?") + "/" + (selecionada.ano || "?")
                       : "Sem data"}
                   </p>
+                  {ehReimpressao(selecionada) && (
+                    <p className="t-small num" style={{ margin: "4px 0 0", color: "var(--accent-text)" }}>
+                      Reimpressão{selecionada.origem ? " de " + selecionada.origem : ""}
+                    </p>
+                  )}
                   {selecionada.posicao !== null && selecionada.posicao !== undefined && (
                     <p className="t-small num" style={{ margin: "4px 0 0", color: "var(--accent-text)" }}>
                       Posição manual no checklist: {selecionada.posicao}

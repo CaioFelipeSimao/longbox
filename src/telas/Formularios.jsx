@@ -361,6 +361,19 @@ export function FormEdicao({
           >
             <input className="input" value={edicaoForm.posicao} onChange={(e) => setEdicaoForm((f) => ({ ...f, posicao: e.target.value }))} />
           </Field>
+          <label className="check-linha">
+            <input
+              type="checkbox"
+              checked={!!edicaoForm.reimpressao}
+              onChange={(e) => setEdicaoForm((f) => ({ ...f, reimpressao: e.target.checked }))}
+            />
+            <span>Esta edição é uma reimpressão</span>
+          </label>
+          {edicaoForm.reimpressao && (
+            <Field label="Original" hint="De onde vem o material, em texto livre. Em branco é aceito.">
+              <input className="input" placeholder="Flash #105 (1959)" value={edicaoForm.origem || ""} onChange={(e) => setEdicaoForm((f) => ({ ...f, origem: e.target.value }))} />
+            </Field>
+          )}
         </Modal>
       )}
     </>

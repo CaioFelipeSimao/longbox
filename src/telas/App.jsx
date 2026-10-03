@@ -944,8 +944,12 @@ export function App() {
 
   function salvarEdicao() {
     if (!edicaoForm.numero.trim()) { showToast("Informe o número da edição."); return; }
+    // v145: reimpressao/origem are written only while the box is ticked, so an
+    // unticked edição goes back to having neither field.
+    const { reimpressao, origem, ...resto } = edicaoForm;
     const payload = {
-      ...edicaoForm,
+      ...resto,
+      ...(reimpressao ? { reimpressao: true, origem: (origem || "").trim() } : null),
       posicao: edicaoForm.posicao.trim() !== "" && !isNaN(parseFloat(edicaoForm.posicao)) ? parseFloat(edicaoForm.posicao) : null,
     };
     const next = payload.id
@@ -1486,7 +1490,7 @@ export function App() {
   // v121: the button says what it makes; the hub's makes a volume (its own button, v126).
   const rotuloNovo = tab === "colecoes" ? "Nova coleção" : tab === "series" ? "Nova série" : "Novo volume";
   function novaEdicao(serie) {
-    setEdicaoForm({ id: null, serieId: serie.id, numero: "", mes: "", ano: "", posicao: "" });
+    setEdicaoForm({ id: null, serieId: serie.id, numero: "", mes: "", ano: "", posicao: "", reimpressao: false, origem: "" });
     setShowEdicaoForm(true);
   }
   // v132: N while the série card is in front makes an edição of it (the card's
