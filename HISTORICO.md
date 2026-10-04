@@ -2688,3 +2688,19 @@ white on the white pill on hover (the hover rule beat the measured ink; the open
 A white or very light grey publisher now sets `data-ed-neutro` on the header and the band: light buttons
 with dark ink in the dark theme, graphite with white ink in the light theme (both >= 16:1).
 test-contraste 12, test-arrasto-seguir 27, test-duas-editoras 63.
+
+**v154 The drag behaves like iOS (three defects from the user's real use of v153).** (1) The lifted
+group painted over the header, the band and the logo: elevarCamadas() put z-index 1000 on every ancestor
+of the dragged card while the chrome is 20 (.topbar, .tabbar) and 15 (.ed-band). Lifted ancestors and the
+dragged card now sit at 8, above the other groups and under the chrome. (2) Moving the last HQ to the
+first place made the hole travel one slot per 220ms. The order is now rebuilt at once for the slot under
+the pointer: the original order without the dragged id, re-inserted at that slot, so the ones in between
+shift by exactly one; the FLIP of the others starts from their current visual positions when it is
+interrupted. (3) Neighbours "danced" near a boundary: the target came from the neighbours'
+getBoundingClientRect(), which includes their in-flight FLIP transforms, so the measurement moved with the
+animation. The target is now decided from the rect of every slot measured once when the drag arms (page
+coordinates, re-measured on resize), expanded by half the gap so there are no dead zones; in no slot,
+nothing changes. Checked in Chrome (synthetic pointer events, a hidden tab so timers ran slow): last to
+first in one jump put it at index 0 with the rest shifted once; a pointer parked 2px either side of a
+boundary switched once and stayed; the lifted ancestors computed z-index 8 and elementFromPoint on the
+header and band returned the chrome. test-arrasto-seguir 58, test-duas-editoras 70.

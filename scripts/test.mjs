@@ -48,9 +48,10 @@ const SUITES = [
   { args: ["tests/test-filtro-autor.mjs"], minimo: 32 },
   { args: ["tests/test-destaque-autor.mjs"], minimo: 27 },
   { args: ["tests/test-editora-busca.mjs"], minimo: 10 },
-  { args: ["tests/test-duas-editoras.mjs"], minimo: 63 },
+  { args: ["tests/test-duas-editoras.mjs"], minimo: 70 },
   { args: ["tests/test-tiles-volume.mjs"], minimo: 6 },
-  { args: ["tests/test-arrasto-seguir.mjs"], minimo: 27 },
+  // Removed 8 nearest-centre checks; added 39 fixed-slot/direct-order checks.
+  { args: ["tests/test-arrasto-seguir.mjs"], minimo: 58 },
 ];
 
 // Lines that report a count which must be zero. Source and CSS dash counts are

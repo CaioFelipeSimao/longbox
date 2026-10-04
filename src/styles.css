@@ -1379,7 +1379,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .vol[data-vol-id]:active { transform: none; }
 .vol[data-dragging="true"] {
   position: relative;
-  z-index: 1001;
+  /* Match DRAG_Z_INDEX: above siblings, below filters (12) and chrome (15/20). */
+  z-index: 8;
   cursor: grabbing;
   will-change: transform;
 }

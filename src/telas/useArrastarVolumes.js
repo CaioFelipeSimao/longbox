@@ -3,7 +3,11 @@ import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { swatchColors } from "../lib/cores";
 import { HOLD_EASE_LINEAR, HOLD_EASE_OUT, prefersReducedMotion } from "../lib/hooks";
 import { ordenarGrupoVolumes } from "../ui/VolumeCard";
-import { alvoSlotMaisProximo, pontoNaCaixaExpandida, velocidadeAutoScroll, transformSeguir } from "../lib/arrastoSeguir";
+import { slotNoPonto, reordenarParaSlot, pontoNaCaixaExpandida, velocidadeAutoScroll, transformSeguir } from "../lib/arrastoSeguir";
+
+// Below the chrome: .topbar/.tabbar 20, .ed-band 15, HQs filters 12.
+// Above static sibling groups and the .aba (0)/content lattice (1) layers.
+const DRAG_Z_INDEX = 8;
 
 // Long-press to arm, then drag an HQ within its own personagem group (v30-v49).
 // Everything the gesture needs lives here; App only wires the returned handlers
@@ -14,13 +18,7 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   // on a tablet. 450ms, raised from 350: the user found 350 too easy to trigger
   // by accident while just scrolling or tapping a cover.
   const HOLD_MS = 450;
-  // How long the FLIP slide takes to settle, and therefore how long a new target
-  // is locked out after one commits. The lockout is the whole fix for a drag that
-  // felt unstable: without it, every pixel of pointer movement could re-target the
-  // reflow mid-animation, and elementFromPoint would sometimes hit a card that was
-  // still sliding rather than the one actually under the pointer. Holding the
-  // target still for one settle window turns that into a deliberate, one-slot-at-
-  // a-time snap instead of a flicker, which is the "aim assist" the user asked for.
+  // Neighbours glide for 220ms; target decisions never wait for their animation.
   const FLIP_MS = 220;
   const SETTLE_MS = 200;
   // How long the fill takes to let go once the pointer comes up. Matches the
@@ -47,8 +45,6 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   const flipSnapshotRef = useRef(null); // rects captured just before a live reorder
   const flipCleanupRef = useRef(new Map()); // volume id -> fallback timer clearing its transform
   const flipVersionRef = useRef(new Map()); // invalidates superseded FLIP rAF callbacks
-  const flipBusyRef = useRef(false); // true while the last reflow is still settling
-  const flipBusyTimerRef = useRef(null);
   const followRafRef = useRef(0);
   const settleRef = useRef(null);
   const layersRef = useRef([]);
@@ -73,17 +69,52 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   // getBoundingClientRect includes our translation and lift. Remove them only
   // during the read (no intervening paint), to measure the CURRENT grid slot.
   function rectDoSlot(el) {
+    const transition = el.style.transition;
     const transform = el.style.transform;
+    el.style.transition = "none";
     el.style.transform = "none";
     const rect = el.getBoundingClientRect();
     el.style.transform = transform;
+    el.style.transition = transition;
     return rect;
+  }
+
+  function deslocamentoPagina(info) {
+    const container = info.scrollContainer;
+    const page = container === document.scrollingElement || container === document.documentElement;
+    return {
+      x: window.scrollX + (page ? 0 : container.scrollLeft),
+      y: window.scrollY + (page ? 0 : container.scrollTop),
+    };
+  }
+
+  function ponteiroNaPagina(info) {
+    const offset = deslocamentoPagina(info);
+    return { x: info.pointer.x + offset.x, y: info.pointer.y + offset.y };
+  }
+
+  // Slots stay fixed throughout reordering. On resize, the current DOM order
+  // provides the new geometry by index, regardless of which id occupies it.
+  function medirSlots(info) {
+    const offset = deslocamentoPagina(info);
+    info.slotRects = Array.from(info.grid?.children || []).map((el) => {
+      const rect = rectDoSlot(el);
+      return { left: rect.left + offset.x, right: rect.right + offset.x,
+        top: rect.top + offset.y, bottom: rect.bottom + offset.y };
+    });
+    const style = info.grid && getComputedStyle(info.grid);
+    info.folga = { x: (parseFloat(style?.columnGap) || 0) / 2, y: (parseFloat(style?.rowGap) || 0) / 2 };
   }
 
   function seguirPonteiro(info) {
     const el = cardNodesRef.current.get(info.id);
     if (!el) return;
-    const { x, y } = transformSeguir(info.pointer, info.grabOffset, rectDoSlot(el));
+    // A preview update can precede React's DOM move. Use the currently rendered
+    // slot index until useLayoutEffect rebases it after the keyed node moves.
+    const indice = Array.from(el.parentElement.children).indexOf(el);
+    const slot = info.slotRects[indice];
+    if (!slot) return;
+    const { x, y } = transformSeguir(ponteiroNaPagina(info), info.grabOffset, slot);
     el.style.transform = `translate(${x}px, ${y}px) scale(${prefersReducedMotion() ? 1 : 1.06})`;
   }
 
@@ -92,9 +123,6 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
     flipSnapshotRef.current = capturarRects(info.ids);
     info.ids = ids;
     setDragVisual({ id: info.id, ids, personagem: info.personagem });
-    flipBusyRef.current = true;
-    clearTimeout(flipBusyTimerRef.current);
-    flipBusyTimerRef.current = setTimeout(() => { flipBusyRef.current = false; }, FLIP_MS);
   }
 
   function atualizarSlot(info) {
@@ -104,22 +132,10 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
       atualizarOrdem(info, info.originalIds.slice());
       return;
     }
-    if (flipBusyRef.current) return;
-    const el = cardNodesRef.current.get(info.id);
-    if (!el) return;
-    const rects = info.ids.filter((id) => id !== info.id).map((id) => ({
-      id, rect: cardNodesRef.current.get(id)?.getBoundingClientRect(),
-    })).filter(({ rect }) => rect);
-    const alvo = alvoSlotMaisProximo(info.pointer, rects, rectDoSlot(el));
-    if (alvo == null) return;
-    const from = info.ids.indexOf(info.id);
-    const target = info.ids.indexOf(alvo);
-    if (from < 0 || target < 0 || from === target) return;
-    // One neighbouring slot per settle window, including across wrapped rows.
-    const next = info.ids.slice();
-    next.splice(from, 1);
-    next.splice(from + Math.sign(target - from), 0, info.id);
-    atualizarOrdem(info, next);
+    const target = slotNoPonto(ponteiroNaPagina(info), info.slotRects, { folga: info.folga });
+    // Empty space inside the group keeps the current preview unchanged.
+    if (target == null) return;
+    atualizarOrdem(info, reordenarParaSlot(info.originalIds, info.id, target));
   }
 
   function containerDeScroll(el) {
@@ -172,7 +188,7 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
       const saved = props.map((prop) => [prop, parent.style.getPropertyValue(prop), parent.style.getPropertyPriority(prop)]);
       layersRef.current.push({ el: parent, saved });
       if (style.position === "static") parent.style.setProperty("position", "relative");
-      parent.style.setProperty("z-index", "1000", "important");
+      parent.style.setProperty("z-index", String(DRAG_Z_INDEX), "important");
       if (props.includes("overflow-x")) {
         parent.style.setProperty("overflow-x", "visible", "important");
         parent.style.setProperty("overflow-y", "visible", "important");
@@ -373,6 +389,7 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
       target.style.transition = "none";
       target.style.transform = "none";
       target.style.transformOrigin = `${info.grabOffset.x}px ${info.grabOffset.y}px`;
+      medirSlots(info);
       setDragVisual({ id: volume.id, ids: info.ids, personagem });
       followRafRef.current = requestAnimationFrame(frameArrasto);
     }, HOLD_MS);
@@ -401,19 +418,19 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
     clearTimeout(info.timer);
     cancelAnimationFrame(followRafRef.current);
     followRafRef.current = 0;
-    clearTimeout(flipBusyTimerRef.current);
-    flipBusyRef.current = false;
     const el = cardNodesRef.current.get(info.id);
     soltarPreenchimento(el);
     if (el && el.style) el.style.touchAction = "";
     if (info.active && info.ids) {
+      if (e?.type === "pointerup") atualizarSlot(info);
       const commit = e?.type !== "pointercancel" && e?.type !== "blur" &&
         pontoNaCaixaExpandida(info.pointer, info.grid?.getBoundingClientRect());
       const ids = commit ? info.ids : info.originalIds;
       if (commit) persistirOrdemGrupo(ids);
       else flipSnapshotRef.current = capturarRects(info.ids);
       suppressClickRef.current = true;
-      settleRef.current = { id: info.id, pointer: info.pointer, grabOffset: info.grabOffset, started: false };
+      settleRef.current = { id: info.id, pointer: info.pointer, grabOffset: info.grabOffset,
+        slotRects: info.slotRects, scrollContainer: info.scrollContainer, started: false };
       setDragVisual({ id: info.id, ids, personagem: info.personagem, settling: true });
     } else {
       setDragVisual(null);
@@ -439,16 +456,24 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
     if (!dragVisual || dragVisual.settling) return undefined;
     const finalizar = (e) => finalizarDrag(e);
     const mover = (e) => volDragPointerMove(e);
+    const redimensionar = () => {
+      const info = dragRef.current;
+      if (!info.active) return;
+      medirSlots(info);
+      seguirPonteiro(info);
+    };
     const bloquearToque = (e) => { if (dragRef.current.active) e.preventDefault(); };
     window.addEventListener("pointermove", mover, { capture: true, passive: false });
     window.addEventListener("touchmove", bloquearToque, { capture: true, passive: false });
     window.addEventListener("pointerup", finalizar, true);
     window.addEventListener("pointercancel", finalizar, true);
     window.addEventListener("blur", finalizar);
+    window.addEventListener("resize", redimensionar);
     return () => {
       window.removeEventListener("pointerup", finalizar, true);
       window.removeEventListener("pointercancel", finalizar, true);
       window.removeEventListener("blur", finalizar);
+      window.removeEventListener("resize", redimensionar);
       window.removeEventListener("pointermove", mover, true);
       window.removeEventListener("touchmove", bloquearToque, true);
     };
@@ -456,7 +481,6 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
 
   useEffect(() => () => {
     clearTimeout(dragRef.current.timer);
-    clearTimeout(flipBusyTimerRef.current);
     clearTimeout(settleRef.current?.timer);
     flipCleanupRef.current.forEach((timer) => clearTimeout(timer));
     flipVersionRef.current.clear();

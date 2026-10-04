@@ -205,6 +205,7 @@ console.log("=== reordenar projeções ===");
 // drop area. The keyed nodes themselves must survive React's reorder.
 const drag = await montar({ editoraSel: "image" });
 const [primeiro, outro] = drag.cards();
+const outsideBandBefore = j(drag.salvo("dc"));
 const rect = (left) => ({ left, right: left + 90, top: 0, bottom: 130, width: 90, height: 130 });
 const grid = primeiro.closest("[data-hq-grid]");
 grid.getBoundingClientRect = () => ({ left: 0, right: 190, top: 0, bottom: 130, width: 190, height: 130 });
@@ -215,12 +216,29 @@ primeiro.setPointerCapture = () => { captures++; };
 primeiro.releasePointerCapture = () => {};
 const pointer = (type, x) => primeiro.dispatchEvent(new drag.W.MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: 40 }));
 pointer("pointerdown", 40); await sleep(500);
+const liftedAncestors = [];
+for (let el = grid; el && el !== drag.W.document.body; el = el.parentElement) liftedAncestors.push(el);
+check("drag eleva ancestrais abaixo do chrome", liftedAncestors.every((el) =>
+  el.style.getPropertyValue("z-index") === "8" && el.style.getPropertyPriority("z-index") === "important"));
 const moveAllowed = pointer("pointermove", 160); await sleep(100);
 check("drag mantém o mesmo nó DOM ao trocar de slot", drag.cards()[1] === primeiro && grid.contains(primeiro));
 check("drag segue o ponto de pega no slot atual", primeiro.style.transform === "translate(20px, 0px) scale(1.06)", primeiro.style.transform);
 check("drag renova captura após a mudança de slot", captures >= 3, captures);
 check("drag impede o movimento nativo do ponteiro", moveAllowed === false);
 check("drag não aplica FLIP ao card levantado", primeiro.style.transition === "none" && outro.style.transition.includes("220ms"));
+pointer("pointermove", 40); await sleep(100);
+check("drag aceita novo alvo durante os 220ms de FLIP", drag.cards()[0] === primeiro);
+pointer("pointermove", 160); await sleep(100);
+check("drag interrompe FLIP novamente sem avançar por etapas", drag.cards()[1] === primeiro);
+// Once slots are recorded, an animated neighbour rect cannot affect targeting.
+const neighbourRect = outro.getBoundingClientRect;
+outro.getBoundingClientRect = () => rect(150);
+await sleep(250);
+check("drag parado ignora a geometria animada do vizinho", drag.cards()[1] === primeiro);
+outro.getBoundingClientRect = neighbourRect;
+pointer("pointermove", 95); await sleep(100);
+check("drag no espaço entre slots mantém a prévia", drag.cards()[1] === primeiro);
+pointer("pointermove", 160); await sleep(100);
 const touch = new drag.W.Event("touchmove", { bubbles: true, cancelable: true });
 drag.W.dispatchEvent(touch);
 check("drag bloqueia touchmove na janela", touch.defaultPrevented);
@@ -229,6 +247,8 @@ check("drag na Image muda a ordem exibida", drag.titulos().join() === "Spawn: Or
 check("drag grava ordem no volume real", drag.salvo("dupla")?.ordem === 1 && drag.salvo("image")?.ordem === 0);
 check("drag preserva par primário e tambem", drag.salvo("dupla")?.editora === "DC Comics" && drag.salvo("dupla")?.personagem === "Batman" && drag.salvo("dupla")?.tambem?.[0]?.personagem === "Spawn");
 check("drag não remove volumes fora da faixa", !!drag.salvo("dc") && drag.docs.get("library/volumes").items.length === 3);
+check("drag deixa todos os campos fora da faixa intocados", j(drag.salvo("dc")) === outsideBandBefore);
+check("drag restaura as camadas depois de acomodar", liftedAncestors.every((el) => !el.style.getPropertyValue("z-index")));
 primeiro.click(); await sleep(100);
 check("drag suprime o clique do gesto", !drag.root.querySelector('.sheet[data-in="true"]'));
 
