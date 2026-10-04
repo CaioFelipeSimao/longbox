@@ -9,7 +9,7 @@ import { CoverArt } from "../ui/VolumeCard";
 
 export function ColecaoSheet({
   lib, onRemover, setOpenColecaoId, openColecao, colecaoRola,
-  ordemRecolhida, alternarOrdem, definirCorBarra, openEditarColecao, adicionarMembros,
+  ordemRecolhida, alternarOrdem, corRecolhida, alternarCor, definirCorBarra, openEditarColecao, adicionarMembros,
   removerMembro, moverMembro, personagensDaColecao, onLidasAte, onStatus,
 }) {
   // v120: the reading order reads by default; reordering and taking volumes out
@@ -138,7 +138,16 @@ export function ColecaoSheet({
               change nothing. */}
           {colecaoRola(openColecao) && (
             <div className="cor-barra">
-              <p className="t-micro" style={{ margin: "0 0 8px" }}>Cor da barra</p>
+              <button
+                type="button"
+                className="ordem-head"
+                onClick={() => alternarCor(openColecao.id)}
+                aria-expanded={corRecolhida.has(openColecao.id) ? "false" : "true"}
+              >
+                <span className="t-micro">Cor da barra</span>
+                <ChevronDown size={16} data-rot={corRecolhida.has(openColecao.id) ? "true" : "false"} />
+              </button>
+              {!corRecolhida.has(openColecao.id) && (<>
               <div className="swatches">
                 {PALETA_CROMATICA.map((spec, i) => (
                   <Swatch key={"c" + i} spec={spec} atual={openColecao.corBarra}
@@ -160,6 +169,7 @@ export function ColecaoSheet({
               >
                 {!openColecao.corBarra ? "Usando a cor da editora" : "Voltar para a cor da editora"}
               </button>
+              </>)}
             </div>
           )}
           <Field label="Adicionar volumes">
@@ -209,15 +219,15 @@ function AdicionarVolumes({ volumes, personagens, editoras, onAdicionar }) {
         escolhidos={escolhidos}
         onEscolher={(vid) => setEscolhidos((xs) => (xs.includes(vid) ? xs.filter((x) => x !== vid) : [...xs, vid]))}
         vazio={"Nenhum volume " + (editoras.length ? "da " + editoras.join(" e ") + " " : "") + "fora desta coleção."}
+        rodape={n > 0 && (
+          <div className="add-acoes">
+            <button type="button" className="btn btn-primary" onClick={() => { onAdicionar(escolhidos); setEscolhidos([]); }}>
+              {"Adicionar " + n + (n === 1 ? " volume" : " volumes")}
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => setEscolhidos([])}>Limpar</button>
+          </div>
+        )}
       />
-      {n > 0 && (
-        <div className="add-acoes">
-          <button type="button" className="btn btn-primary" onClick={() => { onAdicionar(escolhidos); setEscolhidos([]); }}>
-            {"Adicionar " + n + (n === 1 ? " volume" : " volumes")}
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={() => setEscolhidos([])}>Limpar</button>
-        </div>
-      )}
     </div>
   );
 }

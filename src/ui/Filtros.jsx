@@ -268,7 +268,7 @@ export function PersonagemFiltro({ id = "filtro-personagem", valor, opcoes, onCh
    field instead of floating, since these fields sit at a sheet's end. With `escolhidos`
    a tap marks a row with the place it will take and the list stays open; without it,
    a tap picks and closes. Each option: { id, titulo, meta, busca, inicio }. */
-export function CampoBusca({ id, rotulo, placeholder, opcoes, escolhidos, onEscolher, vazio }) {
+export function CampoBusca({ id, rotulo, placeholder, opcoes, escolhidos, onEscolher, vazio, rodape }) {
   const [aberta, setAberta] = useState(false);
   const [texto, setTexto] = useState("");
   const [idx, setIdx] = useState(0);
@@ -361,6 +361,7 @@ export function CampoBusca({ id, rotulo, placeholder, opcoes, escolhidos, onEsco
           })}
         </div>
       )}
+      {rodape}
     </div>
   );
 }

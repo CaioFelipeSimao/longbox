@@ -2644,3 +2644,13 @@ lines in a volume's séries block ("Detective Comics (Volume 1)" with "Gerenciar
 rule (plain numbers share one width per block, a longer number spans two) only lived in the série
 map; the volume sheet had its own tile code. The rule moved to lib/edicoes.js (digitosDoBloco,
 formaDoTile) and both sheets use it. tests/test-tiles-volume.mjs 6 checks, shown failing first.
+
+**v151 Two collection-sheet fixes.** (1) "Adicionar volumes": the first tap on "Adicionar N volumes"
+only closed the list. Cause: CampoBusca closes on any pointerdown outside its root, and the action
+buttons lived outside it, so the list collapsed under the finger and the click missed. The buttons are
+now CampoBusca's `rodape`, inside the root. Test written failing first (74 passes, 8 failures). (2) "Cor
+da barra" in Gerenciar coleção folds behind a dropdown header like "Ordem de leitura" (same classes),
+per collection, kept for the session (`longbox:cor-recolhida`), expanded by default. Codex wrote both;
+its sandbox could not build (esbuild "Cannot read directory ..."), so the build and `npm run check`
+ran here. test-colecoes 82. Next, asked by the user the same day: B two publishers per HQ (one
+personagem per publisher), C drag-follow reordering on the HQs tab, D the same on the Coleções tab.

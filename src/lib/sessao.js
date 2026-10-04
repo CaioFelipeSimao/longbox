@@ -171,6 +171,32 @@ export function salvarOrdemRecolhida(ids) {
   }
 }
 
+// Which collections have their bar colour controls folded in the manage sheet.
+// Like the reading order, a fresh visit expands them and a reload keeps the fold.
+export const COR_RECOLHIDA_KEY = "longbox:cor-recolhida";
+
+export function lerCorRecolhida() {
+  try {
+    if (typeof window === "undefined") return new Set();
+    const salvo = window.sessionStorage.getItem(COR_RECOLHIDA_KEY);
+    if (!salvo) return new Set();
+    const lista = JSON.parse(salvo);
+    return Array.isArray(lista) ? new Set(lista.filter((x) => typeof x === "string")) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+export function salvarCorRecolhida(ids) {
+  try {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(COR_RECOLHIDA_KEY, JSON.stringify([...ids]));
+    }
+  } catch {
+    // Not remembered here, and nothing else breaks.
+  }
+}
+
 // The HQs tab's filters (status, tipo, personagem). Same lifetime as everything
 // above: a reload keeps them, a fresh visit starts with none. Switching tabs never
 // touched them, since they live in the app's own state; only a reload lost them.

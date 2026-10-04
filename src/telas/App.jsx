@@ -21,8 +21,8 @@ import {
 import { useCelular, useHubUnlock, useLarguraDaBarra, usePonteiroFino } from "../lib/hooks";
 import {
   lerAbaSalva, lerColecoesFechadas, lerFiltroSeries, lerFiltros, lerGruposAbertos, lerGruposFechados,
-  lerOrdemRecolhida, lerAbaBase, salvarAba, salvarAbaBase,salvarColecoesFechadas, salvarFiltroSeries, salvarFiltros, salvarGruposAbertos,
-  salvarGruposFechados, salvarOrdemRecolhida, dobrar, lerFiltroAutor, salvarFiltroAutor,
+  lerOrdemRecolhida, lerCorRecolhida, lerAbaBase, salvarAba, salvarAbaBase,salvarColecoesFechadas, salvarFiltroSeries, salvarFiltros, salvarGruposAbertos,
+  salvarGruposFechados, salvarOrdemRecolhida, salvarCorRecolhida, dobrar, lerFiltroAutor, salvarFiltroAutor,
 } from "../lib/sessao";
 import { Aba, Modal, Toast } from "../ui/base";
 import { SUGESTOES_DA_ABA, SearchBox, ordenarPorNome, ordenarSugestoes } from "../ui/Busca";
@@ -688,6 +688,7 @@ export function App() {
   };
 
   const [ordemRecolhida, setOrdemRecolhida] = useState(lerOrdemRecolhida);
+  const [corRecolhida, setCorRecolhida] = useState(lerCorRecolhida);
 
   const [colecoesFechadas, setColecoesFechadas] = useState(lerColecoesFechadas);
   // A search forces every collection open, as it does every HQs group.
@@ -713,6 +714,15 @@ export function App() {
       const n = new Set(prev);
       if (n.has(id)) n.delete(id); else n.add(id);
       salvarOrdemRecolhida(n);
+      return n;
+    });
+  }
+
+  function alternarCor(id) {
+    setCorRecolhida((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      salvarCorRecolhida(n);
       return n;
     });
   }
@@ -2138,6 +2148,8 @@ export function App() {
         colecaoRola={colecaoRola}
         ordemRecolhida={ordemRecolhida}
         alternarOrdem={alternarOrdem}
+        corRecolhida={corRecolhida}
+        alternarCor={alternarCor}
         definirCorBarra={definirCorBarra}
         openEditarColecao={openEditarColecao}
         adicionarMembros={adicionarMembros}

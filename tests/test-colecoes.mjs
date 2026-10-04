@@ -89,6 +89,8 @@ const head = () => m1.root.querySelector(".ordem-head");
 check("ordem de leitura tem cabeçalho dobrável", head() && head().getAttribute("aria-expanded") === "true");
 check("lista aberta mostra os 8", m1.root.querySelectorAll('.sheet .ordem-linha').length === 8);
 check("cor da barra oferecida quando a barra existe", !!m1.root.querySelector(".cor-barra"));
+const headCor = () => m1.root.querySelector(".cor-barra .ordem-head");
+check("cor da barra tem cabeçalho aberto", headCor()?.getAttribute("aria-expanded") === "true");
 check("começa na cor da editora", /Usando a cor da editora/.test(m1.root.querySelector(".cor-barra").textContent));
 
 head().click(); await sleep(80);
@@ -125,6 +127,16 @@ await sleep(700);
 const doc2 = m1.docs.get("library/colecoes").items.find((c) => c.id === "longa");
 check("voltar remove a cor da coleção", !("corBarra" in doc2), JSON.stringify(doc2));
 check("barra volta a seguir a editora", !m1.secao("Longa").querySelector(".shelf-wrap").style.getPropertyValue("--shelf-cor"));
+headCor()?.click(); await sleep(80);
+check("recolher a cor esconde paleta e controles", headCor()?.getAttribute("aria-expanded") === "false" && m1.root.querySelectorAll(".cor-barra .swatch").length === 0 && !/Neutros|Usando a cor da editora/.test(m1.root.querySelector(".cor-barra").textContent));
+const corGuardada = m1.window.sessionStorage.getItem("longbox:cor-recolhida");
+check("cor recolhida gravada na sessão", corGuardada === JSON.stringify(["longa"]), corGuardada);
+await m1.fechar();
+await m1.gerenciar("Longa");
+check("reabrir mantém a cor recolhida", headCor()?.getAttribute("aria-expanded") === "false" && m1.root.querySelectorAll(".cor-barra .swatch").length === 0);
+headCor()?.click(); await sleep(80);
+check("expandir a cor devolve a paleta", headCor()?.getAttribute("aria-expanded") === "true" && m1.root.querySelectorAll(".cor-barra .swatch").length === 34);
+headCor()?.click(); await sleep(80);
 await m1.fechar();
 
 await m1.gerenciar("Curta");
@@ -146,14 +158,16 @@ check("curta escondida continua sem opção de cor", !m1.root.querySelector(".co
 check("sem erros (1)", m1.erros.length === 0, m1.erros[0]);
 
 console.log("=== segunda montagem: recarregar ===");
-const m2 = await montar({ sessao: { "longbox:aba": "colecoes", "longbox:ordem-recolhida": guardado } });
+const m2 = await montar({ sessao: { "longbox:aba": "colecoes", "longbox:ordem-recolhida": guardado, "longbox:cor-recolhida": corGuardada } });
 await m2.gerenciar("Longa");
 check("recarregar mantém a ordem recolhida", m2.root.querySelector(".ordem-head").getAttribute("aria-expanded") === "false");
+check("recarregar mantém a cor recolhida", m2.root.querySelector(".cor-barra .ordem-head")?.getAttribute("aria-expanded") === "false");
 
 console.log("=== terceira montagem: visita nova ===");
 const m3 = await montar({ sessao: { "longbox:aba": "colecoes" } });
 await m3.gerenciar("Longa");
 check("visita nova abre a ordem", m3.root.querySelector(".ordem-head").getAttribute("aria-expanded") === "true");
+check("visita nova abre a cor", m3.root.querySelector(".cor-barra .ordem-head")?.getAttribute("aria-expanded") === "true");
 
 // v120: the reading order reads, it does not administer. Reorder and removal live in an
 // "Editar ordem" mode; labels name the volume; removal from the collection can be undone.
@@ -245,7 +259,13 @@ console.log("=== quinta montagem: adicionar vários ===");
   check("botão conta 3", botaoAdd()?.textContent === "Adicionar 3 volumes", botaoAdd()?.textContent);
   await tocar("Batman b4");
   check("tocar de novo desmarca", botaoAdd()?.textContent === "Adicionar 2 volumes" && !ordem("Batman b4"), botaoAdd()?.textContent);
-  botaoAdd()?.click(); await sleep(150);
+  // Dispatch through the document listener before clicking: the action must not
+  // collapse the list and move away from the pointer between down and click.
+  const adicionarDois = botaoAdd();
+  adicionarDois?.dispatchEvent(new W.Event("pointerdown", { bubbles: true }));
+  await sleep(80);
+  check("pointerdown em Adicionar mantém a lista aberta", campo.getAttribute("aria-expanded") === "true" && linhas().length > 0);
+  adicionarDois?.click(); await sleep(150);
   const titulosOrdem = () => [...R.querySelectorAll(".sheet .ordem-titulo")].map((p) => p.textContent);
   check("entram na ordem do toque", titulosOrdem().join() === "Batman b0,Batman b1,Superman: Ação,Flash: Renascimento", titulosOrdem().join());
   check("seleção zera", !botaoAdd());
