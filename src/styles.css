@@ -1083,6 +1083,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .pfiltro-input:focus { cursor: text; }
 .pfiltro-input::placeholder { color: var(--text); }
 .pfiltro-input:focus::placeholder { color: var(--text-muted); }
+/* v152: iOS zooms the page when a field under 16px takes focus and keeps the zoom until the
+   user pinches out. The pickers inside sheets (Adicionar volumes) were 14px. */
+@media (pointer: coarse) { .input, .select, .textarea, .pfiltro-input, .search input { font-size: 16px; } }
 .pfiltro-botao { display: flex; align-items: center; text-align: left; font: inherit; color: var(--text); }
 .pfiltro-botao[aria-expanded="true"] { border-color: var(--ed-accent); }
 .ed-lista { left: auto; min-width: 100%; width: max-content; max-width: 280px; }

@@ -18,13 +18,13 @@ function opcoesEditora(editoras, atual) {
 
 // v139: the Longbox picker instead of a native select, whose open list the OS draws
 // (white border, wider than the field) where no stylesheet reaches.
-function SeletorEditora({ id, editoras, valor, onChange }) {
+function SeletorEditora({ id, editoras, valor, onChange, rotulo = "Editora", todos = "Sem editora" }) {
   return (
     <OpcaoFiltro
       id={id}
-      rotulo="Editora"
+      rotulo={rotulo}
       valor={valor || ""}
-      todos="Sem editora"
+      todos={todos}
       opcoes={opcoesEditora(editoras, valor).map((n) => ({ valor: n, rotulo: n }))}
       onChange={onChange}
     />
@@ -113,6 +113,21 @@ export function FormVolume({
           <Field label="Editora">
             <SeletorEditora id="form-volume-editora" editoras={editoras} valor={volumeForm.editora} onChange={trocarEditora} />
           </Field>
+          <Field label="Também publicado por" error={volumeErrors.editora2}>
+            <SeletorEditora
+              id="form-volume-editora2" editoras={editoras} valor={volumeForm.editora2}
+              rotulo="Também publicado por" todos="Nenhuma"
+              onChange={(editora2) => setVolumeForm((f) => ({ ...f, editora2, ...(!editora2 ? { personagem2: "" } : {}) }))}
+            />
+          </Field>
+          {volumeForm.editora2 && (
+            <Field label="Personagem nessa editora" hint="Se ficar vazio, usa o personagem principal.">
+              <input
+                className="input" value={volumeForm.personagem2 || ""} placeholder={volumeForm.personagem}
+                onChange={(e) => setVolumeForm((f) => ({ ...f, personagem2: e.target.value }))}
+              />
+            </Field>
+          )}
           <div className="grid-2">
             <Field label="Tipo" hint={avisoTipo || undefined}>
               <OpcaoFiltro

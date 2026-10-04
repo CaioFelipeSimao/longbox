@@ -7,7 +7,7 @@ import { ordenarGrupoVolumes } from "../ui/VolumeCard";
 // Long-press to arm, then drag an HQ within its own personagem group (v30-v49).
 // Everything the gesture needs lives here; App only wires the returned handlers
 // into the cards and reads dragVisual to draw the live order.
-export function useArrastarVolumes(lib, persist) {
+export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   // A long press tells a hold apart from a tap or the start of a scroll. Pointer
   // events cover mouse and touch alike, which native HTML5 drag and drop does not
   // on a tablet. 450ms, raised from 350: the user found 350 too easy to trigger
@@ -139,12 +139,11 @@ export function useArrastarVolumes(lib, persist) {
   // The committed order is exactly the live preview's own ids, not a fresh
   // single move computed against the persisted order: the preview is what the
   // user watched build up over the whole gesture, so it is what should land.
-  function persistirOrdemGrupo(personagem, ids) {
-    const grupo = lib.volumes.filter((v) => v.personagem === personagem);
-    const outros = lib.volumes.filter((v) => v.personagem !== personagem);
-    const porId = new Map(grupo.map((v) => [v.id, v]));
-    const ordenado = ids.map((id, i) => porId.has(id) ? { ...porId.get(id), ordem: i } : null).filter(Boolean);
-    persist({ ...lib, volumes: [...outros, ...ordenado] });
+  function persistirOrdemGrupo(ids) {
+    // ordem is shared between bands; never persist a projected publisher/character.
+    const ordens = new Map(ids.map((id, i) => [id, i]));
+    persist({ ...lib, volumes: lib.volumes.map((v) =>
+      ordens.has(v.id) ? { ...v, ordem: ordens.get(v.id) } : v) });
   }
 
   // Measured once per gesture, not tracked live: a card resizing mid-press
@@ -212,7 +211,7 @@ export function useArrastarVolumes(lib, persist) {
       // loop is already most of the way to --hold-p:1 by the time this fires,
       // and it keeps running past this point, through the whole drag, only
       // unwinding in finalizarDrag() when the pointer actually comes up.
-      const grupo = lib.volumes.filter((v) => v.personagem === personagem);
+      const grupo = volumesDaFaixa.filter((v) => v.personagem === personagem);
       info.ids = ordenarGrupoVolumes(grupo).map((v) => v.id);
       setDragVisual({ id: volume.id, ids: info.ids, personagem });
     }, HOLD_MS);
@@ -258,7 +257,7 @@ export function useArrastarVolumes(lib, persist) {
     soltarPreenchimento(el);
     if (el && el.style) el.style.touchAction = "";
     if (info.active && info.ids) {
-      persistirOrdemGrupo(info.personagem, info.ids);
+      persistirOrdemGrupo(info.ids);
       suppressClickRef.current = true;
     }
     info.id = null;

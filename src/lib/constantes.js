@@ -135,15 +135,38 @@ export function editoraDe(item) {
   return ((item && item.editora) || "").trim();
 }
 
+// One owned volume can appear under several publishers, each with its character.
+export function presencas(v) {
+  const vistos = new Set();
+  const pares = [v, ...(Array.isArray(v?.tambem) ? v.tambem : [])];
+  return pares.flatMap((p) => {
+    const editora = typeof p?.editora === "string" ? p.editora.trim() : "";
+    const chave = editora.toLowerCase();
+    if (!editora || vistos.has(chave)) return [];
+    vistos.add(chave);
+    return [{ editora, personagem: typeof p.personagem === "string" ? p.personagem.trim() : "" }];
+  });
+}
+
+export function editorasDe(item) {
+  return presencas(item).map((p) => p.editora);
+}
+
+export function naFaixa(v, nomeEditora) {
+  const chave = (nomeEditora || "").trim().toLowerCase();
+  const p = presencas(v).find((x) => x.editora.toLowerCase() === chave);
+  return p ? { ...v, editora: p.editora, personagem: p.personagem } : null;
+}
+
 // Publishers are discovered from data the user already entered, so the selector
 // is populated without any setup step.
 export function editorasDescobertas(lib) {
   const vistos = new Map();
   [...lib.volumes, ...lib.series].forEach((x) => {
-    const nome = editoraDe(x);
-    if (!nome) return;
-    const chave = nome.toLowerCase();
-    if (!vistos.has(chave)) vistos.set(chave, nome);
+    editorasDe(x).forEach((nome) => {
+      const chave = nome.toLowerCase();
+      if (!vistos.has(chave)) vistos.set(chave, nome);
+    });
   });
   return [...vistos.values()];
 }

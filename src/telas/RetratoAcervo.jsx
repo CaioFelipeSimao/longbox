@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { ED_SEM, editoraDe } from "../lib/constantes";
+import { ED_SEM, editorasDe } from "../lib/constantes";
 import { specForCharacter, swatchColors, useCores } from "../lib/cores";
 
 // D1 (v89): a portrait of the collection on the hub, after the shelf. Every bar is
@@ -79,7 +79,10 @@ export function RetratoAcervo({ lib, onRecorte }) {
       leitura,
       formatos: contar(volumes, (v) => v.tipo || "Sem formato"),
       personagens: dobrarCauda(contar(volumes, (v) => v.personagem || "Sem personagem")),
-      editoras: contar(volumes, (v) => editoraDe(v) || "Sem editora"),
+      editoras: contar(volumes.flatMap((v) => {
+        const nomes = editorasDe(v);
+        return nomes.length ? nomes : ["Sem editora"];
+      }), (nome) => nome),
     };
   }, [volumes]);
 

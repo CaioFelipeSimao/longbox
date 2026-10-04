@@ -2654,3 +2654,19 @@ per collection, kept for the session (`longbox:cor-recolhida`), expanded by defa
 its sandbox could not build (esbuild "Cannot read directory ..."), so the build and `npm run check`
 ran here. test-colecoes 82. Next, asked by the user the same day: B two publishers per HQ (one
 personagem per publisher), C drag-follow reordering on the HQs tab, D the same on the Coleções tab.
+
+**v152 Two publishers per HQ, and no more iOS zoom.** (1) On the iPhone, focusing "Adicionar volumes"
+zoomed the page and kept the zoom: iOS does that for any field under 16px, and the pickers inside sheets
+were 14px. On `pointer: coarse` the fields (.input, .select, .textarea, .pfiltro-input, .search input)
+are now 16px; test-acessibilidade 25. (2) One owned volume can belong to two publishers (Batman/Spawn is
+DC and Image): optional `tambem: [{editora, personagem}]` on the volume, the primary pair untouched, no
+migration. `casaEditora`, `daEditora` and the discovered publishers go through `editorasDe()`; under a
+publisher band the HQs tab uses the volume projected onto that publisher (`naFaixa`), so it groups under
+that band's personagem; "Todas" shows it once under the primary pair. Writes (drag order, status) always
+go to the real volume by id, and `ordem` is shared between the bands. A collection's lock stays the union
+of its members' primary publishers, and an item passes when any of its publishers is in the lock. The
+form has "Tambem publicado por" + "Personagem nessa editora". The hub's Editoras column counts the
+volume in both, the totals once. Codex wrote it (it cannot build in its sandbox, so build and
+`npm run check` ran here); tests/test-duas-editoras.mjs 50 checks. Queued: C drag-follow on the HQs tab,
+D the same on the Coleções tab, E the same for the séries cards inside a volume (`ordemSeries` on the
+volume, ring in the sheet-top colour).

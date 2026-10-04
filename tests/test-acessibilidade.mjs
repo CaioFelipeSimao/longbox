@@ -124,5 +124,13 @@ console.log("=== detalhes ===");
   check("a contagem da faixa sai da fonte de código", !!conta && !conta.classList.contains("num"), conta?.className);
 }
 
+// v152: a field under 16px makes iOS zoom the page on focus and keep the zoom.
+console.log("=== sem zoom do iOS ===");
+{
+  const css = fs.readFileSync("src/styles.css", "utf8");
+  const m = css.match(/@media \(pointer: coarse\) \{ ([^{]*)\{ font-size: 16px; \}/);
+  check("campos de toque têm 16px", !!m && [".input", ".select", ".textarea", ".pfiltro-input", ".search input"].every((s) => m[1].includes(s)), m && m[1]);
+}
+
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas === 0 ? 0 : 1);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Check } from "lucide-react";
 
-import { STATUS, STATUS_ORDER } from "../lib/constantes";
+import { STATUS, STATUS_ORDER, editorasDe } from "../lib/constantes";
 import { specForCharacter, swatchColors, useCores } from "../lib/cores";
 import { dobrar } from "../lib/sessao";
 
@@ -370,5 +370,8 @@ export function CampoBusca({ id, rotulo, placeholder, opcoes, escolhidos, onEsco
 // since nothing says it belongs elsewhere; with no reference publisher, nothing is locked.
 export function daEditora(editoras) {
   const chaves = new Set(editoras.map((e) => (e || "").trim().toLowerCase()).filter(Boolean));
-  return (item) => !chaves.size || !(item.editora || "").trim() || chaves.has(item.editora.trim().toLowerCase());
+  return (item) => {
+    const nomes = editorasDe(item);
+    return !chaves.size || !nomes.length || nomes.some((n) => chaves.has(n.toLowerCase()));
+  };
 }

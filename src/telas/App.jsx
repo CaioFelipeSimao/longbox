@@ -4,7 +4,7 @@ import CursorGrid from "../components/CursorGrid/CursorGrid";
 
 import {
   ACCENT_HEX, DOC_LIMIT, ED_SEM, ED_TODAS, EMPTY_LIB, QUASE_FECHANDO, SESSION_SEED, TABS,
-  TIPOS, editoraDe, seededPick, slugify, tiposDaEditora, TIPOS_COMUNS, STATUS } from "../lib/constantes";
+  TIPOS, editorasDe, presencas, naFaixa, seededPick, slugify, tiposDaEditora, TIPOS_COMUNS, STATUS } from "../lib/constantes";
 import { parseNum, porFixados, uid } from "../lib/util";
 import { autoresDasSeries as contarAutoresDasSeries, autoresDe, parseAutores, textoAutores, autoresPossuidos, serieTemAutor, indiceEdicoes, coberturaDe, edicoesCobertas, aplicarFormEdicao } from "../lib/edicoes";
 import { COR_LONGBOX, CoresContext, swatchColors, tintaSobre } from "../lib/cores";
@@ -291,10 +291,20 @@ export function App() {
   const casaEditora = useCallback((item) => {
     const sel = lib.editoraSel || ED_TODAS;
     if (sel === ED_TODAS) return true;
-    const nome = editoraDe(item);
-    if (sel === ED_SEM) return !nome;
-    return editoraAtual ? nome.toLowerCase() === (editoraAtual.nome || "").toLowerCase() : true;
+    const nomes = editorasDe(item);
+    if (sel === ED_SEM) return !nomes.length;
+    return editoraAtual ? nomes.some((nome) => nome.toLowerCase() === (editoraAtual.nome || "").trim().toLowerCase()) : true;
   }, [lib.editoraSel, editoraAtual]);
+
+  // Display projections keep the real id; every write still uses lib.volumes.
+  // Todas and Sem editora retain the primary pair and a single owned copy.
+  const volumesDaFaixa = useMemo(() => {
+    const volumes = lib.volumes.filter(casaEditora);
+    const sel = lib.editoraSel || ED_TODAS;
+    return sel !== ED_TODAS && sel !== ED_SEM && editoraAtual
+      ? volumes.map((v) => naFaixa(v, editoraAtual.nome)).filter(Boolean)
+      : volumes;
+  }, [lib.volumes, lib.editoraSel, casaEditora, editoraAtual]);
 
   // Searching "Detective" should find the Omnibus that collects it, not just
   // volumes with the word in the title, so the series a volume draws from are
@@ -311,7 +321,7 @@ export function App() {
         if (s) series.add(s.nome);
       });
       const autores = v.edicoesColetadasIds.map((eid) => textoAutores(edicaoPorId[eid]));
-      mapa[v.id] = dobrar([v.titulo, v.personagem, v.editora, v.notas, ...series, ...autores]
+      mapa[v.id] = dobrar([v.titulo, v.personagem, ...presencas(v).flatMap((p) => [p.editora, p.personagem]), v.notas, ...series, ...autores]
         .filter(Boolean).join(" "));
     });
     return mapa;
@@ -323,10 +333,12 @@ export function App() {
   // the publisher filter.
   const sugestoes = useMemo(() => {
     // v149: suggestions follow the publisher band, like the tabs.
-    const hqs = ordenarSugestoes(lib.volumes.filter(casaEditora), textoBusca, query);
+    const hqs = ordenarSugestoes(volumesDaFaixa, textoBusca, query);
     const comoVolume = (v) => ({
       tipo: "volume", chave: "v-" + v.id, id: v.id, volume: v, titulo: v.titulo,
-      meta: [v.personagem, v.editora].filter(Boolean).join(" · "),
+      meta: [{ editora: v.editora, personagem: v.personagem },
+        ...presencas(lib.volumes.find((x) => x.id === v.id)).filter((p) => p.editora.toLowerCase() !== (v.editora || "").trim().toLowerCase())].map((p) =>
+        [p.personagem, p.editora].filter(Boolean).join(" · ")).join(" · ") || v.personagem,
     });
     if (tab !== "colecoes" && tab !== "series") return hqs.map(comoVolume);
     let daAba;
@@ -360,7 +372,7 @@ export function App() {
         });
     }
     return daAba.concat(hqs.slice(0, SUGESTOES_DA_ABA).map((v) => ({ ...comoVolume(v), secao: "HQs" })));
-  }, [tab, lib.volumes, lib.colecoes, lib.series, textoBusca, query, edicoesPorSerie, ownedEdicaoIds, filtroSerie, filtroAutor, casaEditora]);
+  }, [tab, volumesDaFaixa, lib.volumes, lib.colecoes, lib.series, textoBusca, query, edicoesPorSerie, ownedEdicaoIds, filtroSerie, filtroAutor, casaEditora]);
 
   // Fold state for the HQs tab's character groups — see lerGruposFechados'
   // own comment for why this stores the closed names, inverted from the
@@ -393,11 +405,11 @@ export function App() {
   // row will hold before the status and tipo filters narrow it further.
   const personagensDisponiveis = useMemo(() => {
     const n = {};
-    lib.volumes.filter(casaEditora).forEach((v) => {
+    volumesDaFaixa.forEach((v) => {
       if (v.personagem) n[v.personagem] = (n[v.personagem] || 0) + 1;
     });
     return Object.keys(n).sort((x, y) => x.localeCompare(y, "pt-BR")).map((nome) => ({ nome, n: n[nome] }));
-  }, [lib.volumes, casaEditora]);
+  }, [volumesDaFaixa]);
 
   // Switching the band to a publisher this character has nothing under would
   // leave an empty shelf with no visible reason, so the filter lets go instead.
@@ -423,7 +435,7 @@ export function App() {
   }, [loading, filtroTipo, opcoesTipo]);
 
   const volumesFiltrados = useMemo(() => {
-    let vs = lib.volumes.filter(casaEditora);
+    let vs = volumesDaFaixa;
     if (query.trim()) {
       const q = dobrar(query.trim());
       vs = vs.filter((v) => (textoBusca[v.id] || "").includes(q));
@@ -437,7 +449,7 @@ export function App() {
       personagem: p,
       itens: ordenarGrupoVolumes(grupos[p]),
     }));
-  }, [lib.volumes, query, filtroStatus, filtroTipo, filtroPersonagem, casaEditora, textoBusca, fixados]);
+  }, [volumesDaFaixa, query, filtroStatus, filtroTipo, filtroPersonagem, textoBusca, fixados]);
 
   // Reordering is restricted to the plain, unfiltered view: a search or filter
   // shows a subset of the group, and reordering only what is visible would
@@ -450,7 +462,7 @@ export function App() {
   const {
     suppressClickRef, dragVisual, editoraCorPorNome, registrarCardNode, volDragPointerDown,
     volDragPointerMove, volDragPointerEnd,
-  } = useArrastarVolumes(lib, persist);
+  } = useArrastarVolumes(lib, persist, volumesDaFaixa);
 
   function abrirVolumeCard(volumeId) {
     if (suppressClickRef.current) { suppressClickRef.current = false; return; }
@@ -514,7 +526,7 @@ export function App() {
     // a publisher view does not leave the field blank and drop the volume into
     // the "Sem editora" bucket.
     const ed = editoraAtual ? editoraAtual.nome : "";
-    setVolumeForm({ id: null, titulo: "", personagem: "", tipo: TIPOS[0], editora: ed, ano: "", status: "nao_lida", notas: "" });
+    setVolumeForm({ id: null, titulo: "", personagem: "", tipo: TIPOS[0], editora: ed, editora2: "", personagem2: "", ano: "", status: "nao_lida", notas: "" });
     setVolumeErrors({}); setVolumeDupWarning(null); setShowVolumeForm(true);
   }
 
@@ -525,6 +537,8 @@ export function App() {
       personagem: v.personagem,
       tipo: v.tipo,
       editora: v.editora,
+      editora2: Array.isArray(v.tambem) ? v.tambem[0]?.editora || "" : "",
+      personagem2: Array.isArray(v.tambem) ? v.tambem[0]?.personagem || "" : "",
       ano: v.ano,
       status: "nao_lida",
       notas: "",
@@ -536,19 +550,34 @@ export function App() {
     setShowVolumeForm(true);
   }
   function openEditarVolume(v) {
-    setVolumeForm({ ...v }); setVolumeErrors({}); setVolumeDupWarning(null); setShowVolumeForm(true);
+    setVolumeForm({ ...v,
+      editora2: Array.isArray(v.tambem) ? v.tambem[0]?.editora || "" : "",
+      personagem2: Array.isArray(v.tambem) ? v.tambem[0]?.personagem || "" : "",
+    }); setVolumeErrors({}); setVolumeDupWarning(null); setShowVolumeForm(true);
   }
 
   function validarVolume() {
     const errs = {};
     if (!volumeForm.titulo.trim()) errs.titulo = "Informe o título do volume";
     if (!volumeForm.personagem.trim()) errs.personagem = "Informe o personagem principal";
+    if (volumeForm.editora2?.trim() && volumeForm.editora2.trim().toLowerCase() === (volumeForm.editora || "").trim().toLowerCase()) {
+      errs.editora2 = "Escolha uma editora diferente da editora principal";
+    }
     setVolumeErrors(errs);
     return Object.keys(errs).length === 0;
   }
 
   function tituloDuplicado(titulo) {
     return lib.volumes.find((v) => v.titulo.trim().toLowerCase() === titulo.trim().toLowerCase());
+  }
+
+  function volumeDoForm(base = {}) {
+    const { editora2, personagem2, tambem, ...volume } = { ...base, ...volumeForm };
+    const segunda = (editora2 || "").trim();
+    return {
+      ...volume,
+      ...(segunda ? { tambem: [{ editora: segunda, personagem: (personagem2 || "").trim() || volume.personagem.trim() }] } : {}),
+    };
   }
 
   function salvarVolume() {
@@ -559,10 +588,10 @@ export function App() {
     }
     let next, novoId = volumeForm.id;
     if (volumeForm.id) {
-      next = { ...lib, volumes: lib.volumes.map((v) => (v.id === volumeForm.id ? { ...v, ...volumeForm } : v)) };
+      next = { ...lib, volumes: lib.volumes.map((v) => (v.id === volumeForm.id ? volumeDoForm(v) : v)) };
     } else {
       novoId = uid();
-      next = { ...lib, volumes: [...lib.volumes, { ...volumeForm, id: novoId, edicoesColetadasIds: [] }] };
+      next = { ...lib, volumes: [...lib.volumes, { ...volumeDoForm(), id: novoId, edicoesColetadasIds: [] }] };
     }
     persist(next);
     if (!volumeForm.id && capaNova) handleCoverPick(novoId, capaNova);
@@ -578,14 +607,14 @@ export function App() {
       const dup = tituloDuplicado(volumeForm.titulo);
       if (dup) { setVolumeDupWarning('Já existe "' + dup.titulo + '" cadastrado. Toque em "Salvar e cadastrar outro" de novo pra criar mesmo assim.'); return; }
     }
-    const novo = { ...volumeForm, id: uid(), edicoesColetadasIds: [] };
+    const novo = { ...volumeDoForm(), id: uid(), edicoesColetadasIds: [] };
     persist({ ...lib, volumes: [...lib.volumes, novo] });
     if (capaNova) handleCoverPick(novo.id, capaNova);
     setCapaNova(null);
     showToast('"' + novo.titulo + '" adicionado. Pronto pro próximo.');
     setVolumeForm((f) => ({
       id: null, titulo: "", personagem: f.personagem, tipo: f.tipo,
-      editora: f.editora, ano: "", status: "nao_lida", notas: "",
+      editora: f.editora, editora2: f.editora2, personagem2: f.personagem2, ano: "", status: "nao_lida", notas: "",
     }));
     setVolumeErrors({});
     setVolumeDupWarning(null);
@@ -917,7 +946,8 @@ export function App() {
     if (!q || sel === ED_TODAS || loading) return 0;
     if (tab === "volumes") {
       if (volumesFiltrados.length) return 0;
-      return lib.volumes.filter((v) => !casaEditora(v) && (textoBusca[v.id] || "").includes(q)).length;
+      const naFaixaIds = new Set(volumesDaFaixa.map((v) => v.id));
+      return lib.volumes.filter((v) => !naFaixaIds.has(v.id) && (textoBusca[v.id] || "").includes(q)).length;
     }
     if (tab === "series") {
       if (seriesFiltradas.length) return 0;
@@ -930,7 +960,7 @@ export function App() {
       return lib.colecoes.filter((c) => dobrar(c.nome).includes(q)).length;
     }
     return 0;
-  }, [lib.editoraSel, query, loading, tab, volumesFiltrados, seriesFiltradas, colecoesFiltradas, lib.volumes, lib.series, lib.colecoes, casaEditora, textoBusca, edicoesPorSerie, ownedEdicaoIds]);
+  }, [lib.editoraSel, query, loading, tab, volumesFiltrados, volumesDaFaixa, seriesFiltradas, colecoesFiltradas, lib.volumes, lib.series, lib.colecoes, casaEditora, textoBusca, edicoesPorSerie, ownedEdicaoIds]);
 
   // v141: pin a character to the top of the HQs and Séries tabs, three at most.
   function alternarFixado(personagem) {

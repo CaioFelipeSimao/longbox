@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Pencil, Trash2, Link2, ImagePlus, ChevronLeft, ChevronRight, Copy, Library } from "lucide-react";
 
-import { STATUS, STATUS_ORDER } from "../lib/constantes";
+import { STATUS, STATUS_ORDER, editorasDe, presencas } from "../lib/constantes";
 import { parseNum } from "../lib/util";
 import { digitosDoBloco, formaDoTile } from "../lib/edicoes";
 import { usePasteImage } from "../lib/hooks";
@@ -24,6 +24,8 @@ export function VolumeSheet({
   const kept = useRef(null);
   if (volume) kept.current = volume;
   const v = volume || kept.current;
+  const editoras = editorasDe(v);
+  const publicacoes = presencas(v);
 
   // v114: a form on top (the "Novo volume" cover field) takes the paste, not this sheet.
   usePasteImage(!!volume && canUpload, (f) => { if (!document.querySelector(".modal")) onCoverPick(f); });
@@ -40,7 +42,7 @@ export function VolumeSheet({
   const opcoesSerie = useMemo(() => {
     if (!v) return [];
     const ord = (a, b) => a.nome.localeCompare(b.nome, "pt-BR", { numeric: true });
-    const cabem = series.filter(daEditora([v.editora]));
+    const cabem = series.filter(daEditora(editorasDe(v)));
     const dele = (x) => personagensDaSerie(x).some((p) => p.nome === v.personagem);
     return [...cabem.filter(dele).sort(ord), ...cabem.filter((x) => !dele(x)).sort(ord)].map((x) => {
       const nomes = personagensDaSerie(x).map((p) => p.nome).join(", ");
@@ -166,7 +168,8 @@ export function VolumeSheet({
           <div className="vs-info">
             <dl className="deflist">
               <dt>Tipo</dt><dd>{v.tipo}</dd>
-              {v.editora && <><dt>Editora</dt><dd>{v.editora}</dd></>}
+              {editoras.length > 0 && <><dt>Editora</dt><dd>{editoras.join(" · ")}</dd></>}
+              {Array.isArray(v.tambem) && v.tambem.length > 0 && publicacoes.length > 0 && <><dt>Personagem</dt><dd>{publicacoes.map((p) => p.personagem + " (" + p.editora + ")").join(" · ")}</dd></>}
               {v.ano && <><dt>Ano</dt><dd className="num">{v.ano}</dd></>}
               {colecoes.length > 0 && (
                 <><dt>Coleções</dt><dd>{colecoes.map((c) => c.nome).join(", ")}</dd></>
@@ -255,10 +258,10 @@ export function VolumeSheet({
                   <CampoBusca
                     id="vincular-serie"
                     rotulo="Buscar série"
-                    placeholder={v.editora ? "Buscar séries da " + v.editora : "Buscar série"}
+                    placeholder={editoras.length ? "Buscar séries da " + editoras.join(" e ") : "Buscar série"}
                     opcoes={opcoesSerie}
                     onEscolher={setLinkSerieId}
-                    vazio={"Nenhuma série" + (v.editora ? " da " + v.editora : "") + " cadastrada."}
+                    vazio={"Nenhuma série" + (editoras.length ? " da " + editoras.join(" e ") : "") + " cadastrada."}
                   />
                 </Field>
                 <button className="btn btn-quiet" style={{ width: "100%", marginTop: 10 }} onClick={() => setLinkSerieId(null)}>Cancelar</button>
