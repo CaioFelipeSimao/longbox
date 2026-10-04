@@ -2726,3 +2726,10 @@ strip; every offset derives from the variable. Checked in Chrome (synthetic poin
 the collection drag reorders and renumbers, the strip scrolls sideways, a release below the strip cancels
 and leaves no ghost; on the HQs tab a pointer 12px under the band scrolls the page up.
 test-arrastar-colecao 52, test-arrasto-seguir 82+.
+
+**v156 Header back to 76px.** v155 shrank the desktop header from 76px to 60px to "remove the gap above
+the Longbox strip" the user pointed at. It was a guess and not what they asked for; the user asked to put
+it back. The real gap (a ~7px strip between the Claude artifact bar and the header where the top of a
+scrolled cover shows, visible in the user's screenshots) could not be reproduced in the harness nor in the
+live app in the PC Chrome tried here (the header sits flush under the 30px host bar), so it is open:
+needs the user's environment (Claude desktop app or browser, zoom).

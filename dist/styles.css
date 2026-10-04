@@ -123,7 +123,7 @@
 }
 
 @media (min-width: 768px) {
-  :root { --topbar-h: 60px; --app-pad-b: 48px; }
+  :root { --topbar-h: 76px; --app-pad-b: 48px; }
 }
 
 /* The header and the strip take the hue of the publisher being read. Only the
