@@ -63,3 +63,48 @@ export function transformSeguir(pointer, grabOffset, slotRect) {
     y: pointer.y - grabOffset.y - slotRect.top,
   };
 }
+
+// Strip slots are measured once in content coordinates. Scrolling changes the
+// pointer's content position, never the recorded slots.
+export function pontoNoConteudo(pointer, rect, scrollLeft = 0, scrollTop = 0) {
+  return { x: pointer.x - rect.left + scrollLeft, y: pointer.y - rect.top + scrollTop };
+}
+
+export function rectNoConteudo(rect, containerRect, scrollLeft = 0, scrollTop = 0) {
+  const p = pontoNoConteudo({ x: rect.left, y: rect.top }, containerRect, scrollLeft, scrollTop);
+  return { left: p.x, right: p.x + rect.width, top: p.y, bottom: p.y + rect.height };
+}
+
+// Positive is right. Both axes use the same depth, cap and end-stop rules.
+export function velocidadeAutoScrollHorizontal(x, left, right, { scrollLeft = 0, ...options } = {}) {
+  return velocidadeAutoScroll(x, left, right, { ...options, scrollTop: scrollLeft });
+}
+
+// Callers supply only visible chrome that is currently stuck/fixed. A floating
+// bottom bar can leave a safe-area gap; a bar moved up by the keyboard is not
+// the bottom of the usable page viewport.
+export function limitesDeRolagemDaPagina({ altura, topbar, banda, tabbar } = {}) {
+  const top = Math.min(altura, Math.max(0, (banda || topbar)?.bottom || 0));
+  const bottom = tabbar && tabbar.bottom > tabbar.top && tabbar.top >= altura / 2 &&
+    tabbar.bottom <= altura + 1 && tabbar.bottom >= altura - 100 ? tabbar.top : altura;
+  return { top, bottom: Math.max(top, bottom) };
+}
+
+export function lerLimitesDeRolagemDaPagina(doc = document, win = window) {
+  const presoNoTopo = (selector) => {
+    const el = doc.querySelector(selector);
+    if (!el) return null;
+    const style = win.getComputedStyle(el), rect = el.getBoundingClientRect();
+    if (style.display === "none" || rect.height <= 0 ||
+        !["sticky", "fixed"].includes(style.position) || style.top === "auto" ||
+        rect.top > (parseFloat(style.top) || 0) + 1) return null;
+    return rect;
+  };
+  const bar = doc.querySelector(".tabbar");
+  const style = bar && win.getComputedStyle(bar);
+  const barRect = bar?.getBoundingClientRect();
+  const atBottom = style?.position === "fixed" && style.display !== "none" && style.bottom !== "auto" &&
+    Math.abs(barRect.bottom - (win.innerHeight - (parseFloat(style.bottom) || 0))) <= 2;
+  return limitesDeRolagemDaPagina({ altura: win.innerHeight, topbar: presoNoTopo(".topbar"),
+    banda: presoNoTopo(".ed-band"), tabbar: atBottom ? barRect : null });
+}

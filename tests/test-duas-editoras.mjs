@@ -219,7 +219,7 @@ pointer("pointerdown", 40); await sleep(500);
 const liftedAncestors = [];
 for (let el = grid; el && el !== drag.W.document.body; el = el.parentElement) liftedAncestors.push(el);
 check("drag eleva ancestrais abaixo do chrome", liftedAncestors.every((el) =>
-  el.style.getPropertyValue("z-index") === "8" && el.style.getPropertyPriority("z-index") === "important"));
+  el.style.getPropertyValue("z-index") === "14" && el.style.getPropertyPriority("z-index") === "important"));
 const moveAllowed = pointer("pointermove", 160); await sleep(100);
 check("drag mantém o mesmo nó DOM ao trocar de slot", drag.cards()[1] === primeiro && grid.contains(primeiro));
 check("drag segue o ponto de pega no slot atual", primeiro.style.transform === "translate(20px, 0px) scale(1.06)", primeiro.style.transform);

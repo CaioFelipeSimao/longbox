@@ -3,11 +3,11 @@ import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { swatchColors } from "../lib/cores";
 import { HOLD_EASE_LINEAR, HOLD_EASE_OUT, prefersReducedMotion } from "../lib/hooks";
 import { ordenarGrupoVolumes } from "../ui/VolumeCard";
-import { slotNoPonto, reordenarParaSlot, pontoNaCaixaExpandida, velocidadeAutoScroll, transformSeguir } from "../lib/arrastoSeguir";
+import { slotNoPonto, reordenarParaSlot, pontoNaCaixaExpandida, velocidadeAutoScroll, transformSeguir, lerLimitesDeRolagemDaPagina } from "../lib/arrastoSeguir";
 
 // Below the chrome: .topbar/.tabbar 20, .ed-band 15, HQs filters 12.
 // Above static sibling groups and the .aba (0)/content lattice (1) layers.
-const DRAG_Z_INDEX = 8;
+const DRAG_Z_INDEX = 14;
 
 // Long-press to arm, then drag an HQ within its own personagem group (v30-v49).
 // Everything the gesture needs lives here; App only wires the returned handlers
@@ -149,7 +149,7 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   function autoScroll(info) {
     const container = info.scrollContainer;
     const page = container === document.scrollingElement || container === document.documentElement;
-    const rect = page ? { top: 0, bottom: window.innerHeight } : container.getBoundingClientRect();
+    const rect = page ? lerLimitesDeRolagemDaPagina() : container.getBoundingClientRect();
     const top = Math.max(0, rect.top);
     const bottom = Math.min(window.innerHeight, rect.bottom);
     const height = page ? window.innerHeight : container.clientHeight;

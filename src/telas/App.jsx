@@ -1982,6 +1982,7 @@ export function App() {
         {!loading && abaMontada("colecoes") && (
           <Aba ativa={tab === "colecoes"} render={() => (
           <AbaColecoes
+            persist={persist}
             lib={lib}
             abrirVolume={abrirVolume}
             buscando={buscando}

@@ -3,7 +3,8 @@ import fs from "node:fs";
 // package.json is CommonJS, but this layout-free source is ESM and has no
 // imports. Load it as a data module, without compiling the app or needing DOM.
 const source = fs.readFileSync(new URL("../src/lib/arrastoSeguir.js", import.meta.url), "utf8");
-const { slotNoPonto, reordenarParaSlot, pontoNaCaixaExpandida, velocidadeAutoScroll, transformSeguir } =
+const { slotNoPonto, reordenarParaSlot, pontoNaCaixaExpandida, velocidadeAutoScroll, transformSeguir,
+  velocidadeAutoScrollHorizontal, pontoNoConteudo, rectNoConteudo, limitesDeRolagemDaPagina, lerLimitesDeRolagemDaPagina } =
   await import("data:text/javascript;base64," + Buffer.from(source).toString("base64"));
 let passes = 0, falhas = 0;
 const check = (nome, ok) => {
@@ -99,6 +100,46 @@ const moved = transformSeguir(pointer, grab, rect(210, 380));
 check("changing slots rebases translation without a jump", moved.x === 90 && moved.y === 20 && 210 + moved.x + grab.x === pointer.x && 380 + moved.y + grab.y === pointer.y);
 const negative = transformSeguir({ x: -20, y: -50 }, grab, rect(100, 200));
 check("translation follows the pointer outside the screen", negative.x === -150 && negative.y === -320);
+
+const horizontal = { scrollLeft: 200, maxScroll: 1000 };
+check("horizontal scroll is zero away from the edges", velocidadeAutoScrollHorizontal(400, 100, 700, horizontal) === 0);
+check("horizontal left depth is proportional", velocidadeAutoScrollHorizontal(132, 100, 700, horizontal) === -7);
+check("horizontal right depth is proportional", velocidadeAutoScrollHorizontal(668, 100, 700, horizontal) === 7);
+check("horizontal speed is full beyond the left edge", velocidadeAutoScrollHorizontal(0, 100, 700, horizontal) === -14);
+check("horizontal speed is full beyond the right edge", velocidadeAutoScrollHorizontal(800, 100, 700, horizontal) === 14);
+check("horizontal left end stops scrolling", velocidadeAutoScrollHorizontal(100, 100, 700, { ...horizontal, scrollLeft: 0 }) === 0);
+check("horizontal right end stops scrolling", velocidadeAutoScrollHorizontal(700, 100, 700, { ...horizontal, scrollLeft: 1000 }) === 0);
+check("a fitting horizontal strip cannot scroll", velocidadeAutoScrollHorizontal(700, 100, 700, { maxScroll: 0 }) === 0);
+const contentBox = rect(100, 200, 300, 180);
+const contentPointer = pontoNoConteudo({ x: 150, y: 250 }, contentBox, 230);
+check("pointer conversion includes scrollLeft", contentPointer.x === 280 && contentPointer.y === 50);
+const contentSlot = rectNoConteudo(rect(120, 220), contentBox, 230);
+check("slot conversion includes content origin and scrollLeft", contentSlot.left === 250 && contentSlot.right === 340 && contentSlot.top === 20 && contentSlot.bottom === 170);
+check("scrolling changes targeting without measuring slots again", slotNoPonto(pontoNoConteudo({ x: 150, y: 250 }, contentBox, 230), [contentSlot]) === 0 &&
+  slotNoPonto(pontoNoConteudo({ x: 150, y: 250 }, contentBox, 0), [contentSlot]) === null);
+check("content conversion supports sheet scrollTop too", pontoNoConteudo({ x: 150, y: 250 }, contentBox, 0, 300).y === 350);
+const topbar = rect(0, 0, 800, 76), banda = rect(0, 76, 800, 54);
+const pageLimits = limitesDeRolagemDaPagina({ altura: 800, topbar, banda });
+check("stuck publisher band defines the page top", pageLimits.top === 130 && pageLimits.bottom === 800);
+check("without a band the topbar defines the page top", limitesDeRolagemDaPagina({ altura: 800, topbar }).top === 76);
+check("without top chrome the page begins at zero", limitesDeRolagemDaPagina({ altura: 800 }).top === 0);
+check("chrome that has left the viewport cannot give a negative top", limitesDeRolagemDaPagina({ altura: 800, banda: rect(0, -80, 800, 54) }).top === 0);
+check("fixed bottom tabbar defines the page bottom", limitesDeRolagemDaPagina({ altura: 800, topbar, banda, tabbar: rect(16, 734, 768, 58) }).bottom === 734);
+check("a tabbar away from the bottom does not shorten the viewport", limitesDeRolagemDaPagina({ altura: 800, tabbar: rect(0, 300, 800, 58) }).bottom === 800);
+check("hidden bottom tabbar does not shorten the viewport", limitesDeRolagemDaPagina({ altura: 800, tabbar: rect(0, 0, 0, 0) }).bottom === 800);
+check("pointer over the chrome scrolls up at full speed", velocidadeAutoScroll(100, pageLimits.top, pageLimits.bottom, limits) === -14);
+check("the top zone starts below the chrome", velocidadeAutoScroll(162, pageLimits.top, pageLimits.bottom, limits) === -7);
+// The DOM reader filters chrome that is present but has not stuck yet, and a
+// fixed bottom bar translated up by the on-screen keyboard.
+const chrome = (r, position, top = "auto", bottom = "auto") => ({ getBoundingClientRect: () => r, style: { position, top, bottom, display: "block" } });
+const elements = { ".topbar": chrome(topbar, "sticky", "0px"), ".ed-band": chrome(rect(0, 300, 800, 54), "sticky", "76px"),
+  ".tabbar": chrome(rect(0, 500, 800, 58), "fixed", "auto", "8px") };
+const fakeDoc = { querySelector: (s) => elements[s] || null }, fakeWin = { innerHeight: 800, getComputedStyle: (el) => el.style };
+check("DOM reader ignores a band that is not stuck", lerLimitesDeRolagemDaPagina(fakeDoc, fakeWin).top === 76);
+check("DOM reader ignores a keyboard-raised tabbar", lerLimitesDeRolagemDaPagina(fakeDoc, fakeWin).bottom === 800);
+elements[".ed-band"] = chrome(banda, "sticky", "76px");
+elements[".tabbar"] = chrome(rect(0, 734, 800, 58), "fixed", "auto", "8px");
+check("DOM reader uses stuck band and fixed bottom bar", JSON.stringify(lerLimitesDeRolagemDaPagina(fakeDoc, fakeWin)) === '{"top":130,"bottom":734}');
 
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);

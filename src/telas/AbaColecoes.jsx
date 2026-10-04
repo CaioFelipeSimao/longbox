@@ -3,9 +3,11 @@ import { Layers, ChevronDown } from "lucide-react";
 import { EmptyState } from "../ui/base";
 import { ShelfStrip } from "../ui/Prateleira";
 import { VolumeCard } from "../ui/VolumeCard";
+import { swatchColors } from "../lib/cores";
+import { useArrastarColecao } from "./useArrastarColecao";
 
 export function AbaColecoes({
-  lib, abrirVolume, buscando, setOpenColecaoId, colecoesFiltradas, colecoesFechadas,
+  lib, persist, abrirVolume, buscando, setOpenColecaoId, colecoesFiltradas, colecoesFechadas,
   colecaoAberta, alternarColecao, alternarTodasColecoes, switchTab,
 }) {
   return (
@@ -59,25 +61,47 @@ export function AbaColecoes({
             {!aberta ? null : membros.length === 0 ? (
               <p className="t-small muted">Abra em Gerenciar para adicionar volumes.</p>
             ) : (
-              <ShelfStrip total={membros.length} cor={c.corBarra}>
-                {membros.map((v, i) => (
-                  <div key={v.id + ":" + i}>
-                    <div className="slot-order">{String(i + 1).padStart(2, "0")}</div>
-                    <VolumeCard
-                      volume={v}
-                      index={0}
-                      tabParada={i === 0 ? 0 : -1}
-                      open={false}
-                      onClick={() => abrirVolume(v.id, { tipo: "colecao", id: c.id })}
-                    />
-                  </div>
-                ))}
-              </ShelfStrip>
+              <ColecaoStrip colecao={c} lib={lib} persist={persist} abrirVolume={abrirVolume} />
             )}
           </section>
         );
       })}
       </>
     )
+  );
+}
+
+// The gesture's owner unmounts with the folded/removed strip, cleaning its ghost
+// immediately. Occurrence keys stay stable through each preview and settlement.
+function ColecaoStrip({ colecao, lib, persist, abrirVolume }) {
+  const drag = useArrastarColecao(colecao, lib, persist);
+  const membros = drag.visual?.membros || colecao.membros;
+  const order = drag.visual?.order || membros.map((_, i) => i);
+  const itens = order.map((indice) => ({ indice, volume: lib.volumes.find((v) => v.id === membros[indice]) })).filter((x) => x.volume);
+  const cor = colecao.corBarra;
+  const barColor = cor ? (cor.longbox ? "var(--accent)" : swatchColors(cor, 0).edge) : null;
+  return (
+    <ShelfStrip total={itens.length} cor={cor} onKeyDown={(e) => {
+      // A keyboard activation is separate from the synthetic click of a drag.
+      if (e.key === "Enter" || e.key === " ") drag.suppressClickRef.current = false;
+    }}>
+      {itens.map(({ indice, volume: v }, i) => {
+        // No bar colour of its own: the hook reads the accent the bar itself draws with.
+        const holdColor = barColor || undefined;
+        return (
+          <div key={v.id + ":" + indice} data-membro-indice={indice}>
+            <div className="slot-order">{String(i + 1).padStart(2, "0")}</div>
+            <VolumeCard volume={v} index={0} tabParada={i === 0 ? 0 : -1} open={false}
+              reordenavel holdColor={holdColor} cardRef={(el) => drag.registrar(indice, el)}
+              onDragPointerDown={(e) => drag.pointerDown(e, indice)}
+              onDragPointerMove={drag.mover} onDragPointerEnd={drag.finalizar}
+              onClick={() => {
+                if (drag.suppressClickRef.current) { drag.suppressClickRef.current = false; return; }
+                abrirVolume(v.id, { tipo: "colecao", id: colecao.id });
+              }} />
+          </div>
+        );
+      })}
+    </ShelfStrip>
   );
 }

@@ -50,8 +50,9 @@ const SUITES = [
   { args: ["tests/test-editora-busca.mjs"], minimo: 10 },
   { args: ["tests/test-duas-editoras.mjs"], minimo: 70 },
   { args: ["tests/test-tiles-volume.mjs"], minimo: 6 },
-  // Removed 8 nearest-centre checks; added 39 fixed-slot/direct-order checks.
-  { args: ["tests/test-arrasto-seguir.mjs"], minimo: 58 },
+  // Fixed-slot geometry, both scroll axes and chrome-aware page limits.
+  { args: ["tests/test-arrasto-seguir.mjs"], minimo: 82 },
+  { args: ["tests/test-arrastar-colecao.mjs"], minimo: 52 },
 ];
 
 // Lines that report a count which must be zero. Source and CSS dash counts are

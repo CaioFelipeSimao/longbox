@@ -2704,3 +2704,25 @@ nothing changes. Checked in Chrome (synthetic pointer events, a hidden tab so ti
 first in one jump put it at index 0 with the rest shifted once; a pointer parked 2px either side of a
 boundary switched once and stayed; the lifted ancestors computed z-index 8 and elementFromPoint on the
 header and band returned the chrome. test-arrasto-seguir 58, test-duas-editoras 70.
+
+**v155 Drag-reorder on the Coleções tab, auto-scroll from under the chrome, a tighter header.** (1)
+Long-press a volume in a collection's row, the ring fills, then drag: the order of `colecao.membros`
+changes (the Gerenciar sheet's "Ordem de leitura" is the same list, so both methods edit one thing) and
+the 01, 02... badges renumber live. The row is a scroll container that would clip a lifted card, so the
+dragged card is a fixed ghost on <body> (src/lib/arrastoGhost.js, reusable) while the original keeps its
+box as the hole; on release the ghost glides to the slot. The strip scrolls sideways near its edges
+(slots are measured in content coordinates), the page scrolls vertically, a release outside the strip
+cancels. The ring colour is the collection's own bar colour, else the accent the bar itself draws with
+(`--ed-accent`, resolved at press time because the ghost lives outside .app). The reusable parts are the
+pure helpers in src/lib/arrastoSeguir.js and the ghost; the HQs hook stays as it was
+(src/telas/useArrastarColecao.js beside useArrastarVolumes.js). (2) The page auto-scroll's zone is now
+measured from the bottom of the sticky chrome (the publisher band, the floating tab bar at the bottom on
+a phone), not from the window top, and a pointer over the chrome scrolls at full speed:
+limitesDeRolagemDaPagina; the user had to drag up into the header to scroll up. (3) The dragged HQ now
+sits above the sticky group headers (z 10) and the filter panel (12) at z 14, still under the band (15)
+and the header (20); DRAG_Z_INDEX is 14 in the hook, the CSS and the ghost. (4) The desktop header is
+60px instead of 76 (--topbar-h): the user saw dead space between the Claude artifact bar and the Longbox
+strip; every offset derives from the variable. Checked in Chrome (synthetic pointer events, hidden tab):
+the collection drag reorders and renumbers, the strip scrolls sideways, a release below the strip cancels
+and leaves no ghost; on the HQs tab a pointer 12px under the band scrolls the page up.
+test-arrastar-colecao 52, test-arrasto-seguir 82+.

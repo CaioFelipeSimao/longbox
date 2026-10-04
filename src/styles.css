@@ -123,7 +123,7 @@
 }
 
 @media (min-width: 768px) {
-  :root { --topbar-h: 76px; --app-pad-b: 48px; }
+  :root { --topbar-h: 60px; --app-pad-b: 48px; }
 }
 
 /* The header and the strip take the hue of the publisher being read. Only the
@@ -1379,8 +1379,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .vol[data-vol-id]:active { transform: none; }
 .vol[data-dragging="true"] {
   position: relative;
-  /* Match DRAG_Z_INDEX: above siblings, below filters (12) and chrome (15/20). */
-  z-index: 8;
+  /* Match DRAG_Z_INDEX: above siblings and the sticky group headers (10) and filters (12), below the chrome (15/20). */
+  z-index: 14;
   cursor: grabbing;
   will-change: transform;
 }
@@ -2115,6 +2115,9 @@ button.retrato-linha { cursor: pointer; }
 /* Snapping would fight the drag, pulling the strip back to a cover edge under
    the pointer. It comes back on release. */
 .coll-strip[data-dragging] { scroll-snap-type: none; }
+/* The body ghost paints the picked-up card; its real box remains in the row. */
+.coll-strip .vol[data-drag-hole="true"] { visibility: hidden; }
+.vol[data-drag-ghost="true"] { visibility: visible; cursor: grabbing; }
 .coll-strip > * { scroll-snap-align: start; flex: 0 0 108px; }
 @media (min-width: 640px) { .coll-strip > * { flex-basis: 124px; } }
 

@@ -156,7 +156,7 @@ export function ShelfBar({ stripRef, total }) {
 
 // One collection's strip with its bar. Its own component so the strip's ref has
 // a stable owner per collection.
-export function ShelfStrip({ total, cor, children }) {
+export function ShelfStrip({ total, cor, children, onKeyDown }) {
   const stripRef = useRef(null);
   // A collection's own bar colour (v66), from the character palette; without
   // one the lit spines follow the publisher, as before.
@@ -165,7 +165,10 @@ export function ShelfStrip({ total, cor, children }) {
     : undefined;
   return (
     <div className="shelf-wrap" style={estilo}>
-      <div className="coll-strip" ref={stripRef} {...gradeTeclado}>{children}</div>
+      <div className="coll-strip" ref={stripRef} {...gradeTeclado} onKeyDown={(e) => {
+        onKeyDown?.(e);
+        gradeTeclado.onKeyDown(e);
+      }}>{children}</div>
       <ShelfBar stripRef={stripRef} total={total} />
     </div>
   );
