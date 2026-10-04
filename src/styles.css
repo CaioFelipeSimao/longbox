@@ -145,6 +145,28 @@
   }
 }
 
+/* v153: a white publisher (Image Comics) has no hue, so the chrome would keep the Longbox
+   cyan. It gets a neutral accent: light buttons with dark ink on the dark theme, graphite
+   with white ink on the light one (a white button would vanish on a light page). Both the
+   header and the band carry the attribute; --ed-accent is set too because it was resolved
+   once on :root and does not follow --accent down the tree. */
+[data-ed-neutro] {
+  --accent: #F2F3F5;
+  --accent-text: #F2F3F5;
+  --accent-ink: #14161A;
+  --ed-accent: #F2F3F5;
+  --ed-accent-text: #F2F3F5;
+}
+@media (prefers-color-scheme: light) {
+  [data-ed-neutro] {
+    --accent: #1B1D21;
+    --accent-text: #1B1D21;
+    --accent-ink: #FFFFFF;
+    --ed-accent: #1B1D21;
+    --ed-accent-text: #1B1D21;
+  }
+}
+
 /* What follows the publisher inside the page (v64): the Coleções spine window,
    the inner scrollbars and the outline of the sheets and dropdown lists. The
    header's rule above redefines --accent itself on the chrome; this is kept to
@@ -758,6 +780,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 @media (hover: hover) and (pointer: fine) {
   .segmented button:hover { color: var(--text); }
   .ed-band[data-tinted="true"] .segmented button:hover { color: #fff; }
+  /* v153: the open tab keeps the ink measured against its pill; the white above made the
+     label vanish on a white publisher (Image Comics). */
+  .ed-band[data-tinted="true"] .segmented button[data-active="true"]:hover { color: var(--ed-cor-tinta, #fff); }
 }
 
 /* The publisher band's own controls sit taller than the ones in the sheets: heights
@@ -1349,18 +1374,29 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   .vol-hold { clip-path: none; opacity: var(--hold-p, 0); }
   .vol-hold__crest { display: none; }
 }
-.vol[data-dragging="true"] { z-index: 5; }
-.vol[data-dragging="true"] .cover { transform: scale(1.05); box-shadow: var(--shadow-cover-hover); opacity: 0.9; }
+.vol[data-vol-id] { touch-action: none; -webkit-user-select: none; user-select: none; }
+/* Keep the button's grab coordinates stable; its cover still gives press feedback. */
+.vol[data-vol-id]:active { transform: none; }
+.vol[data-dragging="true"] {
+  position: relative;
+  z-index: 1001;
+  cursor: grabbing;
+  will-change: transform;
+}
+.vol[data-dragging="true"] .cover {
+  box-shadow: 0 12px 28px rgb(0 0 0 / 24%), var(--shadow-cover-hover);
+  transform: none;
+}
 /* A gentle wiggle, not the position wiggle: it says "this one is picked up",
    the same job the FLIP slide already does for everything moving around it, so
    the angle stays small (1.5deg) and unhurried (320ms) rather than reading as
    an alarm. Gated inside no-preference, not merely shortened under reduce, the
    same way every other movement-only animation in this file is. */
 @media (prefers-reduced-motion: no-preference) {
-  .vol[data-dragging="true"] .cover { animation: volWiggle 320ms ease-in-out infinite; }
+  .vol[data-dragging="true"]:not([data-drag-settling]) .cover { animation: volWiggle 320ms ease-in-out infinite; }
   @keyframes volWiggle {
-    0%, 100% { transform: scale(1.05) rotate(-1.5deg); }
-    50% { transform: scale(1.05) rotate(1.5deg); }
+    0%, 100% { transform: rotate(-1.5deg); }
+    50% { transform: rotate(1.5deg); }
   }
 }
 
@@ -2858,9 +2894,10 @@ html[data-capa="true"] body { scrollbar-color: auto; }
   }
   .sheet, .modal { transition-property: opacity !important; transform: none !important; }
   .sheet[data-in="true"], .modal[data-in="true"] { transform: none !important; }
-  .press:active, .btn:active, .btn-icon:active, .tile:active, .vol:active .cover,
+  .press:active:not(.vol[data-dragging="true"]), .btn:active, .btn-icon:active, .tile:active, .vol:active .cover,
   .serie-row:active, .seg3 button:active, .cover-upload:active,
   .vol[data-dragging="true"] .cover { transform: none !important; }
+  .vol[data-vol-id], .vol[data-vol-id] .cover { transition: none !important; }
   .toast { transform: translate(-50%, 0) !important; }
 }
 

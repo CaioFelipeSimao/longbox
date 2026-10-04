@@ -1423,6 +1423,14 @@ export function App() {
     };
   }, [lib.editoras, lib.editoraSel]);
   const edHue = edCroma ? edCroma.h : null;
+  // v153: a white or very light grey publisher (Image Comics) has no hue to lend, so the
+  // chrome used to fall back to the Longbox cyan. It takes a neutral accent instead:
+  // light buttons with dark ink on the dark theme, graphite with white ink on the light one.
+  const edNeutro = useMemo(() => {
+    const atual = (lib.editoras || []).find((e) => e.id === (lib.editoraSel || ED_TODAS));
+    const spec = atual && atual.cor;
+    return !!spec && spec.s !== undefined && spec.s < 12 && (spec.l === undefined ? 56 : spec.l) >= 70;
+  }, [lib.editoras, lib.editoraSel]);
 
   // The publisher's backdrop colour, for the gradient that now runs from the very
   // top of the page through the header into the band (v68). The hub is a layer of
@@ -1754,6 +1762,7 @@ export function App() {
         className="topbar"
         data-scrolled={scrolled ? "true" : "false"}
         data-ed-hue={edHue == null ? undefined : "true"}
+        data-ed-neutro={edNeutro ? "true" : undefined}
         style={
           edCroma == null
             ? undefined
@@ -1816,6 +1825,7 @@ export function App() {
           tab={tab}
           onTab={switchTab}
           edCroma={edCroma}
+          edNeutro={edNeutro}
           dobra={dobraDaAba}
           contagem={
             // v147: singular for one ("1 série", not "1 séries").

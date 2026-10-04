@@ -20,7 +20,7 @@ export function EditoraLogo({ editora, size }) {
 }
 
 export function EditoraBar({
-  editoras, selecionada, onSelect, onManage, buscando, tabs, tab, onTab, contagem, edCroma, dobra,
+  editoras, selecionada, onSelect, onManage, buscando, tabs, tab, onTab, contagem, edCroma, edNeutro, dobra,
 }) {
   const edHue = edCroma ? edCroma.h : null;
   const atual = editoras.find((e) => e.id === selecionada) || null;
@@ -64,6 +64,7 @@ export function EditoraBar({
       }
       data-tinted={cor ? "true" : "false"}
       data-ed-hue={edHue == null ? undefined : "true"}
+      data-ed-neutro={edNeutro ? "true" : undefined}
     >
     <div className="ed-bar">
       <EditoraLogo editora={atual} />

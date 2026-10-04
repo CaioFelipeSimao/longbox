@@ -201,20 +201,56 @@ check("salvar e continuar também salva tambem", form.docs.get("library/volumes"
 check("continuar mantém campos para o próximo volume", !!form.modal() && form.campo("Título")?.value === "" && segundo()?.textContent === "Image Comics" && form.campo("Personagem nessa editora")?.value === "Spawn");
 
 console.log("=== reordenar projeções ===");
-// JSDOM has no layout: supply the two cards' measured positions for the gesture.
+// JSDOM has no layout: measure slots from the live DOM order, plus the group's
+// drop area. The keyed nodes themselves must survive React's reorder.
 const drag = await montar({ editoraSel: "image" });
 const [primeiro, outro] = drag.cards();
 const rect = (left) => ({ left, right: left + 90, top: 0, bottom: 130, width: 90, height: 130 });
-primeiro.getBoundingClientRect = () => rect(0);
-outro.getBoundingClientRect = () => rect(100);
+const grid = primeiro.closest("[data-hq-grid]");
+grid.getBoundingClientRect = () => ({ left: 0, right: 190, top: 0, bottom: 130, width: 190, height: 130 });
+primeiro.getBoundingClientRect = () => rect([...grid.children].indexOf(primeiro) * 100);
+outro.getBoundingClientRect = () => rect([...grid.children].indexOf(outro) * 100);
+let captures = 0;
+primeiro.setPointerCapture = () => { captures++; };
+primeiro.releasePointerCapture = () => {};
 const pointer = (type, x) => primeiro.dispatchEvent(new drag.W.MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: 40 }));
 pointer("pointerdown", 40); await sleep(500);
-pointer("pointermove", 140); await sleep(100);
-pointer("pointerup", 140); await sleep(750);
+const moveAllowed = pointer("pointermove", 160); await sleep(100);
+check("drag mantém o mesmo nó DOM ao trocar de slot", drag.cards()[1] === primeiro && grid.contains(primeiro));
+check("drag segue o ponto de pega no slot atual", primeiro.style.transform === "translate(20px, 0px) scale(1.06)", primeiro.style.transform);
+check("drag renova captura após a mudança de slot", captures >= 3, captures);
+check("drag impede o movimento nativo do ponteiro", moveAllowed === false);
+check("drag não aplica FLIP ao card levantado", primeiro.style.transition === "none" && outro.style.transition.includes("220ms"));
+const touch = new drag.W.Event("touchmove", { bubbles: true, cancelable: true });
+drag.W.dispatchEvent(touch);
+check("drag bloqueia touchmove na janela", touch.defaultPrevented);
+pointer("pointerup", 160); await sleep(750);
 check("drag na Image muda a ordem exibida", drag.titulos().join() === "Spawn: Origens,Encontro dos heróis");
 check("drag grava ordem no volume real", drag.salvo("dupla")?.ordem === 1 && drag.salvo("image")?.ordem === 0);
 check("drag preserva par primário e tambem", drag.salvo("dupla")?.editora === "DC Comics" && drag.salvo("dupla")?.personagem === "Batman" && drag.salvo("dupla")?.tambem?.[0]?.personagem === "Spawn");
 check("drag não remove volumes fora da faixa", !!drag.salvo("dc") && drag.docs.get("library/volumes").items.length === 3);
+primeiro.click(); await sleep(100);
+check("drag suprime o clique do gesto", !drag.root.querySelector('.sheet[data-in="true"]'));
+
+const savedOrder = j(drag.docs.get("library/volumes"));
+pointer("pointerdown", 140); await sleep(500);
+pointer("pointermove", 40); await sleep(100);
+pointer("pointermove", 400); await sleep(100);
+check("drag fora da grade restaura a ordem inicial", drag.titulos().join() === "Spawn: Origens,Encontro dos heróis");
+check("drag continua seguindo fora da grade", primeiro.style.transform === "translate(260px, 0px) scale(1.06)", primeiro.style.transform);
+pointer("pointerup", 400); await sleep(750);
+check("soltar fora da grade não persiste a prévia", j(drag.docs.get("library/volumes")) === savedOrder);
+check("cancelamento remove lift e transform depois de acomodar", !primeiro.dataset.dragging && !primeiro.dataset.dragSettling && primeiro.style.transform === "");
+
+pointer("pointerdown", 140); await sleep(500);
+pointer("pointermove", 40); await sleep(100);
+pointer("pointercancel", 40); await sleep(750);
+check("pointercancel dentro da grade também cancela", j(drag.docs.get("library/volumes")) === savedOrder && drag.cards()[1] === primeiro);
+
+pointer("pointerdown", 140); await sleep(500);
+pointer("pointermove", 40); await sleep(100);
+drag.W.dispatchEvent(new drag.W.Event("blur")); await sleep(750);
+check("blur encerra o gesto sem persistir", j(drag.docs.get("library/volumes")) === savedOrder && !primeiro.dataset.dragging);
 
 console.log("=== hub e descoberta ===");
 const hub = await montar({ aba: "hub" });

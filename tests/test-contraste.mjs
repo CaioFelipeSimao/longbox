@@ -79,5 +79,23 @@ check("Todas as editoras (ciano claro): tinta escura", (await montar("__todas__"
 check("editora de cor clara (amarelo): tinta escura", (await montar("amarela")) === "#04191E", await montar("amarela"));
 check("editora de azul forte: branco", (await montar("dc")) === "#FFFFFF", await montar("dc"));
 
+// v153: a white publisher (Image Comics) gets a neutral accent on the chrome instead of the cyan.
+{
+  const bloco = css.slice(css.indexOf("[data-ed-neutro] {"));
+  const escuroN = bloco.slice(0, bloco.indexOf("}"));
+  const claroN = bloco.slice(bloco.indexOf("@media (prefers-color-scheme: light)"));
+  check("neutro escuro: tinta sobre botão claro >= 7", razao(token(escuroN, "accent-ink"), token(escuroN, "accent")) >= 7, razao(token(escuroN, "accent-ink"), token(escuroN, "accent")).toFixed(1));
+  check("neutro claro: tinta sobre botão grafite >= 7", razao(token(claroN, "accent-ink"), token(claroN, "accent")) >= 7, razao(token(claroN, "accent-ink"), token(claroN, "accent")).toFixed(1));
+  check("cabeçalho e faixa levam data-ed-neutro", (bundle.match(/data-ed-neutro/g) || []).length >= 2);
+}
+
+// v153: hovering the open tab on a white publisher (Image) drew white ink on the white pill.
+{
+  const css = fs.readFileSync("src/styles.css", "utf8");
+  const ativo = css.indexOf('button[data-active="true"]:hover { color: var(--ed-cor-tinta');
+  const geral = css.indexOf('.ed-band[data-tinted="true"] .segmented button:hover { color: #fff; }');
+  check("hover da aba aberta mantém a tinta, depois da regra branca", ativo > 0 && geral > 0 && ativo > geral, ativo + " / " + geral);
+}
+
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);

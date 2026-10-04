@@ -2670,3 +2670,21 @@ volume in both, the totals once. Codex wrote it (it cannot build in its sandbox,
 `npm run check` ran here); tests/test-duas-editoras.mjs 50 checks. Queued: C drag-follow on the HQs tab,
 D the same on the Coleções tab, E the same for the séries cards inside a volume (`ordemSeries` on the
 volume, ring in the sheet-top colour).
+
+**v153 Drag-follow reordering on the HQs tab, and Image Comics' chrome.** (1) Reordering HQs now feels
+like the iOS home screen: after the 450ms hold the card is glued to the pointer (grab offset kept, scale
+1.06 and a shadow), the others slide by FLIP, it can go anywhere on screen but only counts inside its own
+personagem group (the grid's box plus 16px): outside, the preview returns to the starting order and
+releasing cancels, the card gliding back. Releasing inside settles it into the slot (200ms). Near the
+top/bottom edge the page auto-scrolls (max 14px/frame, proportional to depth). The wiggle, the fill ring,
+click suppression and the rule that writes go to the real volume by id stay. The geometry lives in
+src/lib/arrastoSeguir.js (pure: nearest slot, expanded box, auto-scroll speed, follow transform) so the
+Coleções tab and the séries cards in a volume sheet reuse it; tests/test-arrasto-seguir.mjs 27 checks.
+Checked in Chrome with synthetic pointer events: it follows, moves slot by slot, cancels outside, scrolls
+(the harness tab was hidden, so timers ran at ~3 Hz; run with a requestAnimationFrame shim). Codex wrote
+it; the build and tests ran here. (2) Image Comics (white) left two defects: the open tab's label was
+white on the white pill on hover (the hover rule beat the measured ink; the open tab's hover now keeps
+--ed-cor-tinta) and the header/band buttons wore the Longbox cyan because a greyscale colour lends no hue.
+A white or very light grey publisher now sets `data-ed-neutro` on the header and the band: light buttons
+with dark ink in the dark theme, graphite with white ink in the light theme (both >= 16:1).
+test-contraste 12, test-arrasto-seguir 27, test-duas-editoras 63.

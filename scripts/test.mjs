@@ -31,7 +31,7 @@ const SUITES = [
   { args: ["tests/test-backup.mjs"], minimo: 18 },
   { args: ["tests/test-navegar.mjs"], minimo: 27 },
   { args: ["tests/test-retrato.mjs"], minimo: 23 },
-  { args: ["tests/test-contraste.mjs"], minimo: 8 },
+  { args: ["tests/test-contraste.mjs"], minimo: 12 },
   { args: ["tests/test-atalhos.mjs"], minimo: 61 },
   { args: ["tests/test-filtro-series.mjs"], minimo: 27 },
   { args: ["tests/test-fixados.mjs"], minimo: 13 },
@@ -48,8 +48,9 @@ const SUITES = [
   { args: ["tests/test-filtro-autor.mjs"], minimo: 32 },
   { args: ["tests/test-destaque-autor.mjs"], minimo: 27 },
   { args: ["tests/test-editora-busca.mjs"], minimo: 10 },
-  { args: ["tests/test-duas-editoras.mjs"], minimo: 50 },
+  { args: ["tests/test-duas-editoras.mjs"], minimo: 63 },
   { args: ["tests/test-tiles-volume.mjs"], minimo: 6 },
+  { args: ["tests/test-arrasto-seguir.mjs"], minimo: 27 },
 ];
 
 // Lines that report a count which must be zero. Source and CSS dash counts are

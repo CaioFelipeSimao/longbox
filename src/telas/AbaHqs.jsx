@@ -55,7 +55,7 @@ export function AbaHqs({
             onFixar={alternarFixado}
           />
           {aberto && (
-          <div className="shelf stagger" role="group" aria-label={"HQs de " + grupo.personagem} {...gradeTeclado}>
+          <div className="shelf stagger" data-hq-grid={grupo.personagem} role="group" aria-label={"HQs de " + grupo.personagem} {...gradeTeclado}>
             {itensExibidos.map((v, i) => (
               <VolumeCard
                 key={v.id}

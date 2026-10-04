@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 import { STATUS } from "../lib/constantes";
 import { coverColors, useCores } from "../lib/cores";
@@ -135,9 +135,14 @@ export function VolumeCard({
   onDragPointerDown, onDragPointerMove, onDragPointerEnd, tabParada,
 }) {
   const c = coverColors(volume, useCores());
+  // Reordering keeps this keyed button alive. A stable callback ref also keeps
+  // its registration alive when the parent creates new handler closures.
+  const cardRefAtual = useRef(cardRef);
+  cardRefAtual.current = cardRef;
+  const registrar = useCallback((el) => cardRefAtual.current?.(el), []);
   return (
     <button
-      ref={cardRef}
+      ref={registrar}
       tabIndex={tabParada}
       className="vol press"
       data-open={open ? "true" : "false"}

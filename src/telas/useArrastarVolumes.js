@@ -3,6 +3,7 @@ import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { swatchColors } from "../lib/cores";
 import { HOLD_EASE_LINEAR, HOLD_EASE_OUT, prefersReducedMotion } from "../lib/hooks";
 import { ordenarGrupoVolumes } from "../ui/VolumeCard";
+import { alvoSlotMaisProximo, pontoNaCaixaExpandida, velocidadeAutoScroll, transformSeguir } from "../lib/arrastoSeguir";
 
 // Long-press to arm, then drag an HQ within its own personagem group (v30-v49).
 // Everything the gesture needs lives here; App only wires the returned handlers
@@ -21,6 +22,7 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   // target still for one settle window turns that into a deliberate, one-slot-at-
   // a-time snap instead of a flicker, which is the "aim assist" the user asked for.
   const FLIP_MS = 220;
+  const SETTLE_MS = 200;
   // How long the fill takes to let go once the pointer comes up. Matches the
   // old CSS transition's own release timing, kept here now that release is
   // driven the same way the rise is.
@@ -44,8 +46,12 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   const cardNodesRef = useRef(new Map()); // volume id -> its .vol DOM node, for FLIP
   const flipSnapshotRef = useRef(null); // rects captured just before a live reorder
   const flipCleanupRef = useRef(new Map()); // volume id -> fallback timer clearing its transform
+  const flipVersionRef = useRef(new Map()); // invalidates superseded FLIP rAF callbacks
   const flipBusyRef = useRef(false); // true while the last reflow is still settling
   const flipBusyTimerRef = useRef(null);
+  const followRafRef = useRef(0);
+  const settleRef = useRef(null);
+  const layersRef = useRef([]);
   const [dragVisual, setDragVisual] = useState(null); // { id, ids, personagem } while a drag is armed
 
   // The press-fill and the dragged card both take their tint from the volume's
@@ -64,34 +70,121 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
     if (el) cardNodesRef.current.set(id, el); else cardNodesRef.current.delete(id);
   }
 
-  // Two things have to both be true for a move to retarget something. First,
-  // the pointer has to have actually left the dragged card's own current box:
-  // comparing raw distance-to-centre alone (the first cut of this) retargeted
-  // the instant a neighbour's centre was fractionally closer, which fired while
-  // the pointer was still plainly sitting over the card being dragged — the
-  // opposite of what holding a card should feel like. Second, once outside that
-  // box, elementFromPoint has dead zones: the grid gap between cards belongs to
-  // no card, and hovering it used to read as "no target" and drop the group back
-  // to its unmoved order. Picking whichever OTHER card's centre is nearest
-  // covers every point past the dragged card's own edge, gaps included, without
-  // widening the hitbox any click uses the rest of the time.
-  function alvoParaMover(personagem, draggedId, x, y) {
-    const draggedEl = cardNodesRef.current.get(draggedId);
-    if (draggedEl) {
-      const r = draggedEl.getBoundingClientRect();
-      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return null;
+  // getBoundingClientRect includes our translation and lift. Remove them only
+  // during the read (no intervening paint), to measure the CURRENT grid slot.
+  function rectDoSlot(el) {
+    const transform = el.style.transform;
+    el.style.transform = "none";
+    const rect = el.getBoundingClientRect();
+    el.style.transform = transform;
+    return rect;
+  }
+
+  function seguirPonteiro(info) {
+    const el = cardNodesRef.current.get(info.id);
+    if (!el) return;
+    const { x, y } = transformSeguir(info.pointer, info.grabOffset, rectDoSlot(el));
+    el.style.transform = `translate(${x}px, ${y}px) scale(${prefersReducedMotion() ? 1 : 1.06})`;
+  }
+
+  function atualizarOrdem(info, ids) {
+    if (ids.every((id, i) => id === info.ids[i])) return;
+    flipSnapshotRef.current = capturarRects(info.ids);
+    info.ids = ids;
+    setDragVisual({ id: info.id, ids, personagem: info.personagem });
+    flipBusyRef.current = true;
+    clearTimeout(flipBusyTimerRef.current);
+    flipBusyTimerRef.current = setTimeout(() => { flipBusyRef.current = false; }, FLIP_MS);
+  }
+
+  function atualizarSlot(info) {
+    const dentro = pontoNaCaixaExpandida(info.pointer, info.grid?.getBoundingClientRect());
+    if (!dentro) {
+      // Leaving the group reverses the preview immediately, even during FLIP.
+      atualizarOrdem(info, info.originalIds.slice());
+      return;
     }
-    let melhorId = null;
-    let melhorDist = Infinity;
-    cardNodesRef.current.forEach((el, id) => {
-      if (id === draggedId || el.dataset.personagem !== personagem) return;
-      const r = el.getBoundingClientRect();
-      const dx = x - (r.left + r.width / 2);
-      const dy = y - (r.top + r.height / 2);
-      const d = dx * dx + dy * dy;
-      if (d < melhorDist) { melhorDist = d; melhorId = id; }
+    if (flipBusyRef.current) return;
+    const el = cardNodesRef.current.get(info.id);
+    if (!el) return;
+    const rects = info.ids.filter((id) => id !== info.id).map((id) => ({
+      id, rect: cardNodesRef.current.get(id)?.getBoundingClientRect(),
+    })).filter(({ rect }) => rect);
+    const alvo = alvoSlotMaisProximo(info.pointer, rects, rectDoSlot(el));
+    if (alvo == null) return;
+    const from = info.ids.indexOf(info.id);
+    const target = info.ids.indexOf(alvo);
+    if (from < 0 || target < 0 || from === target) return;
+    // One neighbouring slot per settle window, including across wrapped rows.
+    const next = info.ids.slice();
+    next.splice(from, 1);
+    next.splice(from + Math.sign(target - from), 0, info.id);
+    atualizarOrdem(info, next);
+  }
+
+  function containerDeScroll(el) {
+    for (let parent = el.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+      if (/(auto|scroll)/.test(getComputedStyle(parent).overflowY) && parent.scrollHeight > parent.clientHeight) return parent;
+    }
+    // HQs currently scrolls the document; sheets have their own scroll bodies.
+    return document.scrollingElement || document.documentElement;
+  }
+
+  function autoScroll(info) {
+    const container = info.scrollContainer;
+    const page = container === document.scrollingElement || container === document.documentElement;
+    const rect = page ? { top: 0, bottom: window.innerHeight } : container.getBoundingClientRect();
+    const top = Math.max(0, rect.top);
+    const bottom = Math.min(window.innerHeight, rect.bottom);
+    const height = page ? window.innerHeight : container.clientHeight;
+    // The floating transform can extend document overflow. Exclude it from the
+    // scroll limit, otherwise a card below the page creates endless extra room.
+    const el = cardNodesRef.current.get(info.id);
+    const transform = el?.style.transform;
+    if (el) el.style.transform = "none";
+    const maxScroll = Math.max(0, container.scrollHeight - height);
+    if (el) el.style.transform = transform;
+    const velocidade = velocidadeAutoScroll(info.pointer.y, top, bottom, {
+      scrollTop: container.scrollTop, maxScroll,
     });
-    return melhorId;
+    // Direct scrollTop is immediate even when the app enables smooth scrolling.
+    if (velocidade) container.scrollTop = Math.max(0, Math.min(maxScroll, container.scrollTop + velocidade));
+  }
+
+  function frameArrasto() {
+    const info = dragRef.current;
+    if (!info.active) return;
+    autoScroll(info);
+    atualizarSlot(info);
+    seguirPonteiro(info);
+    followRafRef.current = requestAnimationFrame(frameArrasto);
+  }
+
+  function elevarCamadas(el, scrollContainer) {
+    // Keep the keyed button in its grid: moving it into a portal loses capture.
+    // Lift the ancestor stacking contexts too, including .aba and .content's
+    // lattice layers. .app's overflow-x:clip otherwise cuts off a horizontal drag.
+    for (let parent = el.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+      const style = getComputedStyle(parent);
+      const clips = /(hidden|clip|auto|scroll)/.test(style.overflowX + style.overflowY);
+      const props = ["position", "z-index"];
+      if (clips && parent !== scrollContainer) props.push("overflow-x", "overflow-y");
+      const saved = props.map((prop) => [prop, parent.style.getPropertyValue(prop), parent.style.getPropertyPriority(prop)]);
+      layersRef.current.push({ el: parent, saved });
+      if (style.position === "static") parent.style.setProperty("position", "relative");
+      parent.style.setProperty("z-index", "1000", "important");
+      if (props.includes("overflow-x")) {
+        parent.style.setProperty("overflow-x", "visible", "important");
+        parent.style.setProperty("overflow-y", "visible", "important");
+      }
+    }
+  }
+
+  function restaurarCamadas() {
+    layersRef.current.forEach(({ el, saved }) => saved.forEach(([prop, value, priority]) => {
+      if (value) el.style.setProperty(prop, value, priority); else el.style.removeProperty(prop);
+    }));
+    layersRef.current = [];
   }
 
   function capturarRects(ids) {
@@ -116,25 +209,69 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   // to the punch every time, so this only ever fires as real insurance.
   useLayoutEffect(() => {
     const before = flipSnapshotRef.current;
-    if (!before) return;
     flipSnapshotRef.current = null;
-    if (prefersReducedMotion()) return; // snap instead of sliding the group around
-    before.forEach((prevRect, id) => {
+    const info = dragRef.current;
+    const settling = settleRef.current;
+    const draggedId = info.active ? info.id : settling?.id;
+    if (before && !prefersReducedMotion()) before.forEach((prevRect, id) => {
+      if (id === draggedId) return; // the picked-up card is NEVER part of FLIP
       const el = cardNodesRef.current.get(id);
       if (!el) return;
       clearTimeout(flipCleanupRef.current.get(id));
+      const version = {};
+      flipVersionRef.current.set(id, version);
+      el.style.transition = "none";
+      el.style.transform = "";
       const now = el.getBoundingClientRect();
       const dx = prevRect.left - now.left;
       const dy = prevRect.top - now.top;
       if (!dx && !dy) { el.style.transition = ""; el.style.transform = ""; return; }
-      el.style.transition = "none";
       el.style.transform = "translate(" + dx + "px," + dy + "px)";
       el.getBoundingClientRect(); // force reflow so the jump above isn't itself animated
-      const liberar = () => { el.style.transition = "transform " + FLIP_MS + "ms var(--ease-in-out)"; el.style.transform = ""; };
+      const liberar = () => {
+        if (flipVersionRef.current.get(id) !== version) return;
+        if (dragRef.current.active && dragRef.current.id === id) return;
+        el.style.transition = "transform " + FLIP_MS + "ms var(--ease-in-out, cubic-bezier(0.77, 0, 0.175, 1))";
+        el.style.transform = "";
+      };
       requestAnimationFrame(liberar);
       flipCleanupRef.current.set(id, setTimeout(liberar, FLIP_MS + 150));
     });
+    if (info.active) {
+      // React moves the same keyed DOM node. Refresh capture after that move,
+      // and rebase its translation before paint so a new slot cannot flash.
+      const el = cardNodesRef.current.get(info.id);
+      try { el?.setPointerCapture(info.pointerId); } catch {}
+      seguirPonteiro(info);
+    } else if (settling && !settling.started) {
+      settling.started = true;
+      const el = cardNodesRef.current.get(settling.id);
+      if (!el) { terminarAcomodacao(); return; }
+      el.dataset.dragSettling = "true";
+      seguirPonteiro(settling);
+      el.getBoundingClientRect(); // paint starts from the release point, in its final slot
+      el.style.transition = prefersReducedMotion() ? "none" : `transform ${SETTLE_MS}ms var(--ease-out)`;
+      el.style.transform = "translate(0px, 0px) scale(1)";
+      if (prefersReducedMotion()) terminarAcomodacao();
+      else settling.timer = setTimeout(terminarAcomodacao, SETTLE_MS);
+    }
   }, [dragVisual]);
+
+  function terminarAcomodacao() {
+    const settling = settleRef.current;
+    if (!settling) return;
+    clearTimeout(settling.timer);
+    const el = cardNodesRef.current.get(settling.id);
+    if (el) {
+      el.style.transition = "";
+      el.style.transform = "";
+      el.style.transformOrigin = "";
+      delete el.dataset.dragSettling;
+    }
+    settleRef.current = null;
+    restaurarCamadas();
+    setDragVisual(null);
+  }
 
   // The committed order is exactly the live preview's own ids, not a fresh
   // single move computed against the persisted order: the preview is what the
@@ -193,6 +330,8 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   }
 
   function volDragPointerDown(e, volume, personagem) {
+    if (e.isPrimary === false || (e.button != null && e.button !== 0) || dragRef.current.id) return;
+    terminarAcomodacao();
     const info = dragRef.current;
     clearTimeout(info.timer);
     info.id = volume.id;
@@ -200,12 +339,18 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
     info.ids = null;
     info.startX = e.clientX;
     info.startY = e.clientY;
+    info.pointer = { x: e.clientX, y: e.clientY };
+    info.pointerId = e.pointerId;
     info.active = false;
     const target = e.currentTarget;
+    const initialRect = target.getBoundingClientRect();
+    info.grabOffset = { x: e.clientX - initialRect.left, y: e.clientY - initialRect.top };
     try { target.setPointerCapture(e.pointerId); } catch {}
     comecarPreenchimento(target);
     info.timer = setTimeout(() => {
+      info.timer = null;
       info.active = true;
+      suppressClickRef.current = true;
       target.style.touchAction = "none";
       // The fill itself is not touched here on purpose: driveHold's own rAF
       // loop is already most of the way to --hold-p:1 by the time this fires,
@@ -213,61 +358,74 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
       // unwinding in finalizarDrag() when the pointer actually comes up.
       const grupo = volumesDaFaixa.filter((v) => v.personagem === personagem);
       info.ids = ordenarGrupoVolumes(grupo).map((v) => v.id);
+      info.originalIds = info.ids.slice();
+      info.grid = target.closest("[data-hq-grid]");
+      info.scrollContainer = containerDeScroll(target);
+      elevarCamadas(target, info.scrollContainer);
+      // A forwards-filled entrance animation overrides inline transforms, even
+      // after it has finished. Retire it on this group before any FLIP/follow.
+      info.ids.forEach((id) => {
+        const node = cardNodesRef.current.get(id);
+        if (node) { node.style.animation = "none"; node.style.opacity = "1"; }
+      });
+      clearTimeout(flipCleanupRef.current.get(info.id));
+      flipVersionRef.current.delete(info.id);
+      target.style.transition = "none";
+      target.style.transform = "none";
+      target.style.transformOrigin = `${info.grabOffset.x}px ${info.grabOffset.y}px`;
       setDragVisual({ id: volume.id, ids: info.ids, personagem });
+      followRafRef.current = requestAnimationFrame(frameArrasto);
     }, HOLD_MS);
   }
 
   function volDragPointerMove(e) {
     const info = dragRef.current;
-    if (!info.id) return;
+    if (!info.id || (e.pointerId != null && info.pointerId != null && e.pointerId !== info.pointerId)) return;
+    info.pointer = { x: e.clientX, y: e.clientY };
     if (!info.active) {
       const dist = Math.hypot(e.clientX - info.startX, e.clientY - info.startY);
-      if (dist > 10) { clearTimeout(info.timer); info.id = null; soltarPreenchimento(e.currentTarget); }
+      if (dist > 10) finalizarDrag(e);
       return;
     }
     e.preventDefault();
-    if (flipBusyRef.current) return; // the last slot change hasn't settled yet
-    const alvoId = alvoParaMover(info.personagem, info.id, e.clientX, e.clientY);
-    if (!alvoId) return; // still over the dragged card's own box: nothing to do
-    const fromIdx = info.ids.indexOf(info.id);
-    const toIdx = info.ids.indexOf(alvoId);
-    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
-    flipSnapshotRef.current = capturarRects(info.ids);
-    const next = info.ids.slice();
-    const [item] = next.splice(fromIdx, 1);
-    next.splice(toIdx, 0, item);
-    info.ids = next;
-    setDragVisual({ id: info.id, ids: next, personagem: info.personagem });
-    flipBusyRef.current = true;
-    clearTimeout(flipBusyTimerRef.current);
-    flipBusyTimerRef.current = setTimeout(() => { flipBusyRef.current = false; }, FLIP_MS);
   }
 
   // Shared by the card's own onPointerUp/onPointerCancel and by the window-level
   // safety net below, so both paths end a drag the exact same way. Guarded by
   // info.id so a second call (both can legitimately fire for one release) is a
   // harmless no-op instead of double-committing.
-  function finalizarDrag() {
+  function finalizarDrag(e) {
     const info = dragRef.current;
-    if (!info.id) return;
+    if (!info.id || (e?.pointerId != null && info.pointerId != null && e.pointerId !== info.pointerId)) return;
+    if (e?.type === "pointerup") info.pointer = { x: e.clientX, y: e.clientY };
     clearTimeout(info.timer);
+    cancelAnimationFrame(followRafRef.current);
+    followRafRef.current = 0;
     clearTimeout(flipBusyTimerRef.current);
     flipBusyRef.current = false;
     const el = cardNodesRef.current.get(info.id);
     soltarPreenchimento(el);
     if (el && el.style) el.style.touchAction = "";
     if (info.active && info.ids) {
-      persistirOrdemGrupo(info.ids);
+      const commit = e?.type !== "pointercancel" && e?.type !== "blur" &&
+        pontoNaCaixaExpandida(info.pointer, info.grid?.getBoundingClientRect());
+      const ids = commit ? info.ids : info.originalIds;
+      if (commit) persistirOrdemGrupo(ids);
+      else flipSnapshotRef.current = capturarRects(info.ids);
       suppressClickRef.current = true;
+      settleRef.current = { id: info.id, pointer: info.pointer, grabOffset: info.grabOffset, started: false };
+      setDragVisual({ id: info.id, ids, personagem: info.personagem, settling: true });
+    } else {
+      setDragVisual(null);
     }
+    try { el?.releasePointerCapture(info.pointerId); } catch {}
     info.id = null;
     info.active = false;
     info.ids = null;
-    setDragVisual(null);
   }
 
-  function volDragPointerEnd() {
-    finalizarDrag();
+  function volDragPointerEnd(e) {
+    finalizarDrag(e);
   }
 
   // Safety net: setPointerCapture should keep pointerup routed to the dragged
@@ -278,8 +436,12 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   // actually armed, guarantees the drag always ends when the button comes up
   // (or focus leaves), regardless of what capture did or didn't do.
   useEffect(() => {
-    if (!dragVisual) return undefined;
-    const finalizar = () => finalizarDrag();
+    if (!dragVisual || dragVisual.settling) return undefined;
+    const finalizar = (e) => finalizarDrag(e);
+    const mover = (e) => volDragPointerMove(e);
+    const bloquearToque = (e) => { if (dragRef.current.active) e.preventDefault(); };
+    window.addEventListener("pointermove", mover, { capture: true, passive: false });
+    window.addEventListener("touchmove", bloquearToque, { capture: true, passive: false });
     window.addEventListener("pointerup", finalizar, true);
     window.addEventListener("pointercancel", finalizar, true);
     window.addEventListener("blur", finalizar);
@@ -287,8 +449,21 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
       window.removeEventListener("pointerup", finalizar, true);
       window.removeEventListener("pointercancel", finalizar, true);
       window.removeEventListener("blur", finalizar);
+      window.removeEventListener("pointermove", mover, true);
+      window.removeEventListener("touchmove", bloquearToque, true);
     };
   }, [dragVisual]);
+
+  useEffect(() => () => {
+    clearTimeout(dragRef.current.timer);
+    clearTimeout(flipBusyTimerRef.current);
+    clearTimeout(settleRef.current?.timer);
+    flipCleanupRef.current.forEach((timer) => clearTimeout(timer));
+    flipVersionRef.current.clear();
+    cancelAnimationFrame(followRafRef.current);
+    cancelAnimationFrame(holdMotionRef.current.raf);
+    restaurarCamadas();
+  }, []);
 
   return {
     suppressClickRef, dragVisual, editoraCorPorNome, registrarCardNode, volDragPointerDown,
