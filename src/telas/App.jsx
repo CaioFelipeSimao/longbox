@@ -1141,13 +1141,17 @@ export function App() {
       if (!ed) return;
       const serie = serieById[ed.serieId];
       const key = serie ? serie.id : "?";
-      if (!grupos[key]) grupos[key] = { serie, edicoes: [] };
+      if (!grupos[key]) grupos[key] = { key, serie, edicoes: [] };
       grupos[key].edicoes.push(ed);
     });
     Object.values(grupos).forEach((g) =>
       g.edicoes.sort((a, b) => (parseNum(a.numero) ?? 1e9) - (parseNum(b.numero) ?? 1e9))
     );
-    return Object.values(grupos);
+    const ordem = new Map();
+    (volume.ordemSeries || []).forEach((key, i) => { if (!ordem.has(key)) ordem.set(key, i); });
+    // Stable sort leaves newly linked groups in their natural relative order.
+    return Object.values(grupos).sort((a, b) =>
+      (ordem.get(a.key) ?? Infinity) - (ordem.get(b.key) ?? Infinity));
   }
 
   /* ---------- deletion ---------- */
@@ -2157,6 +2161,11 @@ export function App() {
         onStatus={(s) => setStatusVolume(openVolume.id, s)}
         colecoes={openVolume ? colecoesDoVolume(openVolume.id) : []}
         grupos={openVolume ? edicoesDoVolumeAgrupadas(openVolume) : []}
+        onReordenarSeries={(volumeId, keys) => {
+          const atual = libRef.current;
+          persist({ ...atual, volumes: atual.volumes.map((v) =>
+            v.id === volumeId ? { ...v, ordemSeries: keys.slice() } : v) });
+        }}
         canUpload={canUpload}
         uploading={uploadingCover}
         onCoverPick={(f) => handleCoverPick(openVolume.id, f)}

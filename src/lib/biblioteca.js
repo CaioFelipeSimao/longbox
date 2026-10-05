@@ -147,12 +147,14 @@ export function normalizeLib(raw) {
     edicoes: Array.isArray(raw?.edicoes) ? raw.edicoes : [],
   };
   lib.volumes = lib.volumes.map((v) => {
-    const { tambem, ...volume } = v;
+    const { tambem, ordemSeries, ...volume } = v;
     const validas = Array.isArray(tambem) ? tambem.filter((p) =>
       typeof p?.editora === "string" && p.editora.trim() && typeof p.personagem === "string"
     ).map((p) => ({ editora: p.editora.trim(), personagem: p.personagem.trim() })) : [];
     return {
       ...volume,
+      ...(Array.isArray(ordemSeries) && ordemSeries.every((id) => typeof id === "string" && id.trim())
+        ? { ordemSeries: ordemSeries.slice() } : {}),
       ...(validas.length ? { tambem: validas } : {}),
       ...(TIPOS_RENOMEADOS[v.tipo] ? { tipo: TIPOS_RENOMEADOS[v.tipo] } : null),
       edicoesColetadasIds: Array.isArray(v.edicoesColetadasIds) ? v.edicoesColetadasIds : [],

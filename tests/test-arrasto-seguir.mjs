@@ -4,7 +4,7 @@ import fs from "node:fs";
 // imports. Load it as a data module, without compiling the app or needing DOM.
 const source = fs.readFileSync(new URL("../src/lib/arrastoSeguir.js", import.meta.url), "utf8");
 const { slotNoPonto, reordenarParaSlot, pontoNaCaixaExpandida, velocidadeAutoScroll, transformSeguir,
-  velocidadeAutoScrollHorizontal, pontoNoConteudo, rectNoConteudo, limitesDeRolagemDaPagina, lerLimitesDeRolagemDaPagina } =
+  velocidadeAutoScrollHorizontal, pontoNoConteudo, rectNoConteudo, limitesDeRolagemDaPagina, lerLimitesDeRolagemDaPagina, indiceDeInsercaoVertical } =
   await import("data:text/javascript;base64," + Buffer.from(source).toString("base64"));
 let passes = 0, falhas = 0;
 const check = (nome, ok) => {
@@ -140,6 +140,36 @@ check("DOM reader ignores a keyboard-raised tabbar", lerLimitesDeRolagemDaPagina
 elements[".ed-band"] = chrome(banda, "sticky", "76px");
 elements[".tabbar"] = chrome(rect(0, 734, 800, 58), "fixed", "auto", "8px");
 check("DOM reader uses stuck band and fixed bottom bar", JSON.stringify(lerLimitesDeRolagemDaPagina(fakeDoc, fakeWin)) === '{"top":130,"bottom":734}');
+
+const vertical = (y, heights = [100, 100, 100]) => indiceDeInsercaoVertical(y, heights, { topo: 200, gap: 10 });
+check("vertical equal heights count midpoints above the pointer", vertical(365) === 2);
+check("vertical tall neighbour uses its own midpoint", vertical(365, [100, 300, 100]) === 1);
+check("vertical midpoint itself has not been passed", vertical(250) === 0 && vertical(251) === 1);
+check("vertical pointer above everything inserts first", vertical(-100) === 0);
+check("vertical pointer below everything inserts last", vertical(2000) === 3);
+check("vertical gap is included in the stacked positions", vertical(455, [100, 300]) === 1 &&
+  indiceDeInsercaoVertical(455, [100, 300], { topo: 200, gap: 0 }) === 2);
+check("vertical gap space keeps the number of passed midpoints", vertical(305) === 1);
+check("vertical empty others has only the first insertion", vertical(999, []) === 0);
+const heights = Object.freeze([100, 300, 60]);
+check("vertical calculation leaves measured heights untouched", vertical(800, heights) === 3 && heights.join() === "100,300,60");
+const stack = ["short", "picked", "tall", "last"];
+const heightByKey = { short: 100, picked: 240, tall: 300, last: 60 };
+const insertion = (order, picked, y) => indiceDeInsercaoVertical(y,
+  order.filter((key) => key !== picked).map((key) => heightByKey[key]), { topo: 200, gap: 10 });
+check("vertical last card can go straight to first", reordenarParaSlot(stack, "last", insertion(stack, "last", 200)).join() === "last,short,picked,tall");
+check("vertical first card can go straight to last", reordenarParaSlot(stack, "short", insertion(stack, "short", 2000)).join() === "picked,tall,last,short");
+let stable = true;
+for (let initial = 0; initial < stack.length; initial++) {
+  let preview = reordenarParaSlot(stack, "picked", initial);
+  for (const y of [199, 251, 400, 470, 471, 600, 2000, 470, 251, 199, 600]) {
+    const index = insertion(preview, "picked", y);
+    if (index !== insertion(stack, "picked", y)) stable = false;
+    preview = reordenarParaSlot(preview, "picked", index);
+    if (insertion(preview, "picked", y) !== index) stable = false;
+  }
+}
+check("vertical decisions never oscillate with the preview hole or pointer history", stable);
 
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);

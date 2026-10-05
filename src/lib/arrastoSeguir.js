@@ -39,6 +39,17 @@ export function reordenarParaSlot(ids, id, indice) {
   return next;
 }
 
+// Heights belong to the other cards, in their relative order, with the dragged
+// card omitted. Its moving hole can never change these stacked midpoints.
+export function indiceDeInsercaoVertical(pointerY, alturas, { topo = 0, gap = 0 } = {}) {
+  let y = topo, indice = 0;
+  for (const altura of alturas) {
+    if (y + altura / 2 < pointerY) indice++;
+    y += altura + gap;
+  }
+  return indice;
+}
+
 // Positive is down. Scroll limits are explicit so this needs no DOM or window.
 export function velocidadeAutoScroll(pointerY, viewportTop, viewportBottom, {
   scrollTop = 0, maxScroll = Infinity, zona = 64, maxVelocidade = 14,

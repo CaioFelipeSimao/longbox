@@ -41,7 +41,7 @@ const SUITES = [
   { args: ["tests/test-capa-hub.mjs"], minimo: 40 },
   { args: ["tests/test-arrastar-folha.mjs"], minimo: 14 },
   { args: ["tests/test-barra-busca.mjs"], minimo: 30 },
-  { args: ["tests/test-acessibilidade.mjs"], minimo: 25 },
+  { args: ["tests/test-acessibilidade.mjs"], minimo: 26 },
   { args: ["tests/test-edicoes.mjs"], minimo: 55 },
   { args: ["tests/test-reimpressoes.mjs"], minimo: 32 },
   { args: ["tests/test-autores.mjs"], minimo: 26 },
@@ -51,8 +51,9 @@ const SUITES = [
   { args: ["tests/test-duas-editoras.mjs"], minimo: 70 },
   { args: ["tests/test-tiles-volume.mjs"], minimo: 6 },
   // Fixed-slot geometry, both scroll axes and chrome-aware page limits.
-  { args: ["tests/test-arrasto-seguir.mjs"], minimo: 82 },
+  { args: ["tests/test-arrasto-seguir.mjs"], minimo: 94 },
   { args: ["tests/test-arrastar-colecao.mjs"], minimo: 52 },
+  { args: ["tests/test-arrastar-series.mjs"], minimo: 60 },
 ];
 
 // Lines that report a count which must be zero. Source and CSS dash counts are

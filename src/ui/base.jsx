@@ -128,15 +128,24 @@ function useArrastarParaFechar(ref, ativo, onClose) {
       if (fecha) fechar.current();
     };
 
+    // A long press can arm within the initial pull's movement slack. Give the
+    // pointer reorder ownership without letting that small pull close the sheet.
+    const reordenando = () => {
+      ini = null;
+      if (arrastando) { arrastando = false; soltar(false); }
+    };
+
     el.addEventListener("touchstart", inicio, { passive: true });
     el.addEventListener("touchmove", mover, { passive: false });
     el.addEventListener("touchend", fim);
     el.addEventListener("touchcancel", fim);
+    el.addEventListener("longbox:reorder-start", reordenando);
     return () => {
       el.removeEventListener("touchstart", inicio);
       el.removeEventListener("touchmove", mover);
       el.removeEventListener("touchend", fim);
       el.removeEventListener("touchcancel", fim);
+      el.removeEventListener("longbox:reorder-start", reordenando);
     };
   }, [ativo]);
 }

@@ -11,13 +11,14 @@ import { Field, Sheet } from "../ui/base";
 import { CoverArt } from "../ui/VolumeCard";
 import { CampoBusca, daEditora } from "../ui/Filtros";
 import { personagensDaSerie } from "../lib/biblioteca";
+import { useArrastarSeries } from "./useArrastarSeries";
 
 export function VolumeSheet({
   volume, onClose, onEdit, onDuplicate, onDelete, onStatus, colecoes, grupos,
   canUpload, uploading, onCoverPick, series, edicoesPorSerie,
   linkSerieId, setLinkSerieId,
   rangeDe, setRangeDe, rangeAte, setRangeAte, avulsoNum, setAvulsoNum,
-  onRange, onAvulsa, onToggle, onOpenEdicaoNaSerie, recede,
+  onRange, onAvulsa, onToggle, onOpenEdicaoNaSerie, onReordenarSeries, recede,
   anterior, proximo, posicao, total, onNavegar, direcao,
 }) {
   const inputRef = useRef(null);
@@ -36,6 +37,9 @@ export function VolumeSheet({
   const cores = useCores();
   const spec = v ? specForCharacter(v.personagem || v.titulo, cores) : null;
   const tinta = v ? corCapa || "hsl(" + (spec.longbox ? 188 : spec.h || 0) + " 50% 45%)" : null;
+  const toque = useRef(null);
+  const arrasto = useArrastarSeries(volume?.id, grupos, !!volume && !recede, onReordenarSeries,
+    () => { toque.current = null; });
 
   // v139: séries on offer for "Vincular edições": the volume's publisher only, the
   // volume's character first.
@@ -82,7 +86,6 @@ export function VolumeSheet({
 
   // A swipe counts when it travels 60px sideways and clearly more sideways than
   // down, so scrolling the sheet never turns into a step.
-  const toque = useRef(null);
   function toqueInicio(e) {
     const t = e.touches && e.touches[0];
     toque.current = t && e.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null;
@@ -199,8 +202,16 @@ export function VolumeSheet({
             {grupos.length === 0 && (
               <p className="t-small muted" style={{ margin: "0 0 10px" }}>Nenhuma edição vinculada ainda.</p>
             )}
-            {grupos.map((g) => (
-              <div className="linked-serie" key={g.serie ? g.serie.id : "removida"}>
+            <div className="linked-series" ref={arrasto.blockRef}>
+            {arrasto.grupos.map((g) => (
+              <div className="linked-serie linked-serie-card" key={g.key}
+                data-serie-key={g.key}
+                ref={(el) => arrasto.registrar(g.key, el)}
+                style={{ "--hold-color": tinta }}
+                onPointerDown={(e) => arrasto.pointerDown(e, g.key)}
+                onClickCapture={arrasto.clickCapture}>
+                <span className="vol-hold" aria-hidden="true" />
+                <span className="vol-hold__crest" aria-hidden="true" />
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" }}>
                   <span className="t-small truncate" style={{ fontWeight: 500 }}>
                     {g.serie ? g.serie.nome : "Série removida"}
@@ -241,6 +252,7 @@ export function VolumeSheet({
                 ))(digitosDoBloco(g.edicoes))}
               </div>
             ))}
+            </div>
 
             {linkSerieId === null ? (
               <button

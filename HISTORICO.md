@@ -2733,3 +2733,26 @@ it back. The real gap (a ~7px strip between the Claude artifact bar and the head
 scrolled cover shows, visible in the user's screenshots) could not be reproduced in the harness nor in the
 live app in the PC Chrome tried here (the header sits flush under the 30px host bar), so it is open:
 needs the user's environment (Claude desktop app or browser, zoom).
+
+**v157 Reorder the séries inside a volume, and the top strip on a PC.** (1) In a volume's sheet the
+séries cards ("Edições coletadas") reorder with the same hold-and-drag: the hold arms on the card's
+background, its title and empty space, never on the edição tiles or "Gerenciar" (they keep opening what
+they opened); the fill rises in the sheet's top colour with a ±0.4° wiggle; a ghost of the card (z-index
+90, above the sheets at 41 and the toasts at 60, under nothing the user needs) follows the pointer, the
+others glide to their places; releasing outside the block cancels; the sheet body auto-scrolls near its
+edges. The order lives in the new optional `ordemSeries: string[]` of THAT volume only ("?" is the key of
+the "Série removida" group); `edicoesDoVolumeAgrupadas` sorts by it and puts séries linked later after the
+listed ones; normalizeLib keeps it when it is an array of non-empty strings. The cards have variable
+heights, so the insertion index is computed from the cards' stacked midpoints as if the dragged card were
+not there (`indiceDeInsercaoVertical`): it depends only on the pointer, never on where the hole is, so it
+cannot oscillate. A modal opening mid-drag cancels it. Codex wrote it; it crashed every suite with a null
+`visual.order` (volumeId undefined === undefined when the sheet is closed), fixed here, and one test went
+looking for the backup button on the wrong screen (it lives in the hub footer). Checked in Chrome on a
+scratch harness page with three séries of different heights: a hold on the third card's title and a drag
+to the top put it first at once; a release persisted it and removed the ghost; a window blur reverted it;
+a hold on a tile or on "Gerenciar" never armed. (2) The ~7px strip between the Claude artifact bar and the
+header, with a cover showing through while scrolling (reported on the user's PC in the browser and in the
+desktop app, at 100% and 90% zoom; not reproducible here): the safe-area top inset reaches the page in
+two places, the sticky offset `--topo` and the padding the host adds to :root (the hub cover has its own).
+Both are dropped for `(hover: hover) and (pointer: fine)`; touch devices keep them. A guess from the
+evidence; the user checks. test-arrastar-series 60, test-arrasto-seguir 94.

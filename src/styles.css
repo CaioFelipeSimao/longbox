@@ -126,6 +126,16 @@
   :root { --topbar-h: 76px; --app-pad-b: 48px; }
 }
 
+/* v157: the top safe-area inset only matters on a touch device (the Claude iOS app draws its own
+   bar over the page). On a PC the host bar is opaque above the frame, but a strip of ~7px showed
+   between it and the header, through which the top of a scrolled cover was visible. Both places the
+   inset is applied are dropped for a fine pointer: the sticky offset (--topo) and the padding the
+   host adds to :root. */
+@media (hover: hover) and (pointer: fine) {
+  :root { --topo: 0px; padding-top: 0 !important; }
+  .hub-capa { padding-top: 0; }
+}
+
 /* The header and the strip take the hue of the publisher being read. Only the
    hue: --ed-hue feeds the accent's own saturation and lightness, which are
    different per theme, so a publisher can shift the colour but never the
@@ -2550,6 +2560,22 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 .deflist dd { margin: 0; font-size: 0.8125rem; }
 
 .linked-serie { border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px; margin-bottom: 8px; }
+
+/* Full-width series cards reuse the cover fill and wave behind their content. */
+.linked-series { position: relative; display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.linked-serie-card { position: relative; isolation: isolate; overflow: hidden; margin-bottom: 0; background: var(--surface); -webkit-user-select: none; user-select: none; }
+.linked-serie-card > .vol-hold, .linked-serie-card > .vol-hold__crest { z-index: 0; }
+.linked-serie-card > div { position: relative; z-index: 1; }
+.linked-serie-card[data-drag-hole="true"] { visibility: hidden; }
+.linked-serie-card[data-drag-ghost="true"] { box-shadow: var(--shadow-sheet); cursor: grabbing; will-change: transform; }
+@media (prefers-reduced-motion: no-preference) {
+  /* Individual rotate leaves the pointer-follow transform free to move. */
+  .linked-serie-card[data-drag-ghost="true"]:not([data-drag-settling]) { animation: serieWiggle 320ms ease-in-out infinite !important; }
+  @keyframes serieWiggle {
+    0%, 100% { rotate: -0.4deg; }
+    50% { rotate: 0.4deg; }
+  }
+}
 
 /* Pinned to the foot of the sheet so inspecting issue 700 of a long run never
    scrolls the grid out from under you. */

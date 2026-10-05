@@ -132,5 +132,12 @@ console.log("=== sem zoom do iOS ===");
   check("campos de toque têm 16px", !!m && [".input", ".select", ".textarea", ".pfiltro-input", ".search input"].every((s) => m[1].includes(s)), m && m[1]);
 }
 
+// v157: the top inset belongs to touch devices; a PC with a fine pointer must not keep a strip above the header.
+{
+  const css = fs.readFileSync("src/styles.css", "utf8");
+  const m = css.match(/@media \(hover: hover\) and \(pointer: fine\) \{\s*:root \{ --topo: 0px; padding-top: 0 !important; \}/);
+  check("ponteiro fino não reserva o topo (--topo e padding do :root)", !!m);
+}
+
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas === 0 ? 0 : 1);
