@@ -2569,11 +2569,13 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 .linked-serie-card[data-drag-hole="true"] { visibility: hidden; }
 .linked-serie-card[data-drag-ghost="true"] { box-shadow: var(--shadow-sheet); cursor: grabbing; will-change: transform; }
 @media (prefers-reduced-motion: no-preference) {
-  /* Individual rotate leaves the pointer-follow transform free to move. */
-  .linked-serie-card[data-drag-ghost="true"]:not([data-drag-settling]) { animation: serieWiggle 320ms ease-in-out infinite !important; }
-  @keyframes serieWiggle {
-    0%, 100% { rotate: -0.4deg; }
-    50% { rotate: 0.4deg; }
+  /* v158: a wide card tilting at 320ms looked jittery (the corners of a 400px card move more than a
+     cover's). It breathes instead: a slow, barely-there swell. The individual scale property leaves
+     the pointer-follow transform free to move. */
+  .linked-serie-card[data-drag-ghost="true"]:not([data-drag-settling]) { animation: serieRespira 1400ms ease-in-out infinite !important; }
+  @keyframes serieRespira {
+    0%, 100% { scale: 1; }
+    50% { scale: 1.012; }
   }
 }
 

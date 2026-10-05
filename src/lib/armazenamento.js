@@ -49,6 +49,14 @@ function gravarLast(chave, json) {
     else store.lastEdicoes.set(chave.slice(3), json);
   } else store[DOCS[chave].last] = json;
 }
+// v158: every comparison of "is this the same document" goes through this. The server hands
+// objects back with their keys sorted, while this tab writes them in the order it has (a field
+// added later, like tambem, ordem or ordemSeries, sits last), so comparing JSON.stringify text
+// took the tab's own earlier write for another device's and announced "atualizada em outro
+// aparelho" after save after save. Same data in any key order is the same document.
+const ordenarChaves = (x) => Array.isArray(x) ? x.map(ordenarChaves)
+  : x && typeof x === "object" ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, ordenarChaves(x[k])])) : x;
+const canon = (x) => JSON.stringify(ordenarChaves(x));
 const parseOu = (json, vazio) => { try { return json ? JSON.parse(json) : vazio; } catch (e) { return vazio; } };
 
 // v116: what this tab itself wrote lately, per document. The server echoes every
@@ -113,13 +121,13 @@ export async function loadLibrary(db) {
     if (Array.isArray(items)) edicoes.push(...items);
   });
 
-  store.lastVolumes = JSON.stringify(volumes);
-  store.lastColecoes = JSON.stringify(colecoes);
-  store.lastSeries = JSON.stringify(series);
-  store.lastCores = JSON.stringify(cores);
-  store.lastEditoras = JSON.stringify({ itens: editoras, selecionada: editoraSel });
+  store.lastVolumes = canon(volumes);
+  store.lastColecoes = canon(colecoes);
+  store.lastSeries = canon(series);
+  store.lastCores = canon(cores);
+  store.lastEditoras = canon({ itens: editoras, selecionada: editoraSel });
   store.lastEdicoes = new Map();
-  shardEdicoes(edicoes).forEach((items, sid) => store.lastEdicoes.set(sid, JSON.stringify(items)));
+  shardEdicoes(edicoes).forEach((items, sid) => store.lastEdicoes.set(sid, canon(items)));
 
   return normalizeLib({ volumes, colecoes, series, edicoes, cores, editoras, editoraSel });
 }
@@ -157,12 +165,12 @@ async function flushAgora(lib) {
   const writes = [];
   for (const chave of Object.keys(DOCS)) {
     const local = DOCS[chave].daLib(lib);
-    const json = JSON.stringify(local);
+    const json = canon(local);
     if (json !== lerLast(chave)) writes.push({ chave, ref: db.doc(DOCS[chave].path), local, json });
   }
   const shards = shardEdicoes(lib.edicoes);
   shards.forEach((items, sid) => {
-    const json = JSON.stringify(items);
+    const json = canon(items);
     if (json !== store.lastEdicoes.get(sid)) writes.push({ chave: "ed:" + sid, ref: db.collection("edicoes").doc(sid), local: items, json });
   });
   store.lastEdicoes.forEach((_, sid) => {
@@ -191,10 +199,10 @@ async function flushAgora(lib) {
         const baseJson = lerLast(w.chave);
         let final = w.local, finalJson = w.json;
         // The server copy moved since this tab last saw it: merge, don't overwrite.
-        if (JSON.stringify(remoto) !== (baseJson ?? (ed ? "[]" : JSON.stringify(cfg.parte(null))))) {
+        if (canon(remoto) !== (baseJson ?? (ed ? "[]" : canon(cfg.parte(null))))) {
           const base = parseOu(baseJson, ed ? [] : cfg.parte(null));
           final = (ed ? mesclarLista : cfg.mesclar)(base, w.local, remoto);
-          finalJson = JSON.stringify(final);
+          finalJson = canon(final);
           mescladas.push({ chave: w.chave, parte: final, local: w.local });
         }
         if (ed && Array.isArray(final) && !final.length) {
@@ -239,7 +247,7 @@ export function ouvirMudancas(db) {
     if (!lib || !pendentes.size) return;
     const mudancas = [];
     pendentes.forEach((remoto, chave) => {
-      const json = JSON.stringify(remoto);
+      const json = canon(remoto);
       if (json === lerLast(chave) || ehPropria(chave, json)) return;
       const ed = chave.startsWith("ed:");
       const local = ed ? lib.edicoes.filter((e) => e.serieId === chave.slice(3)) : DOCS[chave].daLib(lib);
@@ -377,13 +385,13 @@ export function aplicarMescladas(lib, mudancas) {
     if (m.chave.startsWith("ed:")) {
       const sid = m.chave.slice(3);
       const atual = next.edicoes.filter((e) => e.serieId === sid);
-      const parte = JSON.stringify(atual) === JSON.stringify(m.local) ? m.parte : mesclarLista(m.local, atual, m.parte);
+      const parte = canon(atual) === canon(m.local) ? m.parte : mesclarLista(m.local, atual, m.parte);
       next.edicoes = [...next.edicoes.filter((e) => e.serieId !== sid), ...parte];
       continue;
     }
     const cfg = DOCS[m.chave];
     const atual = cfg.daLib(next);
-    const parte = JSON.stringify(atual) === JSON.stringify(m.local) ? m.parte : cfg.mesclar(m.local, atual, m.parte);
+    const parte = canon(atual) === canon(m.local) ? m.parte : cfg.mesclar(m.local, atual, m.parte);
     if (m.chave === "editoras") { next.editoras = parte.itens; next.editoraSel = parte.selecionada; }
     else next[m.chave] = parte;
   }

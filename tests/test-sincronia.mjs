@@ -48,6 +48,16 @@ const ids = (l) => l.map((x) => x.id).join(",");
   check("editado aqui e removido lá: a edição daqui fica", ids(r3) === "a,b");
 }
 {
+  // v158: the same item with its keys in another order is the same item. The base comes back from the
+  // server sorted, the tab holds its own order; that must not read as "changed here" and beat what
+  // another device changed.
+  const base = [{ id: "a", s: 1, t: "x" }];
+  const aqui = [{ t: "x", id: "a", s: 1 }];
+  const la = [{ id: "a", s: 9, t: "x" }];
+  const r = M.mesclarLista(base, aqui, la);
+  check("chaves em outra ordem não contam como mudança daqui: vale a de lá", r[0].s === 9, JSON.stringify(r));
+}
+{
   const r = M.mesclarMapa({ x: 1, y: 2 }, { x: 1, y: 3, z: 4 }, { x: 5, y: 2, w: 6 });
   check("mapa de cores: cada lado mantém o que mudou", JSON.stringify(r) === '{"x":5,"y":3,"w":6,"z":4}', JSON.stringify(r));
   const r2 = M.mesclarMapa({ x: 1, y: 2 }, { x: 1 }, { x: 1, y: 2, q: 9 });
@@ -60,7 +70,9 @@ const ids = (l) => l.map((x) => x.id).join(",");
 
 /* ---------- the app with a db that can change under it ---------- */
 const bundle = fs.readFileSync("dist/app.js", "utf8");
-async function montar({ ecoAtraso = 5 } = {}) {
+// ordenarChaves: the real server hands objects back with their keys sorted, whatever order they were written in.
+const ordenar = (x) => Array.isArray(x) ? x.map(ordenar) : x && typeof x === "object" ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, ordenar(x[k])])) : x;
+async function montar({ ecoAtraso = 5, ordenarChaves = false, docsExtra = null } = {}) {
   const dom = new JSDOM(`<!doctype html><html><body><div id="root"></div></body></html>`, {
     runScripts: "outside-only", pretendToBeVisual: true, url: "https://example.test/",
   });
@@ -82,6 +94,8 @@ async function montar({ ecoAtraso = 5 } = {}) {
     ["library/editoras", { itens: [{ id: "dc-comics", nome: "DC Comics", cor: null, logoAssetId: null, logoFundo: "nenhum" }], selecionada: "__todas__" }],
     ["edicoes/s1", { items: [{ id: "e1", serieId: "s1", numero: "1", mes: "", ano: "", posicao: null }] }],
   ]);
+  if (docsExtra) docsExtra(docs);
+  if (ordenarChaves) docs.forEach((corpo, path) => docs.set(path, ordenar(corpo)));
   const ouvintes = new Map(); // path -> Set(fn)
   const ouvintesEd = new Set();
   let gravacoes = 0;
@@ -102,7 +116,7 @@ async function montar({ ecoAtraso = 5 } = {}) {
     // as the real server echo of an earlier write can land after a later write.
     set: async (body) => {
       gravacoes++;
-      const copia = JSON.parse(JSON.stringify(body));
+      const copia = JSON.parse(JSON.stringify(ordenarChaves ? ordenar(body) : body));
       docs.set(path, copia);
       if (path.startsWith("library/")) {
         setTimeout(() => (ouvintes.get(path) || new Set()).forEach((fn) => fn({ ...snapDe(path), exists: true, data: () => copia })), ecoAtraso);
@@ -144,6 +158,31 @@ async function montar({ ecoAtraso = 5 } = {}) {
   // (it never got the snapshot), like the tab of 2026-09-24.
   const externo = (path, body, aoVivo) => { docs.set(path, JSON.parse(JSON.stringify(body))); if (aoVivo) avisar(path); };
   return { window, root, erros, docs, botao, toast, titulos, abrirHq, sheet, fecharSheet, externo, v, gravacoes: () => gravacoes };
+}
+
+// 2026-10-04: after the reorder features the user saw "Biblioteca atualizada em outro aparelho" over and
+// over on one device. A save re-reads the document and compares it, as text, with what this tab last
+// wrote; the server returns every object with its keys sorted, this tab writes them in the order it has
+// (a field added later, like tambem or ordem, sits last), so the texts differed with the same data: the
+// save took its own earlier write for someone else's, merged, and announced it.
+console.log("=== ordem das chaves não é mudança de outro aparelho ===");
+{
+  const m = await montar({
+    ordenarChaves: true,
+    // a volume whose normalised form puts tambem last, as the server's sorted copy never does
+    docsExtra: (docs) => { docs.get("library/volumes").items[1].tambem = [{ editora: "Image Comics", personagem: "Spawn" }]; },
+  });
+  await m.abrirHq("b0");
+  m.botao("Lida", m.sheet())?.click();
+  await sleep(700);
+  m.botao("Lendo", m.sheet())?.click();
+  await sleep(700);
+  m.botao("Não lida", m.sheet())?.click();
+  await sleep(1500);
+  check("nenhum aviso de outro aparelho depois de três gravações seguidas", !/outro aparelho/.test(m.toast()?.textContent || ""), m.toast()?.textContent);
+  check("o banco termina com a última mudança", m.docs.get("library/volumes").items.find((x) => x.id === "b0").status === "nao_lida");
+  check("o volume com tambem continua inteiro", JSON.stringify(m.docs.get("library/volumes").items.find((x) => x.id === "b1").tambem) === JSON.stringify([{ editora: "Image Comics", personagem: "Spawn" }]));
+  check("sem erros (ordem das chaves)", m.erros.length === 0, m.erros[0]);
 }
 
 // 2026-09-27, reported by the user with one PC open: several edits in a row, the

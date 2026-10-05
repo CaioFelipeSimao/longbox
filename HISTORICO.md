@@ -2756,3 +2756,21 @@ desktop app, at 100% and 90% zoom; not reproducible here): the safe-area top ins
 two places, the sticky offset `--topo` and the padding the host adds to :root (the hub cover has its own).
 Both are dropped for `(hover: hover) and (pointer: fine)`; touch devices keep them. A guess from the
 evidence; the user checks. test-arrastar-series 60, test-arrasto-seguir 94.
+
+**v158 "Atualizada em outro aparelho" was the tab's own writes (key order), and a calmer card.** After
+the reorder features the user got "Biblioteca atualizada em outro aparelho" again and again on one
+device. Cause: a save re-reads the document and compares it, as TEXT, with what the tab last wrote
+(`store.last*`, JSON.stringify); the server hands objects back with their keys sorted, the tab writes
+them in the order it holds, and a field added later (`tambem` on the Spawn/Batman volume, `ordem` the first
+time a volume is reordered, `ordemSeries`) sits last in the tab's order. Same data, different text: the
+save took its own earlier write for another device's, merged and announced it, once per save after the
+first. normalizeLib also moved `tambem` to the end of its volume since v152. Reproduced first in
+tests/test-sincronia.mjs with a mock server that sorts keys (3 saves in a row, a volume with tambem): the
+toast appeared. Fix: `canon()` (JSON of the value with every object's keys sorted, arrays keep order) in
+src/lib/armazenamento.js for the `last*` fingerprints, the change test, the "did the server move" test, the
+echo check (`ehPropria`) and `aplicarMescladas`; and the item equality inside src/lib/mesclar.js, which had
+the same flaw (a base item with sorted keys against the tab's own order read as "changed here" and would
+have beaten another device's edit; a unit check covers it). Not touched: the pins document, whose values
+are lists of strings. The séries card ghost no longer tilts at 320ms (a wide card's corners move too much);
+it breathes (scale 1 to 1.012 over 1.4s). A real second device still gets the toast, as before.
+test-sincronia 41.

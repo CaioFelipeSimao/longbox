@@ -13,7 +13,10 @@
 // elsewhere survive. When both sides changed the same item, the tab's version
 // wins: it is the edit the person just made.
 
-const json = (x) => JSON.stringify(x);
+// v158: equality of two items ignores the order of their keys (the server returns them sorted).
+const ordenarChaves = (x) => Array.isArray(x) ? x.map(ordenarChaves)
+  : x && typeof x === "object" ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, ordenarChaves(x[k])])) : x;
+const json = (x) => JSON.stringify(ordenarChaves(x));
 
 // Lists of objects with an `id` (volumes, colecoes, series, editoras.itens, the
 // edições of one série). Order follows `remoto`; items the tab added go at the end.
