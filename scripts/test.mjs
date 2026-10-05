@@ -48,11 +48,10 @@ const SUITES = [
   { args: ["tests/test-filtro-autor.mjs"], minimo: 32 },
   { args: ["tests/test-destaque-autor.mjs"], minimo: 27 },
   { args: ["tests/test-editora-busca.mjs"], minimo: 10 },
-  { args: ["tests/test-duas-editoras.mjs"], minimo: 73 },
+  { args: ["tests/test-duas-editoras.mjs"], minimo: 75 },
   { args: ["tests/test-tiles-volume.mjs"], minimo: 6 },
   // Fixed-slot geometry, both scroll axes and chrome-aware page limits.
   { args: ["tests/test-arrasto-seguir.mjs"], minimo: 94 },
-  { args: ["tests/test-mola.mjs"], minimo: 17 },
   { args: ["tests/test-arrastar-colecao.mjs"], minimo: 52 },
   { args: ["tests/test-arrastar-series.mjs"], minimo: 60 },
 ];

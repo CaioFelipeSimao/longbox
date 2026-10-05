@@ -2850,3 +2850,18 @@ so the first dt was NEGATIVE (-25 ms), the spring stepped backwards and invented
 dragged cover flipped slot 1 <-> 9): max frame-to-frame acceleration 33-36 px -> 8.5-16 px, max step 33-36 ->
 17-25 px, direction reversals 80 -> 48-66. Feel on the iPhone is the user's to confirm; knob = OMEGA.
 tests: test-mola (17), test-duas-editoras now asserts the neighbour has `transition: none` + `translate3d`.
+
+**v164 HQs drag: dwell before the order changes; the spring (v163) is gone.** The user's remaining complaint on the
+iPhone: moving the dragged cover between spaces at the LIMITS of the group made the block shake violently, worse
+when a card changes row. Cause (read in the code, then measured): `atualizarSlot` decided on every frame, and
+leaving the group's box reverted the preview at once, so crossing the edge or sliding over intermediate slots
+reordered the whole block back and forth, each time sweeping the neighbours. The order (or the revert) is now
+applied only after the pointer has asked for the SAME order for `DWELL_MS = 110` ms (iOS rearranges when the
+finger dwells); a different wish restarts the timer; on pointerup the order under the pointer applies at once.
+Chosen by the user on their iPhone in a throwaway comparison page (dummy panel with Deslize Transição/Mola x
+Espera 0/110/200 ms, on a db copy of the library, branch v164-teste): 110 ms fixed it and beat 200 ms; they
+preferred the plain CSS transition (ease-out 260 ms, the v161/v162 glide) over the v163 spring, which did not
+change their problem (measured too: spring alone -6% travel). So v163's `src/lib/mola.js` and its test were
+removed (tag v163 keeps them). Finger-path measurement (390px viewport, CPU 4x, continuous 10px steps every
+16 ms through intermediate slots and out of the group's box and back): order changes 22 -> 12, neighbours' total
+travel ~13700 -> ~6800 px. tests: test-duas-editoras 75 (quick pass changes nothing, release applies at once).

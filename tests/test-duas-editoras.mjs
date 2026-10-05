@@ -221,15 +221,22 @@ const liftedAncestors = [];
 for (let el = grid.parentElement; el && el !== drag.W.document.body; el = el.parentElement) liftedAncestors.push(el);
 check("drag eleva ancestrais abaixo do chrome", liftedAncestors.every((el) =>
   el.style.getPropertyValue("z-index") === "14" && el.style.getPropertyPriority("z-index") === "important"));
-const moveAllowed = pointer("pointermove", 160); await sleep(100);
+const beforeQuickPass = drag.cards();
+pointer("pointermove", 160); await sleep(40);
+const duringQuickPass = drag.cards();
+pointer("pointermove", 40); await sleep(260);
+const afterQuickPass = drag.cards();
+check("drag ignora passagem rápida por outro slot", [duringQuickPass, afterQuickPass].every((cards) =>
+  cards.length === beforeQuickPass.length && cards.every((card, i) => card === beforeQuickPass[i])));
+const moveAllowed = pointer("pointermove", 160); await sleep(260);
 check("drag mantém o mesmo nó DOM ao trocar de slot", drag.cards()[1] === primeiro && grid.contains(primeiro));
 check("drag segue o ponto de pega no slot atual", primeiro.style.transform === "translate(20px, 0px) scale(1.06)", primeiro.style.transform);
 check("drag renova captura após a mudança de slot", captures >= 3, captures);
 check("drag impede o movimento nativo do ponteiro", moveAllowed === false);
-check("drag não aplica FLIP ao card levantado; o vizinho anda por mola (v163)", primeiro.style.transition === "none" && outro.style.transition === "none" && outro.style.transform.startsWith("translate3d"), outro.style.transition + " | " + outro.style.transform);
-pointer("pointermove", 40); await sleep(100);
+check("drag não aplica FLIP ao card levantado", primeiro.style.transition === "none" && outro.style.transition === "transform 260ms var(--ease-out)");
+pointer("pointermove", 40); await sleep(260);
 check("drag aceita novo alvo durante os 260ms de FLIP", drag.cards()[0] === primeiro);
-pointer("pointermove", 160); await sleep(100);
+pointer("pointermove", 160); await sleep(260);
 check("drag interrompe FLIP novamente sem avançar por etapas", drag.cards()[1] === primeiro);
 // Once slots are recorded, an animated neighbour rect cannot affect targeting.
 const neighbourRect = outro.getBoundingClientRect;
@@ -237,7 +244,7 @@ outro.getBoundingClientRect = () => rect(150);
 await sleep(250);
 check("drag parado ignora a geometria animada do vizinho", drag.cards()[1] === primeiro);
 outro.getBoundingClientRect = neighbourRect;
-pointer("pointermove", 95); await sleep(100);
+pointer("pointermove", 95); await sleep(260);
 check("drag no espaço entre slots mantém a prévia", drag.cards()[1] === primeiro);
 pointer("pointermove", 160); await sleep(100);
 const touch = new drag.W.Event("touchmove", { bubbles: true, cancelable: true });
@@ -260,8 +267,8 @@ check("drag suprime o clique do gesto", !drag.root.querySelector('.sheet[data-in
 
 const savedOrder = j(drag.docs.get("library/volumes"));
 pointer("pointerdown", 140); await sleep(500);
-pointer("pointermove", 40); await sleep(100);
-pointer("pointermove", 400); await sleep(100);
+pointer("pointermove", 40); await sleep(260);
+pointer("pointermove", 400); await sleep(260);
 check("drag fora da grade restaura a ordem inicial", drag.titulos().join() === "Spawn: Origens,Encontro dos heróis");
 check("drag continua seguindo fora da grade", primeiro.style.transform === "translate(260px, 0px) scale(1.06)", primeiro.style.transform);
 pointer("pointerup", 400); await sleep(750);
@@ -269,14 +276,19 @@ check("soltar fora da grade não persiste a prévia", j(drag.docs.get("library/v
 check("cancelamento remove lift e transform depois de acomodar", !primeiro.dataset.dragging && !primeiro.dataset.dragSettling && primeiro.style.transform === "");
 
 pointer("pointerdown", 140); await sleep(500);
-pointer("pointermove", 40); await sleep(100);
+pointer("pointermove", 40); await sleep(260);
 pointer("pointercancel", 40); await sleep(750);
 check("pointercancel dentro da grade também cancela", j(drag.docs.get("library/volumes")) === savedOrder && drag.cards()[1] === primeiro);
 
 pointer("pointerdown", 140); await sleep(500);
-pointer("pointermove", 40); await sleep(100);
+pointer("pointermove", 40); await sleep(260);
 drag.W.dispatchEvent(new drag.W.Event("blur")); await sleep(750);
 check("blur encerra o gesto sem persistir", j(drag.docs.get("library/volumes")) === savedOrder && !primeiro.dataset.dragging);
+
+pointer("pointerdown", 140); await sleep(500);
+pointer("pointermove", 40);
+pointer("pointerup", 40); await sleep(750);
+check("soltar aplica o alvo imediatamente sem dwell", drag.salvo("dupla")?.ordem === 0 && drag.salvo("image")?.ordem === 1);
 
 console.log("=== hub e descoberta ===");
 const hub = await montar({ aba: "hub" });
