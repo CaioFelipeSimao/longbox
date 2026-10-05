@@ -208,6 +208,7 @@ const [primeiro, outro] = drag.cards();
 const outsideBandBefore = j(drag.salvo("dc"));
 const rect = (left) => ({ left, right: left + 90, top: 0, bottom: 130, width: 90, height: 130 });
 const grid = primeiro.closest("[data-hq-grid]");
+const group = grid.closest("section.group");
 grid.getBoundingClientRect = () => ({ left: 0, right: 190, top: 0, bottom: 130, width: 190, height: 130 });
 primeiro.getBoundingClientRect = () => rect([...grid.children].indexOf(primeiro) * 100);
 outro.getBoundingClientRect = () => rect([...grid.children].indexOf(outro) * 100);
@@ -217,7 +218,7 @@ primeiro.releasePointerCapture = () => {};
 const pointer = (type, x) => primeiro.dispatchEvent(new drag.W.MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: 40 }));
 pointer("pointerdown", 40); await sleep(500);
 const liftedAncestors = [];
-for (let el = grid; el && el !== drag.W.document.body; el = el.parentElement) liftedAncestors.push(el);
+for (let el = grid.parentElement; el && el !== drag.W.document.body; el = el.parentElement) liftedAncestors.push(el);
 check("drag eleva ancestrais abaixo do chrome", liftedAncestors.every((el) =>
   el.style.getPropertyValue("z-index") === "14" && el.style.getPropertyPriority("z-index") === "important"));
 const moveAllowed = pointer("pointermove", 160); await sleep(100);
@@ -225,9 +226,9 @@ check("drag mantém o mesmo nó DOM ao trocar de slot", drag.cards()[1] === prim
 check("drag segue o ponto de pega no slot atual", primeiro.style.transform === "translate(20px, 0px) scale(1.06)", primeiro.style.transform);
 check("drag renova captura após a mudança de slot", captures >= 3, captures);
 check("drag impede o movimento nativo do ponteiro", moveAllowed === false);
-check("drag não aplica FLIP ao card levantado", primeiro.style.transition === "none" && outro.style.transition.includes("220ms"));
+check("drag não aplica FLIP ao card levantado", primeiro.style.transition === "none" && outro.style.transition === "transform 260ms var(--ease-out)");
 pointer("pointermove", 40); await sleep(100);
-check("drag aceita novo alvo durante os 220ms de FLIP", drag.cards()[0] === primeiro);
+check("drag aceita novo alvo durante os 260ms de FLIP", drag.cards()[0] === primeiro);
 pointer("pointermove", 160); await sleep(100);
 check("drag interrompe FLIP novamente sem avançar por etapas", drag.cards()[1] === primeiro);
 // Once slots are recorded, an animated neighbour rect cannot affect targeting.
@@ -242,7 +243,9 @@ pointer("pointermove", 160); await sleep(100);
 const touch = new drag.W.Event("touchmove", { bubbles: true, cancelable: true });
 primeiro.closest("[data-hq-grid]").dispatchEvent(touch);
 check("drag armado bloqueia touchmove na grade (v160)", touch.defaultPrevented);
+check("drag armado eleva o grupo sem elevar a grade", grid.style.zIndex === "" && group.style.zIndex === "14");
 pointer("pointerup", 160); await sleep(750);
+check("drag acomodado restaura grade e grupo", grid.style.zIndex === "" && group.style.zIndex === "");
 const touchOcioso = new drag.W.Event("touchmove", { bubbles: true, cancelable: true });
 primeiro.closest("[data-hq-grid]").dispatchEvent(touchOcioso);
 check("sem drag armado o touchmove rola a página (v160)", !touchOcioso.defaultPrevented);

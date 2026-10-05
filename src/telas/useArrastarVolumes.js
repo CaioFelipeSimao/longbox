@@ -18,8 +18,8 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   // on a tablet. 450ms, raised from 350: the user found 350 too easy to trigger
   // by accident while just scrolling or tapping a cover.
   const HOLD_MS = 450;
-  // Neighbours glide for 220ms; target decisions never wait for their animation.
-  const FLIP_MS = 220;
+  // Neighbours glide for 260ms; target decisions never wait for their animation.
+  const FLIP_MS = 260;
   const SETTLE_MS = 200;
   // How long the fill takes to let go once the pointer comes up. Matches the
   // old CSS transition's own release timing, kept here now that release is
@@ -191,12 +191,16 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
     for (let parent = el.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
       const style = getComputedStyle(parent);
       const clips = /(hidden|clip|auto|scroll)/.test(style.overflowX + style.overflowY);
-      const props = ["position", "z-index"];
+      // Keep the grid out of a stacking context so only the dragged card clears its head.
+      const lift = parent !== el.parentElement;
+      const props = lift ? ["position", "z-index"] : [];
       if (clips && parent !== scrollContainer) props.push("overflow-x", "overflow-y");
       const saved = props.map((prop) => [prop, parent.style.getPropertyValue(prop), parent.style.getPropertyPriority(prop)]);
       layersRef.current.push({ el: parent, saved });
-      if (style.position === "static") parent.style.setProperty("position", "relative");
-      parent.style.setProperty("z-index", String(DRAG_Z_INDEX), "important");
+      if (lift) {
+        if (style.position === "static") parent.style.setProperty("position", "relative");
+        parent.style.setProperty("z-index", String(DRAG_Z_INDEX), "important");
+      }
       if (props.includes("overflow-x")) {
         parent.style.setProperty("overflow-x", "visible", "important");
         parent.style.setProperty("overflow-y", "visible", "important");
@@ -237,30 +241,44 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
     const info = dragRef.current;
     const settling = settleRef.current;
     const draggedId = info.active ? info.id : settling?.id;
-    if (before && !prefersReducedMotion()) before.forEach((prevRect, id) => {
-      if (id === draggedId) return; // the picked-up card is NEVER part of FLIP
-      const el = cardNodesRef.current.get(id);
-      if (!el) return;
-      clearTimeout(flipCleanupRef.current.get(id));
-      const version = {};
-      flipVersionRef.current.set(id, version);
-      el.style.transition = "none";
-      el.style.transform = "";
-      const now = el.getBoundingClientRect();
-      const dx = prevRect.left - now.left;
-      const dy = prevRect.top - now.top;
-      if (!dx && !dy) { el.style.transition = ""; el.style.transform = ""; return; }
-      el.style.transform = "translate(" + dx + "px," + dy + "px)";
-      el.getBoundingClientRect(); // force reflow so the jump above isn't itself animated
-      const liberar = () => {
-        if (flipVersionRef.current.get(id) !== version) return;
-        if (dragRef.current.active && dragRef.current.id === id) return;
-        el.style.transition = "transform " + FLIP_MS + "ms var(--ease-in-out, cubic-bezier(0.77, 0, 0.175, 1))";
+    if (before && !prefersReducedMotion()) {
+      const cards = [];
+      // Reset all cards before reading layout; interleaving would reflow per card.
+      before.forEach((prevRect, id) => {
+        if (id === draggedId) return; // the picked-up card is NEVER part of FLIP
+        const el = cardNodesRef.current.get(id);
+        if (!el) return;
+        clearTimeout(flipCleanupRef.current.get(id));
+        const version = {};
+        flipVersionRef.current.set(id, version);
+        el.style.transition = "none";
         el.style.transform = "";
-      };
-      requestAnimationFrame(liberar);
-      flipCleanupRef.current.set(id, setTimeout(liberar, FLIP_MS + 150));
-    });
+        cards.push({ id, el, prevRect, version });
+      });
+      cards.forEach((card) => { card.now = card.el.getBoundingClientRect(); });
+      const releases = [];
+      cards.forEach(({ id, el, prevRect, now, version }) => {
+        const dx = prevRect.left - now.left;
+        const dy = prevRect.top - now.top;
+        if (!dx && !dy) { el.style.transition = ""; el.style.transform = ""; return; }
+        el.style.transform = "translate(" + dx + "px," + dy + "px)";
+        const liberar = () => {
+          if (flipVersionRef.current.get(id) !== version) return;
+          if (dragRef.current.active && dragRef.current.id === id) return;
+          // Retargeting mid-flight needs an ease-out start to avoid stopping at each new target.
+          el.style.transition = "transform " + FLIP_MS + "ms var(--ease-out)";
+          el.style.transform = "";
+        };
+        releases.push({ id, liberar });
+      });
+      if (releases.length) {
+        document.body.getBoundingClientRect(); // one reflow commits every inverted transform
+        releases.forEach(({ id, liberar }) => {
+          requestAnimationFrame(liberar);
+          flipCleanupRef.current.set(id, setTimeout(liberar, FLIP_MS + 150));
+        });
+      }
+    }
     if (info.active) {
       // React moves the same keyed DOM node. Refresh capture after that move,
       // and rebase its translation before paint so a new slot cannot flash.

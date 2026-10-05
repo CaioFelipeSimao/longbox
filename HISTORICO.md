@@ -2801,3 +2801,18 @@ listener, C grid listener, D C plus `overflow:hidden` on the page): all scrolled
 edge auto-scroll (same formula as `velocidadeAutoScroll`) worked with C too (2374 px). Not touched: the
 Coleções and Séries drags (they set `touch-action` only when armed). `-webkit-touch-callout: none` on the
 covers. test-duas-editoras: armed drag blocks touchmove on the grid, idle one does not (71).
+
+**v161 HQs drag: group head over the covers, calmer glide.** (1) When a drag armed, `elevarCamadas` raised
+the z-index of every ancestor of the cover, including the grid (`.shelf`) itself: measured grid z 14 against
+the sticky `.group-head` at z 10, so ALL covers of the group painted over the personagem's name/bar, not only the
+dragged one (user's screenshot). The grid is no longer lifted (measured now: z auto, section.group 14, head 10); the
+dragged cover keeps its own z 14 from `.vol[data-dragging]`, the others sit under the head like they do under the
+publisher band. (2) The neighbours' FLIP glide: measured in headless Chrome (390px phone viewport, CPU 4x, 14
+covers, the dragged cover flipped between slots 1 and 9 with 560/500/250/120ms holds): wrap-around covers moved up to
+42.9 px a frame, 14 frames over 20 ms, worst frame 238 ms. The layout effect did a forced layout per card
+(`transform=""`, read rect, write, read again); it now resets all cards, reads all rects once, writes all inverted
+transforms and forces ONE reflow. The curve is `--ease-out` for 260 ms instead of `--ease-in-out` for 220 ms: a
+reversal mid-flight restarts a card with zero velocity, and an ease-in made each restart a stop-and-go.
+After: frames over 20 ms 3-6, worst 29-35 ms, the trajectory leaves fast and settles (frame dump checked).
+Method note: `elementsFromPoint` cannot be used to prove the stacking during a drag (the covers drop out of
+hit-testing); the proof is the measured computed z-index of grid, section and head. test-duas-editoras 73.
