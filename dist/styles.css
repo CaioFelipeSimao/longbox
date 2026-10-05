@@ -1375,6 +1375,10 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   mask-position-x: calc(-1 * var(--hold-p, 0) * var(--hold-cycles, 2.2) * var(--hold-tile));
   -webkit-mask-position-y: calc(var(--hold-h, 210px) - var(--hold-p, 0) * (var(--hold-h, 210px) + 20px));
   mask-position-y: calc(var(--hold-h, 210px) - var(--hold-p, 0) * (var(--hold-h, 210px) + 20px));
+  /* v159: --hold-h only exists after a press; before it the band sits at the default 210px, which is
+     INSIDE any card taller than that (a série card with 5+ rows of edições showed a wave stripe at rest).
+     The crest is simply not drawn while nothing is filling. */
+  opacity: min(1, calc(var(--hold-p, 0) * 1000));
 }
 @media (prefers-reduced-motion: reduce) {
   /* driveHold still runs (it is cheap and app.jsx does not special-case

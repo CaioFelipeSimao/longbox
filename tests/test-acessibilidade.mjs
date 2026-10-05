@@ -118,10 +118,16 @@ console.log("=== v134: desfazer mais longo e o topo do app do Claude ===");
 console.log("=== detalhes ===");
 {
   const css = fs.readFileSync("src/styles.css", "utf8");
+  // v159: the wave of the hold fill sat at a default 210px until a press set --hold-h, which is INSIDE any card
+  // taller than that (a série card with 5+ rows of edições drew a wave stripe at rest).
+  check("a onda do enchimento só aparece com o enchimento em andamento", /\.vol-hold__crest \{[^}]*opacity: min\(1, calc\(var\(--hold-p, 0\) \* 1000\)\);/.test(css));
   check("setas diferentes para esconder e mostrar", /\.fold-all svg\[data-rot="false"\] \{ transform: rotate\(180deg\); \}/.test(css));
   const m = await montar("volumes");
   const conta = m.root.querySelector(".ed-note");
   check("a contagem da faixa sai da fonte de código", !!conta && !conta.classList.contains("num"), conta?.className);
+  // v159: the 1px scroll sentinel pushed the sticky header 1px down at the top of the page (a hairline above it).
+  const sent = [...m.root.querySelectorAll("[aria-hidden='true']")].find((e) => e.style.height === "1px" && e.style.width === "1px");
+  check("a sentinela de rolagem não ocupa lugar no fluxo", !!sent && sent.style.position === "absolute", sent && sent.getAttribute("style"));
 }
 
 // v152: a field under 16px makes iOS zoom the page on focus and keep the zoom.

@@ -2774,3 +2774,17 @@ have beaten another device's edit; a unit check covers it). Not touched: the pin
 are lists of strings. The séries card ghost no longer tilts at 320ms (a wide card's corners move too much);
 it breathes (scale 1 to 1.012 over 1.4s). A real second device still gets the toast, as before.
 test-sincronia 41.
+
+**v159 Two hairlines.** (1) The wave of the hold fill (`.vol-hold__crest`) positions its band with
+`--hold-h`, which only exists after a press; before it the band sits at a default 210px, INSIDE any card
+taller than that. A série card in the volume sheet with 5+ rows of edições (taller than 210px) drew a
+wave stripe at rest. Reproduced on a scratch harness page (cards of 255 and 325px, `mask-position-y`
+210px at rest). The crest now has `opacity: min(1, calc(var(--hold-p, 0) * 1000))`: it is not drawn while
+nothing is filling. (2) The strip above the header on the user's PC, which three guesses (v155's 60px
+header, v157's inset) did not touch: a temporary read-only measuring panel (Ctrl+Alt+D, removed again)
+showed `.topbar top: 1.0` with the page at the top: the 1px scroll sentinel (`<div style="height:1">`
+before the header, for the IntersectionObserver that sets `data-scrolled`) was in the flow and pushed the
+sticky header 1px down, leaving a hairline through which what lies behind showed; it vanished once the page
+scrolled, which is what the user described ("only when I have not scrolled"). The sentinel is now
+absolutely positioned; `.topbar top` is 0 and the pixel at y=0 belongs to the header. The v157 inset
+override stays (harmless on a PC). test-acessibilidade 28.

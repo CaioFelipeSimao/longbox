@@ -41,7 +41,7 @@ const SUITES = [
   { args: ["tests/test-capa-hub.mjs"], minimo: 40 },
   { args: ["tests/test-arrastar-folha.mjs"], minimo: 14 },
   { args: ["tests/test-barra-busca.mjs"], minimo: 30 },
-  { args: ["tests/test-acessibilidade.mjs"], minimo: 26 },
+  { args: ["tests/test-acessibilidade.mjs"], minimo: 28 },
   { args: ["tests/test-edicoes.mjs"], minimo: 55 },
   { args: ["tests/test-reimpressoes.mjs"], minimo: 32 },
   { args: ["tests/test-autores.mjs"], minimo: 26 },

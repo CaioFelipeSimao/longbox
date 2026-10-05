@@ -1751,7 +1751,10 @@ export function App() {
         {personagens.map((p) => <option key={p} value={p} />)}
       </datalist>
 
-      <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />
+      {/* v159: taken out of the flow. In the flow this 1px row pushed the sticky header 1px down while the
+          page was at the top, leaving a hairline above it through which what lies behind showed (seen on
+          the user's PC, measured with `.topbar top: 1.0`). The observer only needs it to exist. */}
+      <div ref={sentinelRef} style={{ position: "absolute", top: 0, left: 0, width: 1, height: 1, pointerEvents: "none" }} aria-hidden="true" />
 
       {/* v126: everything under the hub cover. Inert while the cover is down, so
           Tab and screen readers stay on the hub; the sheets sit outside it because
