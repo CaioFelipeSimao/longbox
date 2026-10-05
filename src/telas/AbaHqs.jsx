@@ -8,7 +8,7 @@ export function AbaHqs({
   lib, setCorPersonagem, fixados, alternarFixado, openVolumeId, buscando, gruposFechados, grupoAbertoVolumes,
   alternarGrupoVolumes, alternarTodosVolumes, volumesFiltrados, podeReordenarVolumes,
   dragVisual, editoraCorPorNome, registrarCardNode, volDragPointerDown,
-  volDragPointerMove, volDragPointerEnd, abrirVolumeCard,
+  volDragPointerMove, volDragPointerEnd, gradeRef, abrirVolumeCard,
 }) {
   return (
     volumesFiltrados.length === 0 ? (
@@ -55,7 +55,7 @@ export function AbaHqs({
             onFixar={alternarFixado}
           />
           {aberto && (
-          <div className="shelf stagger" data-hq-grid={grupo.personagem} role="group" aria-label={"HQs de " + grupo.personagem} {...gradeTeclado}>
+          <div className="shelf stagger" ref={gradeRef} data-hq-grid={grupo.personagem} role="group" aria-label={"HQs de " + grupo.personagem} {...gradeTeclado}>
             {itensExibidos.map((v, i) => (
               <VolumeCard
                 key={v.id}

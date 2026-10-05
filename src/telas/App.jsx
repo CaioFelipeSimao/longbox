@@ -461,7 +461,7 @@ export function App() {
   /* ---------- drag to reorder HQs, held to one personagem group ---------- */
   const {
     suppressClickRef, dragVisual, editoraCorPorNome, registrarCardNode, volDragPointerDown,
-    volDragPointerMove, volDragPointerEnd,
+    volDragPointerMove, volDragPointerEnd, gradeRef,
   } = useArrastarVolumes(lib, persist, volumesDaFaixa);
 
   function abrirVolumeCard(volumeId) {
@@ -1980,6 +1980,7 @@ export function App() {
             volDragPointerDown={volDragPointerDown}
             volDragPointerMove={volDragPointerMove}
             volDragPointerEnd={volDragPointerEnd}
+            gradeRef={gradeRef}
             abrirVolumeCard={abrirVolumeCard}
           />
           )} />

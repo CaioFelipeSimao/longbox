@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from "react";
 
 import { swatchColors } from "../lib/cores";
 import { HOLD_EASE_LINEAR, HOLD_EASE_OUT, prefersReducedMotion } from "../lib/hooks";
@@ -41,6 +41,14 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   // the previous card's release was mid-animating.
   const holdMotionRef = useRef({ raf: 0, p: 0, el: null });
   const suppressClickRef = useRef(false);
+  // v160: no fixed touch-action on the covers (a finger on a cover must scroll the page).
+  // Once armed, iOS only honours preventDefault on a touchmove listener that already
+  // existed when the touch began, so it lives on each grid from mount: one stable function
+  // (addEventListener dedupes it across renders), checked against the live drag state.
+  const bloqueioToqueRef = useRef((e) => { if (dragRef.current.active) e.preventDefault(); });
+  const gradeRef = useCallback((el) => {
+    if (el) el.addEventListener("touchmove", bloqueioToqueRef.current, { passive: false });
+  }, []);
   const cardNodesRef = useRef(new Map()); // volume id -> its .vol DOM node, for FLIP
   const flipSnapshotRef = useRef(null); // rects captured just before a live reorder
   const flipCleanupRef = useRef(new Map()); // volume id -> fallback timer clearing its transform
@@ -367,7 +375,6 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
       info.timer = null;
       info.active = true;
       suppressClickRef.current = true;
-      target.style.touchAction = "none";
       // The fill itself is not touched here on purpose: driveHold's own rAF
       // loop is already most of the way to --hold-p:1 by the time this fires,
       // and it keeps running past this point, through the whole drag, only
@@ -420,7 +427,6 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
     followRafRef.current = 0;
     const el = cardNodesRef.current.get(info.id);
     soltarPreenchimento(el);
-    if (el && el.style) el.style.touchAction = "";
     if (info.active && info.ids) {
       if (e?.type === "pointerup") atualizarSlot(info);
       const commit = e?.type !== "pointercancel" && e?.type !== "blur" &&
@@ -462,9 +468,7 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
       medirSlots(info);
       seguirPonteiro(info);
     };
-    const bloquearToque = (e) => { if (dragRef.current.active) e.preventDefault(); };
     window.addEventListener("pointermove", mover, { capture: true, passive: false });
-    window.addEventListener("touchmove", bloquearToque, { capture: true, passive: false });
     window.addEventListener("pointerup", finalizar, true);
     window.addEventListener("pointercancel", finalizar, true);
     window.addEventListener("blur", finalizar);
@@ -475,7 +479,6 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
       window.removeEventListener("blur", finalizar);
       window.removeEventListener("resize", redimensionar);
       window.removeEventListener("pointermove", mover, true);
-      window.removeEventListener("touchmove", bloquearToque, true);
     };
   }, [dragVisual]);
 
@@ -491,6 +494,6 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
 
   return {
     suppressClickRef, dragVisual, editoraCorPorNome, registrarCardNode, volDragPointerDown,
-    volDragPointerMove, volDragPointerEnd,
+    volDragPointerMove, volDragPointerEnd, gradeRef,
   };
 }

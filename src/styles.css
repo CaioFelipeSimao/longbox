@@ -1388,7 +1388,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   .vol-hold { clip-path: none; opacity: var(--hold-p, 0); }
   .vol-hold__crest { display: none; }
 }
-.vol[data-vol-id] { touch-action: none; -webkit-user-select: none; user-select: none; }
+.vol[data-vol-id] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 /* Keep the button's grab coordinates stable; its cover still gives press feedback. */
 .vol[data-vol-id]:active { transform: none; }
 .vol[data-dragging="true"] {

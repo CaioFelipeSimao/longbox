@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teste de rolagem</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0E0F11; color: #f4f4f5; font-family: system-ui, sans-serif; }
+    .bar { position: fixed; inset: 0 0 auto; z-index: 10; padding: 10px 12px;
+      padding-top: max(10px, env(safe-area-inset-top)); background: #191b20; }
+    .modes { display: flex; gap: 8px; }
+    .modes button { flex: 1; min-width: 0; padding: 10px 6px; border: 1px solid #555b66;
+      border-radius: 6px; background: #292d35; color: inherit; font: inherit; font-size: 12px; }
+    .modes button[aria-pressed="true"] { background: #395cad; border-color: #a4bfff; }
+    #status, #perf { margin-top: 8px; white-space: normal; font-size: 11px; font-variant-numeric: tabular-nums; }
+    main { padding: calc(220px + env(safe-area-inset-top)) 12px 40px; }
+    .help { margin: 0 0 16px; color: #bec2cb; font-size: 13px; line-height: 1.5; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .vol { position: relative; width: 100%; aspect-ratio: 2 / 3; padding: 0;
+      border: 1px solid #ffffff30; border-radius: 5px; color: white;
+      font: bold 24px system-ui, sans-serif; text-shadow: 0 2px 4px #000;
+      user-select: none; -webkit-user-select: none; transform-origin: 0 0; }
+    body[data-mode="A"] .vol { touch-action: none; }
+    body:not([data-mode="A"]) .vol { -webkit-touch-callout: none; }
+    .vol.armed { z-index: 5; outline: 3px solid #ffd35e; box-shadow: 0 12px 24px #0009; }
+    .vol span { position: absolute; left: 8px; bottom: 8px; pointer-events: none; }
+  </style>
+</head>
+<body data-mode="A">
+  <header class="bar">
+    <div class="modes">
+      <button type="button" data-mode="A" aria-pressed="true">A: como está hoje</button>
+      <button type="button" data-mode="B" aria-pressed="false">B: janela</button>
+      <button type="button" data-mode="C" aria-pressed="false">C: na capa</button>
+      <button type="button" data-mode="D" aria-pressed="false">D: trava página</button>
+    </div>
+    <div id="status" role="status" aria-live="off"></div>
+    <div id="perf" role="status" aria-live="off"></div>
+  </header>
+  <main>
+    <p class="help">Teste cada modo: segure uma capa 0,5 s, arraste e solte. Depois me mande a linha de status (print).<br>
+      Segure uma capa e leve o dedo para perto da borda de cima ou de baixo da tela: a página deve rolar sozinha.</p>
+    <div class="grid" aria-label="Capas de quadrinhos"></div>
+  </main>
+  <script>
+    const grid = document.querySelector('.grid');
+    const status = document.querySelector('#status');
+    const modeButtons = document.querySelectorAll('.modes button');
+    let mode = 'A';
+    let gesture = null;
+    let reorders = 0;
+    let autoScrollPixels = 0, autoScrollRaf = 0;
+    let lateBlocker = false;
+    const log = { move: 0, cancelable: 0, prevented: 0, pcancel: 0, tcancel: 0, last: '-' };
+    const perf = document.querySelector('#perf');
+    const emptyMetrics = () => ({ frames: 0, total: 0, worst: 0, lost: 0, moves: 0, moveTotal: 0, moveWorst: 0 });
+    const metrics = Object.fromEntries(['A', 'B', 'C', 'D'].map(key => [key, emptyMetrics()]));
+    let perfRaf = 0, lastFrame = 0, lastPerfUpdate = 0;
+    const decimal = (value, digits = 1) => value.toFixed(digits).replace('.', ',');
+    function updatePerf() {
+      const m = metrics[mode], average = m.frames ? m.total / m.frames : 0;
+      perf.textContent = `Quadros: ${m.frames} · média ${decimal(average)} ms (${average ? Math.round(1000 / average) : 0} fps) · pior ${decimal(m.worst)} ms · acima de 20 ms (perdidos): ${m.lost}` +
+        ` · mover: média ${decimal(m.moves ? m.moveTotal / m.moves : 0, 2)} ms, pior ${decimal(m.moveWorst)} ms`;
+    }
+    function sampleFrame() {
+      if (!gesture?.armed) return;
+      const now = performance.now(), m = metrics[mode];
+      if (lastFrame) {
+        const delta = now - lastFrame;
+        m.frames++; m.total += delta; m.worst = Math.max(m.worst, delta);
+        if (delta > 20) m.lost++;
+      }
+      lastFrame = now;
+      if (now - lastPerfUpdate >= 250) { updatePerf(); lastPerfUpdate = now; }
+      perfRaf = requestAnimationFrame(sampleFrame);
+    }
+
+    for (let i = 1; i <= 40; i++) {
+      const cover = document.createElement('button');
+      cover.type = 'button';
+      cover.className = 'vol';
+      cover.setAttribute('aria-label', `Capa ${i}`);
+      const hue = (i * 47) % 360;
+      cover.style.background = `linear-gradient(145deg, hsl(${hue} 65% 48%), hsl(${(hue + 65) % 360} 55% 15%))`;
+      const label = document.createElement('span');
+      label.textContent = i;
+      cover.append(label);
+      grid.append(cover);
+    }
+
+    function updateStatus() {
+      status.textContent = `Modo: ${mode} · Armado: ${gesture?.armed ? 'sim' : 'não'} · Rolagem: ${Math.round(window.scrollY)} px · Reordenações: ${reorders}` +
+        ` · toquemove: ${log.move} (cancelável ${log.cancelable}, travado ${log.prevented}) · pointercancel: ${log.pcancel} · touchcancel: ${log.tcancel} · último: ${log.last}` +
+        ` · autoscroll: ${Math.round(autoScrollPixels).toLocaleString('pt-BR')} px`;
+    }
+
+    function blockLateTouchMove(event) {
+      if (mode === 'A' && gesture?.armed) event.preventDefault();
+    }
+
+    // B: presente desde o carregamento, antes de qualquer toque começar.
+    function blocker(event) {
+      if (!gesture?.armed) return;
+      log.move++;
+      if (event.cancelable) log.cancelable++;
+      event.preventDefault();
+      if (event.defaultPrevented) log.prevented++;
+      updateStatus();
+    }
+    window.addEventListener('touchmove', event => {
+      if (mode === 'B' || mode === 'D') blocker(event);
+    }, { capture: true, passive: false });
+    // C: o bloqueio mora na própria capa e na grade, também desde o carregamento.
+    grid.addEventListener('touchmove', event => { if (mode === 'C') blocker(event); }, { passive: false });
+    grid.addEventListener('touchcancel', () => { log.tcancel++; log.last = 'touchcancel'; updateStatus(); });
+    function lockPage(on) {
+      for (const el of [document.documentElement, document.body]) {
+        el.style.overflow = on ? 'hidden' : '';
+        el.style.overscrollBehavior = on ? 'none' : '';
+      }
+    }
+
+    function finish() {
+      cancelAnimationFrame(perfRaf);
+      cancelAnimationFrame(autoScrollRaf);
+      const old = gesture;
+      gesture = null;
+      if (old) {
+        clearTimeout(old.timer);
+        old.cover.classList.remove('armed');
+        old.cover.style.transform = '';
+        try {
+          if (old.cover.hasPointerCapture(old.id)) old.cover.releasePointerCapture(old.id);
+        } catch (_) {}
+      }
+      if (mode === 'D') lockPage(false);
+      if (lateBlocker) {
+        window.removeEventListener('touchmove', blockLateTouchMove, true);
+        lateBlocker = false;
+      }
+      updateStatus();
+      updatePerf();
+    }
+
+    function follow() {
+      const g = gesture;
+      if (!g?.armed) return;
+      const dx = g.x + window.scrollX - g.baseX - g.grabX;
+      const dy = g.y + window.scrollY - g.baseY - g.grabY;
+      g.cover.style.transform = `translate(${dx}px, ${dy}px) scale(1.06)`;
+    }
+
+    function reorderAt() {
+      const g = gesture;
+      if (!g?.armed) return;
+      const x = g.x + window.scrollX;
+      const y = g.y + window.scrollY;
+      const target = g.slots.findIndex(r => x >= r.x && x <= r.x + r.width
+        && y >= r.y && y <= r.y + r.height);
+      const covers = Array.from(grid.children);
+      const current = covers.indexOf(g.cover);
+      if (target !== -1 && target !== current) {
+        grid.insertBefore(g.cover, target > current ? covers[target].nextSibling : covers[target]);
+        g.cover.style.transform = '';
+        const r = g.cover.getBoundingClientRect();
+        g.baseX = r.left + window.scrollX;
+        g.baseY = r.top + window.scrollY;
+        reorders++;
+        updateStatus();
+      }
+    }
+
+    // Mesma fórmula e constantes de src/lib/arrastoSeguir.js.
+    function velocidadeAutoScroll(pointerY, viewportTop, viewportBottom, {
+      scrollTop = 0, maxScroll = Infinity, zona = 64, maxVelocidade = 14,
+    } = {}) {
+      if (viewportBottom <= viewportTop || zona <= 0 || maxScroll <= 0) return 0;
+      const edge = Math.min(zona, (viewportBottom - viewportTop) / 2);
+      let velocidade = 0;
+      if (pointerY < viewportTop + edge) {
+        velocidade = -maxVelocidade * Math.min(1, (viewportTop + edge - pointerY) / edge);
+      } else if (pointerY > viewportBottom - edge) {
+        velocidade = maxVelocidade * Math.min(1, (pointerY - viewportBottom + edge) / edge);
+      }
+      if ((velocidade < 0 && scrollTop <= 0) || (velocidade > 0 && scrollTop >= maxScroll)) return 0;
+      return velocidade;
+    }
+
+    function autoScrollFrame() {
+      const g = gesture;
+      if (!g?.armed || mode === 'A') return;
+      const container = document.scrollingElement;
+      const scrollTop = container.scrollTop;
+      const top = document.querySelector('.bar').getBoundingClientRect().bottom;
+      const velocidade = velocidadeAutoScroll(g.y, top, window.innerHeight, {
+        scrollTop, maxScroll: g.maxScroll,
+      });
+      if (velocidade) {
+        container.scrollTop = Math.max(0, Math.min(g.maxScroll, scrollTop + velocidade));
+        autoScrollPixels += Math.abs(container.scrollTop - scrollTop);
+        reorderAt();
+        follow();
+        updateStatus();
+      }
+      autoScrollRaf = requestAnimationFrame(autoScrollFrame);
+    }
+
+    function arm(g) {
+      if (gesture !== g) return;
+      g.slots = Array.from(grid.children, cover => {
+        const r = cover.getBoundingClientRect();
+        return { x: r.left + window.scrollX, y: r.top + window.scrollY,
+          width: r.width, height: r.height };
+      });
+      const r = g.cover.getBoundingClientRect();
+      g.baseX = r.left + window.scrollX;
+      g.baseY = r.top + window.scrollY;
+      g.grabX = (g.startX - r.left) * 1.06;
+      g.grabY = (g.startY - r.top) * 1.06;
+      // Medido antes da transformação da capa e da trava do modo D.
+      g.maxScroll = Math.max(0, document.scrollingElement.scrollHeight - window.innerHeight);
+      g.armed = true;
+      lastFrame = 0; lastPerfUpdate = performance.now();
+      perfRaf = requestAnimationFrame(sampleFrame);
+      g.cover.classList.add('armed');
+      // A: o bloqueador só passa a existir depois dos 450 ms.
+      if (mode === 'A') {
+        window.addEventListener('touchmove', blockLateTouchMove, { capture: true, passive: false });
+        lateBlocker = true;
+      }
+      if (mode === 'D') lockPage(true);
+      if (mode !== 'A') autoScrollRaf = requestAnimationFrame(autoScrollFrame);
+      try { g.cover.setPointerCapture(g.id); } catch (_) {}
+      follow();
+      updateStatus();
+    }
+
+    grid.addEventListener('pointerdown', event => {
+      const cover = event.target.closest('.vol');
+      if (!cover || !event.isPrimary || event.button !== 0 || gesture) return;
+      const g = { cover, id: event.pointerId, startX: event.clientX, startY: event.clientY,
+        x: event.clientX, y: event.clientY, armed: false, cancelled: false };
+      gesture = g;
+      g.timer = setTimeout(() => arm(g), 450);
+      updateStatus();
+    });
+
+    window.addEventListener('pointermove', event => {
+      const g = gesture;
+      if (!g || event.pointerId !== g.id) return;
+      const moveStart = g.armed ? performance.now() : 0;
+      g.x = event.clientX;
+      g.y = event.clientY;
+      if (!g.armed) {
+        if (!g.cancelled && Math.hypot(g.x - g.startX, g.y - g.startY) > 10) {
+          clearTimeout(g.timer);
+          g.cancelled = true;
+        }
+        return;
+      }
+      reorderAt();
+      follow();
+      const cost = performance.now() - moveStart, m = metrics[mode];
+      m.moves++; m.moveTotal += cost; m.moveWorst = Math.max(m.moveWorst, cost);
+    });
+
+    for (const type of ['pointerup', 'pointercancel']) {
+      window.addEventListener(type, event => {
+        if (type === 'pointercancel') { log.pcancel++; log.last = gesture?.armed ? 'pointercancel (armado)' : 'pointercancel'; }
+        if (gesture && event.pointerId === gesture.id) finish();
+      });
+    }
+    window.addEventListener('blur', finish);
+    window.addEventListener('scroll', () => { follow(); updateStatus(); }, { passive: true });
+    modeButtons.forEach(button => button.addEventListener('click', () => {
+      finish();
+      mode = button.dataset.mode;
+      document.body.dataset.mode = mode;
+      reorders = 0;
+      autoScrollPixels = 0;
+      Object.assign(log, { move: 0, cancelable: 0, prevented: 0, pcancel: 0, tcancel: 0, last: '-' });
+      metrics[mode] = emptyMetrics();
+      modeButtons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      updateStatus();
+      updatePerf();
+    }));
+    updateStatus();
+    updatePerf();
+  </script>
+</body>
+</html>

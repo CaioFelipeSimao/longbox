@@ -2788,3 +2788,16 @@ sticky header 1px down, leaving a hairline through which what lies behind showed
 scrolled, which is what the user described ("only when I have not scrolled"). The sentinel is now
 absolutely positioned; `.topbar top` is 0 and the pixel at y=0 belongs to the header. The v157 inset
 override stays (harmless on a PC). test-acessibilidade 28.
+
+**v160 Scroll on the HQs tab on the phone.** Every cover had `touch-action: none` in the CSS all the time
+(since the v30 drag), so a finger that landed on a cover could never scroll the page; with four covers a
+row that was almost everywhere. Removed. The drag now blocks the page's scroll with a non-passive
+`touchmove` listener on each HQs grid that exists from mount (`gradeRef` in `useArrastarVolumes`) and only
+prevents default while a drag is armed; iOS ignores a blocker added after the touch began (the old window
+listener was added when the drag armed) and ignores a `touch-action` changed mid-touch. Chosen on the
+user's iPhone (Claude app) with a throwaway probe artifact with four variants (A as before, B window
+listener, C grid listener, D C plus `overflow:hidden` on the page): all scrolled and dragged, B had a
+`pointercancel` once, D had an 89 ms frame, C had zero cancels and the best worst frame (26 ms); the probe's
+edge auto-scroll (same formula as `velocidadeAutoScroll`) worked with C too (2374 px). Not touched: the
+Coleções and Séries drags (they set `touch-action` only when armed). `-webkit-touch-callout: none` on the
+covers. test-duas-editoras: armed drag blocks touchmove on the grid, idle one does not (71).
