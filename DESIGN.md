@@ -632,6 +632,16 @@ the nothing-found state).
 
 ## Reordering, two publishers and document equality (v152-v159)
 
+**v160-v164 (HQs drag, on the phone).** No `touch-action: none` on the covers: a finger on a cover scrolls
+the page, and a non-passive `touchmove` listener on each HQs grid (`gradeRef`, registered at mount because
+iOS ignores one added after the touch began) blocks the scroll only while a drag is armed. The grid is NOT
+z-lifted while dragging (only its ancestors), so just the dragged cover clears the sticky group head. The
+neighbours glide with one batched FLIP pass and `transition: transform 260ms var(--ease-out)` (a spring that
+kept velocity, v163, was tried and rejected by the user). The wished order, or the revert when the pointer
+leaves the group's box, is applied only after the pointer has asked for the SAME order for `DWELL_MS = 110`
+ms (iOS rearranges when the finger dwells; this stopped the block from shaking when crossing the group's
+edge); on release the order under the pointer applies at once. Details: HISTORICO.md v160-v164.
+
 **One gesture, three places.** Long-press 450ms (the fill ring runs, then the cover wiggles), then drag:
 HQs inside their personagem group (v153-v154), a collection's volumes inside its row (v155, writes
 `colecao.membros`, the same list as the sheet's "Ordem de leitura"), the séries cards inside a volume
