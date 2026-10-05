@@ -132,7 +132,7 @@ cyan on the hub and on "Todas", the publisher's hue (`hsl(--ed-hue 100% 50%)`) w
 | Issue tile toggle | background 120ms + scale pop 100ms | Feedback |
 | Toast | in 300ms ease, out 200ms | State transition |
 | Skeleton blocks | opacity 1 to 0.5, 1800ms ease-pulse, looping | The only indeterminate wait in the app (v29) |
-| Dragged HQ | scale 1.05 + rotate ±1.5deg, 320ms ease-in-out, looping | Marks which card is picked up while it's live-reordering (v38) |
+| Dragged HQ | the cover wiggles (volWiggle, 320ms) while armed; since v153 the card itself is glued to the pointer (scale 1.06, shadow); a séries card in the volume sheet breathes instead (scale 1 to 1.012, 1.4s, v158) | Marks which card is picked up (v38, v153, v158) |
 | Hold-fill on a cover | `clip-path` inset driven by `--hold-p`, 450ms linear rising, 150ms ease-out releasing, with a masked wave on the edge | Shows a long-press filling toward the drag it arms, and holds until release (v39-v42) |
 | Band tab pill | `clip-path` inset, leading edge `power3.out` 0.34s, trailing edge `elastic.out(0.6, 0.65)` 0.62s | The rubber-band the user asked for; the split is what keeps the bounce off the track's walls (v39-v42) |
 | Band hover pill | `clip-path` inset, `power3.out` 0.26s, opacity 160ms | Pre-selection travels between buttons instead of switching per button (v43-v44) |
@@ -426,7 +426,8 @@ src/telas/            the screens
   AbaHqs / AbaColecoes / AbaSeries.jsx   one tab's content each
   Hub, VolumeSheet, SerieSheet, ColecaoSheet.jsx
   Formularios.jsx       the create/edit modals and the issue import
-  useArrastarVolumes.js the long-press reorder gesture (v30-v49)
+  useArrastarVolumes.js the long-press reorder gesture on the HQs tab (v30-v49, v153-v154)
+  useArrastarColecao.js the same on a collection's row (v155); useArrastarSeries.js on the séries cards of a volume sheet (v157)
 src/components/       third-party components (see below)
 dist/                 what gets published; built, never edited by hand
 scripts/              build, test runner, encoding check
@@ -524,8 +525,10 @@ v44 and v47 each left four assertions red and neither was noticed for several
 versions. The runner exists because of this; alone, `grep -c FAIL` must print `0`
 and the passes must be counted too.
 
-Not covered by any suite: the long-press reorder gesture (checked in the harness with
-synthetic pointer events after the v86 split), the thumbnails' IndexedDB path, and
+Not covered by any suite: how the reorder gestures FEEL (the geometry and the persistence are, see
+tests/test-arrasto-seguir.mjs, test-arrastar-colecao.mjs, test-arrastar-series.mjs; the feel is checked in the
+harness with synthetic pointer events, with a requestAnimationFrame shim because a hidden Chrome tab runs
+timers at ~3 Hz), the thumbnails' IndexedDB path, and
 anything visual. Source-reading assertions that eval a slice of code strip `export`
 first, since the split put it in front of every top-level declaration.
 
@@ -610,6 +613,37 @@ What the walk covers, beyond the tabs and sheets: the unlock gesture, the colour
 picker, cataloguing shortcuts, publisher filtering, and the search suggestions
 (ranking, the cap at 8, the publisher-filter bypass, arrow and Enter and Escape, and
 the nothing-found state).
+
+## Reordering, two publishers and document equality (v152-v159)
+
+**One gesture, three places.** Long-press 450ms (the fill ring runs, then the cover wiggles), then drag:
+HQs inside their personagem group (v153-v154), a collection's volumes inside its row (v155, writes
+`colecao.membros`, the same list as the sheet's "Ordem de leitura"), the séries cards inside a volume
+sheet (v157, writes the volume's own `ordemSeries`, ids with "?" for a removed série). The dragged card
+follows the pointer with its grab offset; the target is decided from slot rects measured ONCE when the
+drag arms (never from the neighbours' animated rects, which made them dance), and the order is rebuilt
+at once for the slot under the pointer (`reordenarParaSlot`); the others glide by FLIP. Outside the
+allowed area the preview returns to the start and releasing cancels. Auto-scroll near the edges, measured
+from under the sticky chrome (`limitesDeRolagemDaPagina`). Rows that scroll (collections) and the sheet
+use a fixed ghost on <body> (src/lib/arrastoGhost.js; z-index 14 for the HQs layers, 90 for the sheet
+ghost); the chrome is .topbar 20, .ed-band 15, so lifted layers stay under it. Série cards have variable
+heights, so the insertion index comes from stacked midpoints as if the dragged card were absent
+(`indiceDeInsercaoVertical`). Geometry lives in src/lib/arrastoSeguir.js (pure, tested).
+
+**Two publishers per HQ (v152).** `tambem: [{editora, personagem}]` on a volume (optional, omitted when
+empty; the volume's own pair stays the primary). One copy owned, shown in both publishers' bands under that
+band's personagem, counted once in "Todas" and in totals, accepted by collections of either publisher.
+Helpers `presencas`, `editorasDe`, `naFaixa` in lib/constantes.js; display-only projection, writes always
+go to the real volume by id; `ordem` is shared between the bands.
+
+**Document equality ignores key order (v158).** The server returns objects with sorted keys; the tab writes
+the order it has. Every "is this the same document" test (armazenamento.js `canon`, the item equality in
+mesclar.js) sorts keys first. Comparing JSON text had made the tab take its own earlier write for another
+device's and show "atualizada em outro aparelho" after save after save.
+
+**The hold fill's wave** is only drawn while `--hold-p` > 0 (v159); before a press `--hold-h` does not
+exist and the default band would sit inside a tall card. **Image Comics** (white) sets `data-ed-neutro` on
+the header and band: light buttons with dark ink in dark mode, graphite with white ink in light mode.
 
 ## Decided not to build
 
