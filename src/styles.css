@@ -31,15 +31,15 @@
   /* v129: the floating tab bar's glass: a light rim and the active tab's pill. */
   --vidro-borda: rgba(255, 255, 255, 0.12);
   --vidro-pill: rgba(255, 255, 255, 0.1);
-  --vidro-sombra: 0 10px 30px rgba(0, 0, 0, 0.4);
-  --shadow-sheet: 0 -12px 48px rgba(0, 0, 0, 0.5);
-  --shadow-panel: -12px 0 48px rgba(0, 0, 0, 0.5);
-  --shadow-cover: 0 2px 10px rgba(0, 0, 0, 0.45);
-  --shadow-cover-hover: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --vidro-sombra: 0 0.625rem 1.875rem rgba(0, 0, 0, 0.4);
+  --shadow-sheet: 0 -0.75rem 3rem rgba(0, 0, 0, 0.5);
+  --shadow-panel: -0.75rem 0 3rem rgba(0, 0, 0, 0.5);
+  --shadow-cover: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.45);
+  --shadow-cover-hover: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.55);
 
-  --r-sm: 6px;
-  --r: 8px;
-  --r-lg: 16px;
+  --r-sm: 0.375rem;
+  --r: 0.5rem;
+  --r-lg: 1rem;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
@@ -51,10 +51,10 @@
   --font-ui: "Geist", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-mono: "Geist Mono", "Cascadia Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-  --topbar-h: 62px;
+  --topbar-h: 3.875rem;
   /* v129: the floating capsule (58px) plus the 8px it floats above the edge and
      some air, so the last row of covers clears it. */
-  --tabbar-h: 78px;
+  --tabbar-h: 4.875rem;
   /* The room .app keeps under the content for the mobile tab bar. A token because
      the tab lattice has to reach the same floor, or it stops short and leaves a
      bare strip that only shows once you scroll to the very bottom. */
@@ -62,7 +62,7 @@
   /* The real height of the publisher band, not a floor it never reaches: the controls
      inside are sized so this is exactly what it measures, which is also what the
      sticky group headers offset themselves by. */
-  --edbar-h: 72px;
+  --edbar-h: 4.5rem;
   /* v137: where the sticky bars pin. The Claude iOS app covers the page top with
      its own translucent bar and reports it as the top safe-area inset; the host
      pads :root by it, but a sticky offset on the document counts from the window
@@ -72,17 +72,20 @@
 
   /* The hub's rhythm lives here rather than in each block, so a section and a
      rule-separated block are spaced by the same two numbers everywhere. */
-  --hub-gap: 38px;
-  --hub-rule-pad: 20px;
+  --hub-gap: 2.375rem;
+  --hub-rule-pad: 1.25rem;
 
   /* One column width for the top bar, the publisher strip and the content. They
      have to move together or the strip stops sharing a margin with the shelf. */
-  --col: 1560px;
+  --col: 97.5rem;
 
   /* Inlined because the artifact CSP blocks every external image host. Stroke is
      --text-muted, hardcoded: a data URI cannot read currentColor. */
   --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239AA1AA' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
+
+/* Scale desktop lengths once through rem; touch devices keep the default size. */
+@media (hover: hover) and (pointer: fine) and (min-width: 1280px) { html { font-size: 90%; } }
 
 @media (prefers-color-scheme: light) {
   :root {
@@ -112,18 +115,18 @@
     --topbar-shadow: rgba(20, 22, 26, 0.1);
     --vidro-borda: rgba(255, 255, 255, 0.7);
     --vidro-pill: rgba(20, 22, 26, 0.07);
-    --vidro-sombra: 0 10px 30px rgba(20, 22, 26, 0.14);
-    --shadow-sheet: 0 -12px 48px rgba(20, 22, 26, 0.16);
-    --shadow-panel: -12px 0 48px rgba(20, 22, 26, 0.16);
-    --shadow-cover: 0 1px 6px rgba(20, 22, 26, 0.14);
-    --shadow-cover-hover: 0 8px 22px rgba(20, 22, 26, 0.2);
+    --vidro-sombra: 0 0.625rem 1.875rem rgba(20, 22, 26, 0.14);
+    --shadow-sheet: 0 -0.75rem 3rem rgba(20, 22, 26, 0.16);
+    --shadow-panel: -0.75rem 0 3rem rgba(20, 22, 26, 0.16);
+    --shadow-cover: 0 1px 0.375rem rgba(20, 22, 26, 0.14);
+    --shadow-cover-hover: 0 0.5rem 1.375rem rgba(20, 22, 26, 0.2);
 
     --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235B6370' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   }
 }
 
 @media (min-width: 768px) {
-  :root { --topbar-h: 76px; --app-pad-b: 48px; }
+  :root { --topbar-h: 4.75rem; --app-pad-b: 3rem; }
 }
 
 /* v157: the top safe-area inset only matters on a touch device (the Claude iOS app draws its own
@@ -224,8 +227,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 button { background: none; border: none; padding: 0; cursor: pointer; }
 
 :focus-visible {
-  outline: 2px solid var(--ed-accent);
-  outline-offset: 2px;
+  outline: 0.125rem solid var(--ed-accent);
+  outline-offset: 0.125rem;
   border-radius: var(--r-sm);
 }
 :focus:not(:focus-visible) { outline: none; }
@@ -281,8 +284,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   top: var(--topo);
   z-index: 20;
   background: var(--topbar-bg);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(1.25rem) saturate(180%);
+  -webkit-backdrop-filter: blur(1.25rem) saturate(180%);
   border-bottom: 1px solid transparent;
   transition: border-color 200ms var(--ease-out), box-shadow 200ms var(--ease-out),
               background-color 200ms var(--ease-out);
@@ -291,7 +294,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .topbar[data-scrolled="true"] {
   background: var(--topbar-bg-solid);
   border-bottom-color: var(--border);
-  box-shadow: 0 6px 24px var(--topbar-shadow);
+  box-shadow: 0 0.375rem 1.5rem var(--topbar-shadow);
 }
 .topbar-inner {
   max-width: var(--col);
@@ -299,18 +302,18 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   min-height: var(--topbar-h);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
+  gap: 0.625rem;
+  padding: 0.5rem 1rem;
 }
-@media (min-width: 768px) { .topbar-inner { padding: 8px 24px; } }
+@media (min-width: 768px) { .topbar-inner { padding: 0.5rem 1.5rem; } }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 0.5625rem;
   flex-shrink: 0;
-  padding: 4px 2px;
-  margin-left: -2px;
+  padding: 0.25rem 0.125rem;
+  margin-left: -0.125rem;
   border-radius: var(--r);
   transition: transform 120ms var(--ease-out), opacity 120ms var(--ease-out);
 }
@@ -321,7 +324,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 
 .brand-chev {
   color: var(--text-muted);
-  margin-right: -3px;
+  margin-right: -0.1875rem;
   flex-shrink: 0;
 }
 
@@ -329,12 +332,12 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .mark {
   display: flex;
   align-items: flex-end;
-  gap: 2px;
-  height: 20px;
+  gap: 0.125rem;
+  height: 1.25rem;
   flex-shrink: 0;
 }
 .mark i {
-  width: 3px;
+  width: 0.1875rem;
   border-radius: 1px;
   background: var(--text);
   transition: background 160ms var(--ease-out);
@@ -343,7 +346,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .mark i:nth-child(2) { height: 100%; }
 .mark i:nth-child(3) { height: 78%; background: var(--accent); }
 .mark i:nth-child(4) { height: 90%; }
-@media (min-width: 768px) { .mark { height: 24px; } .mark i { width: 3.5px; } }
+@media (min-width: 768px) { .mark { height: 1.5rem; } .mark i { width: 0.2188rem; } }
 
 .wordmark {
   font-family: var(--font-display);
@@ -359,7 +362,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    two seconds after, then fades out; it never takes space from the header's
    controls (fixed width, no text when idle). */
 .salvamento {
-  flex-shrink: 0; width: 72px; margin-left: 10px;
+  flex-shrink: 0; width: 4.5rem; margin-left: 0.625rem;
   font-size: 0.75rem; color: var(--text-muted); white-space: nowrap;
   opacity: 0; transition: opacity 200ms var(--ease-out);
 }
@@ -367,7 +370,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 /* v118: on a phone the words would take the search's room, so the signal shrinks to a
    dot (accent while saving, green once saved); the words stay for screen readers. */
 @media (max-width: 520px) {
-  .salvamento { width: 8px; height: 8px; margin-left: 2px; border-radius: 50%; font-size: 0; overflow: hidden; }
+  .salvamento { width: 0.5rem; height: 0.5rem; margin-left: 0.125rem; border-radius: 50%; font-size: 0; overflow: hidden; }
   .salvamento[data-estado="salvando"] { background: var(--accent); }
   .salvamento[data-estado="salvo"] { background: var(--read); }
   /* Idle, it leaves the row entirely, so its gap is not spent either. */
@@ -388,13 +391,13 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .ed-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
   max-width: var(--col);
   margin: 0 auto;
-  padding: 12px 16px;
+  padding: 0.75rem 1rem;
   min-height: var(--edbar-h);
 }
-@media (min-width: 768px) { .ed-bar { padding: 12px 24px; } }
+@media (min-width: 768px) { .ed-bar { padding: 0.75rem 1.5rem; } }
 .ed-band[data-tinted="true"] {
   border-bottom-color: var(--ed-cor);
   background: linear-gradient(to bottom, color-mix(in srgb, var(--ed-fundo) 55%, var(--bg)), var(--bg));
@@ -409,7 +412,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    instead: the colour holds further down and still reads at the band line,
    rather than being spent halfway. The band line separates it from the grid. */
 .app[data-ed-fundo="true"] {
-  --ed-grad-h: calc(var(--topbar-h) + var(--edbar-h) + 2px);
+  --ed-grad-h: calc(var(--topbar-h) + var(--edbar-h) + 0.125rem);
   --ed-grad: linear-gradient(to bottom,
     color-mix(in srgb, var(--ed-fundo) 55%, var(--bg)) 0%,
     color-mix(in srgb, var(--ed-fundo) 30%, var(--bg)) 50%,
@@ -444,7 +447,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   align-items: center;
   flex-shrink: 0;
   border-radius: var(--r-sm);
-  padding: 3px 6px;
+  padding: 0.1875rem 0.375rem;
 }
 /* Height is set inline, per instance, directly on the img rather than on the
    span: the span's own padding would otherwise eat into a percentage height and
@@ -452,14 +455,14 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    rises with the logo height. Left at 130px a wide wordmark logo would hit the
    width ceiling first and stop growing, so the increase would show on square
    logos and not on wide ones. */
-.ed-logo img { width: auto; max-width: 185px; object-fit: contain; display: block; }
+.ed-logo img { width: auto; max-width: 11.5625rem; object-fit: contain; display: block; }
 .ed-logo[data-plate="escuro"] { background: #101215; }
 .ed-logo[data-plate="claro"] { background: #F2F3F5; }
 
 .ed-segmented { display: none; }
 @media (min-width: 768px) { .ed-segmented { display: flex; } }
 
-.ed-right { display: flex; align-items: center; gap: 10px; margin-left: auto; min-width: 0; }
+.ed-right { display: flex; align-items: center; gap: 0.625rem; margin-left: auto; min-width: 0; }
 .ed-note { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; } /* v132: the UI face, not the code one */
 /* v133: on a phone the band is one row doing three jobs: the publisher on the left,
    the count beside it (it used to vanish under 520px, leaving the left half empty),
@@ -474,21 +477,21 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   .ed-bar:has(.ed-logo) .ed-note { display: none; }
   .aba .fold-all { display: none; } /* .aba: outweighs the base .fold-all rule further down */
 }
-.ed-select { width: auto; min-width: 0; max-width: 190px; padding: 7px 9px; font-size: 0.8125rem; }
+.ed-select { width: auto; min-width: 0; max-width: 11.875rem; padding: 0.4375rem 0.5625rem; font-size: 0.8125rem; }
 
 .ed-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px;
+  gap: 0.75rem;
+  padding: 0.875rem;
   border: 1px solid var(--border);
   border-radius: var(--r);
   background: var(--surface);
 }
-.ed-card-top { display: flex; gap: 8px; align-items: center; }
-.ed-card-logo { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.ed-card-top { display: flex; gap: 0.5rem; align-items: center; }
+.ed-card-logo { display: flex; gap: 0.625rem; align-items: center; flex-wrap: wrap; }
 
-.content { max-width: var(--col); margin: 0 auto; padding: 20px 16px 40px; }
+.content { max-width: var(--col); margin: 0 auto; padding: 1.25rem 1rem 2.5rem; }
 
 /* The tab content stands on a lattice that answers to the pointer. The layer is
    inert and the content area is what listens, so every click still reaches the
@@ -537,7 +540,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 @media (hover: none), (pointer: coarse) {
   .cursor-grid { display: none; }
 }
-@media (min-width: 768px) { .content { padding: 24px 24px 64px; } }
+@media (min-width: 768px) { .content { padding: 1.5rem 1.5rem 4rem; } }
 
 /* ---------- tabs ---------- */
 
@@ -549,15 +552,15 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    on-screen keyboard up the whole bar rides above it (--teclado, measured with
    visualViewport by the search), minus the inset the keyboard now covers. */
 .tabbar {
-  --vidro-h: 58px;
+  --vidro-h: 3.625rem;
   position: fixed;
-  left: 16px;
-  right: 16px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  left: 1rem;
+  right: 1rem;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
   z-index: 20;
   display: flex;
   align-items: flex-end;
-  gap: 10px;
+  gap: 0.625rem;
   transform: translateY(calc(-1 * max(0px, var(--teclado, 0px) - env(safe-area-inset-bottom, 0px))));
   transition: transform 220ms var(--ease-out);
 }
@@ -575,7 +578,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   position: relative;
   z-index: 0;
   height: var(--vidro-h);
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   border: 1px solid var(--vidro-borda);
   box-shadow: var(--vidro-sombra);
 }
@@ -587,8 +590,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   z-index: -1;
   border-radius: inherit;
   background: var(--topbar-bg);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(1.25rem) saturate(180%);
+  -webkit-backdrop-filter: blur(1.25rem) saturate(180%);
   pointer-events: none;
   transition: background-color 250ms var(--ease-out);
 }
@@ -604,8 +607,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 .tabbar-capsula {
   display: flex;
-  padding: 4px;
-  flex: 0 0 calc(100% - var(--vidro-h) - 10px);
+  padding: 0.25rem;
+  flex: 0 0 calc(100% - var(--vidro-h) - 0.625rem);
   min-width: 0;
   transition: flex-basis 320ms var(--ease-drawer);
 }
@@ -620,8 +623,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  border-radius: 999px;
+  gap: 0.125rem;
+  border-radius: 62.4375rem;
   color: var(--text-muted);
   font-size: 0.6875rem;
   font-weight: 500;
@@ -631,11 +634,11 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 /* The pill behind the active tab: a third of the capsule, slid by the tab's index. */
 .tabbar-pill {
   position: absolute;
-  top: 4px;
-  bottom: 4px;
-  left: 4px;
-  width: calc((100% - 8px) / 3);
-  border-radius: 999px;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  left: 0.25rem;
+  width: calc((100% - 0.5rem) / 3);
+  border-radius: 62.4375rem;
   background: var(--vidro-pill);
   transform: translateX(calc(var(--aba-i, 0) * 100%));
   transition: transform 320ms var(--ease-drawer), opacity 160ms var(--ease-out);
@@ -646,7 +649,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   z-index: 2;
   display: grid;
   place-items: center;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   color: var(--accent-text);
 }
 .tabbar[data-buscando="true"] .tabbar-capsula { flex-basis: var(--vidro-h); }
@@ -660,8 +663,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--r);
-  padding: 3px;
-  gap: 2px;
+  padding: 0.1875rem;
+  gap: 0.125rem;
 }
 @media (min-width: 768px) { .segmented { display: flex; } }
 .segmented button {
@@ -669,8 +672,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
   border-radius: var(--r-sm);
   font-size: 0.8125rem;
   font-weight: 500;
@@ -819,10 +822,10 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    then-smaller box), but the button was the one that read as undersized:
    this inflates it to match instead. Horizontal padding stays, so the first
    and last button don't sit flush against the track's own border. */
-.ed-segmented { padding: 0 4px; }
-.ed-segmented button { height: 46px; }
-.ed-select { height: 43px; }
-@media (pointer: coarse) { .ed-select { height: 44px; } } /* v133: the touch floor */
+.ed-segmented { padding: 0 0.25rem; }
+.ed-segmented button { height: 2.875rem; }
+.ed-select { height: 2.6875rem; }
+@media (pointer: coarse) { .ed-select { height: 2.75rem; } } /* v133: the touch floor */
 
 /* ---------- controls ---------- */
 
@@ -833,8 +836,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
   border-radius: var(--r);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -850,8 +853,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .btn-ghost:hover { color: var(--text); }
 .btn-danger { background: var(--danger); color: #fff; }
 .btn-icon {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   padding: 0;
   flex-shrink: 0;
   border-radius: var(--r);
@@ -872,12 +875,12 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .btn-icon svg[data-rot="true"] { transform: rotate(-90deg); }
 /* v101: finger-sized on touch (44px, the tablet floor); mouse and pen keep 36px. */
 @media (pointer: coarse) {
-  .btn-icon { width: 44px; height: 44px; }
+  .btn-icon { width: 2.75rem; height: 2.75rem; }
   /* v112: the boxed text controls reach 44px on touch too (v101 only raised icons
      and tiles). Inline ghost links stay the height of their text. */
-  .btn-primary, .btn-quiet, .btn-danger, .seg3 button, .cover-upload { min-height: 44px; }
+  .btn-primary, .btn-quiet, .btn-danger, .seg3 button, .cover-upload { min-height: 2.75rem; }
   /* v118: the hub's remaining small targets (30-38px, measured) and the wordmark. */
-  .btn-ghost, .brand, .prog-row { min-height: 44px; }
+  .btn-ghost, .brand, .prog-row { min-height: 2.75rem; }
 }
 /* Always in the accent, open or closed, with or without filters (the user's
    call). What changes is the count on its corner, which says filters are on. */
@@ -889,18 +892,18 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 .btn-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border-radius: 999px;
+  top: -0.375rem;
+  right: -0.375rem;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.25rem;
+  border-radius: 62.4375rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: var(--text);
   color: var(--bg);
-  box-shadow: 0 0 0 2px var(--bg);
+  box-shadow: 0 0 0 0.125rem var(--bg);
   font-size: 0.6875rem; /* v112: 11px, the type floor; was 10px */
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -913,18 +916,18 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   flex: 1;
   /* v118: never narrower than the magnifier; tapping it opens the full-screen
      search on a phone, so a narrow box is enough there. */
-  min-width: 44px;
+  min-width: 2.75rem;
   /* Capped near the width it had beside the spacer on a desktop (456px at
      1440), and pushed right by its auto margin, so the PC header is unchanged. */
-  max-width: 456px;
+  max-width: 28.5rem;
   margin-left: auto;
 }
-.search-field { position: relative; display: flex; align-items: center; gap: 8px; }
+.search-field { position: relative; display: flex; align-items: center; gap: 0.5rem; }
 /* The magnifier only (v73 put icons in the suggestion list too). The sheet's
    issue search has no .search-field, hence the second selector (v79 fix). */
 .search-field > svg, .search > svg {
   position: absolute;
-  left: 10px;
+  left: 0.625rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
@@ -932,49 +935,49 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 .search input {
   width: 100%;
-  height: 36px;
-  padding: 0 10px 0 32px;
+  height: 2.25rem;
+  padding: 0 0.625rem 0 2rem;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--r);
   color: var(--text);
   transition: border-color 120ms var(--ease-out);
 }
-@media (pointer: coarse) { .search input { height: 44px; } }
+@media (pointer: coarse) { .search input { height: 2.75rem; } }
 .search input::placeholder { color: var(--text-muted); }
 .search input:focus { border-color: var(--ed-accent); }
 
 
 .sug {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 0.375rem);
   left: 0;
   right: 0;
   z-index: 30;
-  max-height: 400px;
+  max-height: 25rem;
   overflow-y: auto;
-  padding: 6px;
+  padding: 0.375rem;
   border: 1px solid var(--ed-borda);
   border-radius: var(--r-lg);
   background: var(--surface);
-  box-shadow: 0 14px 40px var(--topbar-shadow);
+  box-shadow: 0 0.875rem 2.5rem var(--topbar-shadow);
 }
 .sug-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   width: 100%;
   text-align: left;
-  padding: 6px 8px;
+  padding: 0.375rem 0.5rem;
   border-radius: var(--r);
   transition: background 120ms var(--ease-out);
 }
 .sug-row[data-on="true"] { background: var(--surface-2); }
 /* The cover is what makes a volume recognisable faster than its title reads. */
-.sug-cover { width: 30px; flex-shrink: 0; box-shadow: none; }
+.sug-cover { width: 1.875rem; flex-shrink: 0; box-shadow: none; }
 /* v74: the shelf's 3px character stripe is a tenth of a 30px thumbnail and
    hid the art; the colour still reads at half that. */
-.sug-cover.cover::after { width: 1.5px; }
+.sug-cover.cover::after { width: 0.0938rem; }
 /* v90 (D2): at 30px the drawn cover's title broke into single letters; the
    thumbnail keeps its gradient and the character's edge, and the row beside it
    already says the title. */
@@ -985,12 +988,12 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 /* v73: a tab's results and the HQs under them, each under its own label. */
 .sug-secao {
   margin: 0;
-  padding: 8px 8px 4px;
+  padding: 0.5rem 0.5rem 0.25rem;
   font-size: 0.6875rem;
   font-weight: 600;
   color: var(--text-muted);
 }
-.sug-secao:not(:first-child) { margin-top: 4px; border-top: 1px solid var(--border); padding-top: 10px; }
+.sug-secao:not(:first-child) { margin-top: 0.25rem; border-top: 1px solid var(--border); padding-top: 0.625rem; }
 /* Collections and séries have no cover of their own: the tab's own icon, on a
    tile the size of a cover so titles line up with the HQ rows. */
 .sug-icone {
@@ -1002,7 +1005,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   background: var(--surface-2);
   color: var(--text-muted);
 }
-.sug-empty { margin: 0; padding: 12px 10px; font-size: 0.8125rem; color: var(--text-muted); }
+.sug-empty { margin: 0; padding: 0.75rem 0.625rem; font-size: 0.8125rem; color: var(--text-muted); }
 
 /* v129: on a phone the search is the glass circle in the tab bar (see .tabbar) and
    grows into a field there; the suggestions open above it, over the tab, which the
@@ -1017,51 +1020,51 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   margin-left: 0;
   transition: flex-basis 320ms var(--ease-drawer);
 }
-.tabbar[data-buscando="true"] .search-barra { flex-basis: calc(100% - var(--vidro-h) - 10px); }
-.search-barra .search-field > svg { left: 18px; color: var(--text); }
+.tabbar[data-buscando="true"] .search-barra { flex-basis: calc(100% - var(--vidro-h) - 0.625rem); }
+.search-barra .search-field > svg { left: 1.125rem; color: var(--text); }
 .search-barra input {
   height: 100%;
-  padding: 0 52px 0 48px;
+  padding: 0 3.25rem 0 3rem;
   background: transparent;
   border: none;
-  border-radius: 999px;
-  font-size: 16px;
+  border-radius: 62.4375rem;
+  font-size: 1rem;
   opacity: 0;
   pointer-events: none;
 }
 .search-barra[data-full="true"] input { opacity: 1; pointer-events: auto; transition: opacity 160ms var(--ease-out) 120ms; }
 .search-barra input:focus { border-color: transparent; outline: none; }
-.search-abrir { position: absolute; inset: 0; z-index: 1; border-radius: 999px; }
+.search-abrir { position: absolute; inset: 0; z-index: 1; border-radius: 62.4375rem; }
 .search-fechar {
   position: absolute;
-  right: 7px;
+  right: 0.4375rem;
   top: 50%;
   transform: translateY(-50%);
-  width: 42px;
-  height: 42px;
+  width: 2.625rem;
+  height: 2.625rem;
   display: grid;
   place-items: center;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   color: var(--text-muted);
   background: var(--vidro-pill);
 }
 .search-barra .sug {
   top: auto;
-  bottom: calc(100% + 10px);
+  bottom: calc(100% + 0.625rem);
   left: 0;
   right: 0;
-  max-height: min(440px, calc(var(--vv-altura, 100vh) - var(--vidro-h) - 150px));
-  border-radius: 22px;
-  padding: 8px;
+  max-height: min(27.5rem, calc(var(--vv-altura, 100vh) - var(--vidro-h) - 9.375rem));
+  border-radius: 1.375rem;
+  padding: 0.5rem;
 }
-.search-barra .sug-row { padding: 8px; }
-.search-barra .sug-cover { width: 36px; }
+.search-barra .sug-row { padding: 0.5rem; }
+.search-barra .sug-cover { width: 2.25rem; }
 
-.field { display: flex; flex-direction: column; gap: 6px; }
+.field { display: flex; flex-direction: column; gap: 0.375rem; }
 .field > label { font-size: 0.8125rem; font-weight: 600; }
 .input, .select, .textarea {
   width: 100%;
-  padding: 9px 11px;
+  padding: 0.5625rem 0.6875rem;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--r);
@@ -1080,27 +1083,27 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   -webkit-appearance: none;
   background-image: var(--select-arrow);
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 14px 14px;
-  padding-right: 32px;
+  background-position: right 0.625rem center;
+  background-size: 0.875rem 0.875rem;
+  padding-right: 2rem;
 }
 .select::-ms-expand { display: none; }
 .input[data-invalid="true"], .textarea[data-invalid="true"] { border-color: var(--danger); }
-.textarea { resize: vertical; min-height: 66px; }
+.textarea { resize: vertical; min-height: 4.125rem; }
 
 /* v88: the série sheet's count, with "Copiar faltantes" under it, and the box the
    text lands in when the clipboard refuses. */
-.faltantes-cont { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.faltantes-cont { display: flex; flex-direction: column; align-items: flex-start; gap: 0.125rem; min-width: 0; }
 .faltantes-manual { min-height: 0; font-size: 0.8125rem; }
 .field-error { font-size: 0.8125rem; color: var(--danger-text); }
 .field-hint { font-size: 0.8125rem; color: var(--text-muted); }
 
-.row { display: flex; gap: 8px; }
+.row { display: flex; gap: 0.5rem; }
 /* Keeps a third-tier action at its own width instead of letting it stretch wider
    than the primary it sits under. */
 .row-center { justify-content: center; }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.625rem; }
 
 /* The character filter: a text field dressed as the two selects beside it, so the
    row still reads as three filters, with the search's own dropdown under it. */
@@ -1112,27 +1115,27 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .content[data-lattice="true"] > .filtros-hqs { position: relative; z-index: 12; }
 .pfiltro { position: relative; min-width: 0; }
 /* v148: clear hit area over the drawn chevron (the field's padding-right), 44px on touch. */
-.pfiltro-seta { position: absolute; top: 0; right: 0; bottom: 0; width: 32px; background: transparent; cursor: pointer; }
-@media (pointer: coarse) { .pfiltro-seta { width: 44px; } }
+.pfiltro-seta { position: absolute; top: 0; right: 0; bottom: 0; width: 2rem; background: transparent; cursor: pointer; }
+@media (pointer: coarse) { .pfiltro-seta { width: 2.75rem; } }
 .pfiltro-input { cursor: pointer; text-overflow: ellipsis; }
 .pfiltro-input:focus { cursor: text; }
 .pfiltro-input::placeholder { color: var(--text); }
 .pfiltro-input:focus::placeholder { color: var(--text-muted); }
 /* v152: iOS zooms the page when a field under 16px takes focus and keeps the zoom until the
    user pinches out. The pickers inside sheets (Adicionar volumes) were 14px. */
-@media (pointer: coarse) { .input, .select, .textarea, .pfiltro-input, .search input { font-size: 16px; } }
+@media (pointer: coarse) { .input, .select, .textarea, .pfiltro-input, .search input { font-size: 1rem; } }
 .pfiltro-botao { display: flex; align-items: center; text-align: left; font: inherit; color: var(--text); }
 .pfiltro-botao[aria-expanded="true"] { border-color: var(--ed-accent); }
-.ed-lista { left: auto; min-width: 100%; width: max-content; max-width: 280px; }
-.pfiltro-sep { height: 1px; margin: 6px 8px; background: var(--border); }
+.ed-lista { left: auto; min-width: 100%; width: max-content; max-width: 17.5rem; }
+.pfiltro-sep { height: 1px; margin: 0.375rem 0.5rem; background: var(--border); }
 .pfiltro-acao .sug-title { color: var(--text-muted); font-weight: 400; }
 /* Three filters and the clear button on one row: the filters share the width,
    the button takes what its label needs, and under 560px only its X. */
-.filtros-linha { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 10px; }
+.filtros-linha { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 0.625rem; }
 /* The séries tab has one filter (v93): the field keeps the width of one of the
    HQs row's three, so it does not stretch into a bar across the page. */
-.filtros-linha[data-campos="1"] { grid-template-columns: minmax(0, 320px) auto; justify-content: start; }
-.filtros-linha[data-campos="2"] { grid-template-columns: repeat(2, minmax(0, 320px)) auto; justify-content: start; }
+.filtros-linha[data-campos="1"] { grid-template-columns: minmax(0, 20rem) auto; justify-content: start; }
+.filtros-linha[data-campos="2"] { grid-template-columns: repeat(2, minmax(0, 20rem)) auto; justify-content: start; }
 @media (max-width: 639px) {
   /* v147: full-width fields keep the phone's labels readable; clearing stays
      beside all the rows, as it already did for the two séries fields. */
@@ -1143,24 +1146,24 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   .filtros-linha[data-campos="2"] > .filtros-limpar { grid-column: 2; grid-row: 1 / 3; }
   .filtros-linha[data-campos="3"] > .filtros-limpar { grid-column: 2; grid-row: 1 / 4; }
 }
-.filtros-limpar { gap: 6px; height: 100%; white-space: nowrap; }
+.filtros-limpar { gap: 0.375rem; height: 100%; white-space: nowrap; }
 .filtros-limpar:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
 /* v147: the phone's leftmost triggers cannot grow leftwards. The viewport cap
    keeps both publisher and filter lists within the two 16px gutters. */
-.pfiltro-lista { max-height: 320px; }
+.pfiltro-lista { max-height: 20rem; }
 @media (max-width: 639px) {
-  .pfiltro-lista { left: 0; right: auto; width: 100%; min-width: 0; max-width: calc(100vw - 32px); }
-  .ed-lista { width: max-content; min-width: min(100%, calc(100vw - 32px)); }
+  .pfiltro-lista { left: 0; right: auto; width: 100%; min-width: 0; max-width: calc(100vw - 2rem); }
+  .ed-lista { width: max-content; min-width: min(100%, calc(100vw - 2rem)); }
 }
 /* v147: in a form (Tipo, Editora) the list keeps the field's own width, so the
    two-column modal never borrows the other field's room for its options. */
 .modal-body .pfiltro-lista { left: 0; right: 0; min-width: 0; }
-.pfiltro-row { gap: 10px; padding: 8px 10px; }
+.pfiltro-row { gap: 0.625rem; padding: 0.5rem 0.625rem; }
 .pfiltro-row .sug-title { flex: 1; min-width: 0; }
 .pfiltro-todos {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 0.125rem;
   flex-shrink: 0;
   border: 1px solid var(--border-strong);
 }
@@ -1170,31 +1173,31 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 /* v138: "Adicionar volumes" in the collection sheet. The field is the sheet's last
    control, so its list flows under it instead of floating past the sheet's end,
    as wide as the field. A picked row carries the place it will take. */
-.escolha-lista { position: static; margin-top: 6px; max-height: 320px; box-shadow: none; }
-.escolha-lista .sug-row { min-height: 52px; }
+.escolha-lista { position: static; margin-top: 0.375rem; max-height: 20rem; box-shadow: none; }
+.escolha-lista .sug-row { min-height: 3.25rem; }
 .escolha-lista .sug-row[aria-selected="true"] .sug-title { color: var(--ed-accent-text); }
 .escolha-ordem {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  border-radius: 11px;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 0.375rem;
+  border-radius: 0.6875rem;
   background: var(--accent);
   color: var(--accent-ink);
   font-size: 0.75rem;
   font-weight: 600;
 }
-.add-acoes { display: flex; gap: 8px; margin-top: 10px; }
+.add-acoes { display: flex; gap: 0.5rem; margin-top: 0.625rem; }
 .add-acoes .btn-primary { flex: 1; }
 
 /* ---------- status ---------- */
 
-.seg3 { display: flex; gap: 6px; }
+.seg3 { display: flex; gap: 0.375rem; }
 .seg3 button {
   flex: 1;
-  padding: 8px 6px;
+  padding: 0.5rem 0.375rem;
   border-radius: var(--r);
   border: 1px solid var(--border);
   background: var(--surface-2);
@@ -1214,8 +1217,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
+  gap: 0.3125rem;
+  padding: 0.1875rem 0.5rem;
   border-radius: var(--r-sm);
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -1229,25 +1232,25 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 
 .shelf {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.875rem;
 }
-@media (min-width: 640px) { .shelf { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 18px; } }
+@media (min-width: 640px) { .shelf { grid-template-columns: repeat(auto-fill, minmax(7.75rem, 1fr)); gap: 1.125rem; } }
 /* v128: four covers a row on a phone (about 82px each at 390px), chosen by the user
    from a preview over three. The caption steps down (title 11px, meta 10px) so
    "Trade Paperback" fits whole, and the status moves to a line of its own, without
    the dot, instead of cutting the format. The drawn covers shrink their type the
    way the hub wall's do. */
 @media (max-width: 639px) {
-  .shelf { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 8px; }
-  .shelf .vol-title { font-size: 0.6875rem; line-height: 1.25; margin-top: 6px; }
+  .shelf { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem 0.5rem; }
+  .shelf .vol-title { font-size: 0.6875rem; line-height: 1.25; margin-top: 0.375rem; }
   .shelf .vol-meta { font-size: 0.625rem; }
   .shelf .vol-meta-linha { flex-direction: column; gap: 1px; }
   .shelf .vol-ponto { display: none; }
-  .shelf .cover-fb { padding: 7px 6px; }
+  .shelf .cover-fb { padding: 0.4375rem 0.375rem; }
   .shelf .cover-fb-title { font-size: 0.6875rem; }
   .shelf .cover-fb-foot { font-size: 0.5625rem; }
-  .shelf .cover-rule { width: 16px; margin-bottom: 5px; }
+  .shelf .cover-rule { width: 1rem; margin-bottom: 0.3125rem; }
 }
 
 .vol { text-align: left; display: block; width: 100%; }
@@ -1270,15 +1273,15 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   left: 0;
   top: 0;
   bottom: 0;
-  width: 3px;
+  width: 0.1875rem;
   background: var(--edge, transparent);
   z-index: 1;
 }
 .vol:active .cover { transform: scale(0.97); }
 @media (hover: hover) and (pointer: fine) {
-  .vol:hover .cover { transform: translateY(-2px); box-shadow: var(--shadow-cover-hover); }
+  .vol:hover .cover { transform: translateY(-0.125rem); box-shadow: var(--shadow-cover-hover); }
 }
-.vol[data-open="true"] .cover { outline: 2px solid var(--accent); outline-offset: 2px; }
+.vol[data-open="true"] .cover { outline: 0.125rem solid var(--accent); outline-offset: 0.125rem; }
 
 /* Reordering a HQ: a press-and-hold fill shows the 450ms arming window being
    timed out, then the card that's been picked up keeps that same fill while
@@ -1317,7 +1320,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   z-index: 2;
   pointer-events: none;
   background: color-mix(in srgb, var(--hold-color, var(--accent)) 32%, transparent);
-  clip-path: inset(calc((1 - var(--hold-p, 0)) * (100% + 20px)) 0 0 0);
+  clip-path: inset(calc((1 - var(--hold-p, 0)) * (100% + 1.25rem)) 0 0 0);
 }
 
 /* The rising edge of .vol-hold is a flat line; this layer draws a wavy
@@ -1363,18 +1366,18 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
      with the tile for exactly that reason — it was a ratio of the card's
      width, so halving the crests per tile silently halved how far the wave
      appeared to travel, and it stopped reading as moving at all. */
-  --hold-tile: calc(var(--hold-w, 140px) * 0.55);
+  --hold-tile: calc(var(--hold-w, 8.75rem) * 0.55);
   background: color-mix(in srgb, var(--hold-color, var(--accent)) 32%, transparent);
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='20' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M0 20V10C40 10 60 2 100 2C140 2 160 10 200 10V20Z'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='20' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M0 20V10C40 10 60 2 100 2C140 2 160 10 200 10V20Z'/%3E%3C/svg%3E");
   -webkit-mask-repeat: repeat-x;
   mask-repeat: repeat-x;
-  -webkit-mask-size: var(--hold-tile) 20px;
-  mask-size: var(--hold-tile) 20px;
+  -webkit-mask-size: var(--hold-tile) 1.25rem;
+  mask-size: var(--hold-tile) 1.25rem;
   -webkit-mask-position-x: calc(-1 * var(--hold-p, 0) * var(--hold-cycles, 2.2) * var(--hold-tile));
   mask-position-x: calc(-1 * var(--hold-p, 0) * var(--hold-cycles, 2.2) * var(--hold-tile));
-  -webkit-mask-position-y: calc(var(--hold-h, 210px) - var(--hold-p, 0) * (var(--hold-h, 210px) + 20px));
-  mask-position-y: calc(var(--hold-h, 210px) - var(--hold-p, 0) * (var(--hold-h, 210px) + 20px));
+  -webkit-mask-position-y: calc(var(--hold-h, 13.125rem) - var(--hold-p, 0) * (var(--hold-h, 13.125rem) + 1.25rem));
+  mask-position-y: calc(var(--hold-h, 13.125rem) - var(--hold-p, 0) * (var(--hold-h, 13.125rem) + 1.25rem));
   /* v159: --hold-h only exists after a press; before it the band sits at the default 210px, which is
      INSIDE any card taller than that (a série card with 5+ rows of edições showed a wave stripe at rest).
      The crest is simply not drawn while nothing is filling. */
@@ -1399,7 +1402,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   will-change: transform;
 }
 .vol[data-dragging="true"] .cover {
-  box-shadow: 0 12px 28px rgb(0 0 0 / 24%), var(--shadow-cover-hover);
+  box-shadow: 0 0.75rem 1.75rem rgb(0 0 0 / 24%), var(--shadow-cover-hover);
   transform: none;
 }
 /* A gentle wiggle, not the position wiggle: it says "this one is picked up",
@@ -1422,7 +1425,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 10px 9px;
+  padding: 0.625rem 0.5625rem;
   background: linear-gradient(160deg, var(--fb-a), var(--fb-b));
 }
 .cover-fb-title {
@@ -1448,15 +1451,15 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   white-space: nowrap;
 }
 .cover-rule {
-  height: 2px;
-  width: 22px;
+  height: 0.125rem;
+  width: 1.375rem;
   background: var(--fb-rule, rgba(255, 255, 255, 0.5));
-  margin-bottom: 7px;
+  margin-bottom: 0.4375rem;
 }
 
 
-.vol-title { margin-top: 7px; font-size: 0.8125rem; font-weight: 500; line-height: 1.3; }
-.vol-meta { margin-top: 2px; font-size: 0.75rem; color: var(--text-muted); }
+.vol-title { margin-top: 0.4375rem; font-size: 0.8125rem; font-weight: 500; line-height: 1.3; }
+.vol-meta { margin-top: 0.125rem; font-size: 0.75rem; color: var(--text-muted); }
 .vol-meta-linha { display: flex; gap: 0.3em; min-width: 0; white-space: nowrap; }
 .vol-meta-linha > .truncate { min-width: 0; }
 .vol-status-wrap { flex-shrink: 0; }
@@ -1466,7 +1469,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 
 /* ---------- group headers ---------- */
 
-.group { margin-bottom: 30px; }
+.group { margin-bottom: 1.875rem; }
 .group-head {
   position: sticky;
   /* Clears the publisher strip, which is itself stuck under the header. */
@@ -1476,10 +1479,10 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   /* v122: centred, like on touch; on the baseline the name sat 5px above the colour
      square and the fold arrow, which centre on the taller row. */
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px 7px;
-  margin-inline: -12px;
-  margin-bottom: 12px;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem 0.4375rem;
+  margin-inline: -0.75rem;
+  margin-bottom: 0.75rem;
   --grp-bg: color-mix(in srgb, var(--grp-cor, var(--bg)) 8%, var(--bg));
   background: var(--grp-bg);
   border-radius: var(--r);
@@ -1490,11 +1493,11 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .group-cor {
   position: relative; z-index: 2; align-self: center;
   display: grid; place-items: center;
-  width: 24px; height: 24px; margin: -4px -4px -4px -6px;
+  width: 1.5rem; height: 1.5rem; margin: -0.25rem -0.25rem -0.25rem -0.375rem;
   border-radius: var(--r-sm);
   transition: background 120ms var(--ease-out);
 }
-@media (pointer: coarse) { .group-cor { width: 44px; height: 44px; margin: -14px -12px -14px -16px; } }
+@media (pointer: coarse) { .group-cor { width: 2.75rem; height: 2.75rem; margin: -0.875rem -0.75rem -0.875rem -1rem; } }
 .group-head h2 { min-width: 0; }
 .group-toggle {
   font: inherit; color: inherit; letter-spacing: inherit; text-align: left;
@@ -1503,17 +1506,17 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 .group-toggle::after { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 1; }
 .group-toggle:focus-visible { outline: none; }
-.group-head:has(.group-toggle:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.group-head:has(.group-toggle:focus-visible) { outline: 0.125rem solid var(--accent); outline-offset: 0.125rem; }
 .group-head[data-dobra="true"] { cursor: pointer; }
-@media (pointer: coarse) { .group-head[data-dobra="true"] { min-height: 44px; align-items: center; } }
+@media (pointer: coarse) { .group-head[data-dobra="true"] { min-height: 2.75rem; align-items: center; } }
 @media (hover: hover) and (pointer: fine) {
   .group-cor:hover { background: var(--surface-2); }
   .group-head[data-dobra="true"]:hover { background: color-mix(in srgb, var(--grp-cor, var(--bg)) 14%, var(--bg)); }
 }
 .group-swatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 0.125rem;
   flex-shrink: 0;
   box-shadow: 0 0 0 1px var(--grp-bg, var(--bg)) inset;
 }
@@ -1533,7 +1536,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .swatches {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
+  gap: 0.5rem;
 }
 @media (min-width: 420px) { .swatches { grid-template-columns: repeat(8, 1fr); } }
 /* A swatch is a miniature of the cover it produces, edge stripe included, so you
@@ -1546,7 +1549,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid transparent;
+  border: 0.125rem solid transparent;
   transition: transform 120ms var(--ease-out), border-color 120ms var(--ease-out);
 }
 .swatch::after {
@@ -1555,7 +1558,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   left: 0;
   top: 0;
   bottom: 0;
-  width: 3px;
+  width: 0.1875rem;
   background: var(--edge);
 }
 .swatch[data-on="true"] { border-color: var(--text); }
@@ -1571,10 +1574,10 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 [data-dica]::after {
   content: attr(data-dica);
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 0.375rem);
   left: 50%;
   z-index: 60;
-  padding: 4px 8px;
+  padding: 0.25rem 0.5rem;
   border-radius: var(--r-sm);
   background: var(--surface-2);
   border: 1px solid var(--ed-borda);
@@ -1586,7 +1589,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
-  transform: translate(-50%, -3px);
+  transform: translate(-50%, -0.1875rem);
   transition: opacity 120ms var(--ease-out), transform 120ms var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -1600,17 +1603,17 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 [data-dica]:has(> :focus-visible)::after { opacity: 1; transform: translate(-50%, 0); }
 /* Swatches at either end of a row keep their label inside the sheet. The grid is
    6 across on a phone and 8 from 420px. */
-.swatches > .dica-swatch:nth-child(6n + 1)::after { left: 0; transform: translate(0, -3px); }
-.swatches > .dica-swatch:nth-child(6n)::after { left: auto; right: 0; transform: translate(0, -3px); }
+.swatches > .dica-swatch:nth-child(6n + 1)::after { left: 0; transform: translate(0, -0.1875rem); }
+.swatches > .dica-swatch:nth-child(6n)::after { left: auto; right: 0; transform: translate(0, -0.1875rem); }
 @media (hover: hover) and (pointer: fine) {
   .swatches > .dica-swatch:nth-child(6n + 1):hover::after,
   .swatches > .dica-swatch:nth-child(6n):hover::after { transform: translate(0, 0); }
 }
 @media (min-width: 420px) {
   .swatches > .dica-swatch:nth-child(6n + 1)::after,
-  .swatches > .dica-swatch:nth-child(6n)::after { left: 50%; right: auto; transform: translate(-50%, -3px); }
-  .swatches > .dica-swatch:nth-child(8n + 1)::after { left: 0; right: auto; transform: translate(0, -3px); }
-  .swatches > .dica-swatch:nth-child(8n)::after { left: auto; right: 0; transform: translate(0, -3px); }
+  .swatches > .dica-swatch:nth-child(6n)::after { left: 50%; right: auto; transform: translate(-50%, -0.1875rem); }
+  .swatches > .dica-swatch:nth-child(8n + 1)::after { left: 0; right: auto; transform: translate(0, -0.1875rem); }
+  .swatches > .dica-swatch:nth-child(8n)::after { left: auto; right: 0; transform: translate(0, -0.1875rem); }
 }
 @media (min-width: 420px) and (hover: hover) and (pointer: fine) {
   .swatches > .dica-swatch:nth-child(6n + 1):hover::after,
@@ -1620,7 +1623,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 /* A collection's fold button is the last thing on its row, so its label hangs
    left from the button's right edge instead of centring past the page (v79). */
-.coll-acoes [data-dica]::after { left: auto; right: 0; transform: translate(0, -3px); }
+.coll-acoes [data-dica]::after { left: auto; right: 0; transform: translate(0, -0.1875rem); }
 @media (hover: hover) and (pointer: fine) {
   .coll-acoes [data-dica]:hover::after { transform: translate(0, 0); }
 }
@@ -1637,24 +1640,24 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    only an icon has no useful one of. */
 .group-fold {
   margin-left: auto; align-self: center;
-  width: 36px; height: 36px; display: grid; place-items: center;
+  width: 2.25rem; height: 2.25rem; display: grid; place-items: center;
   color: var(--text-muted); pointer-events: none;
 }
 /* v141: the pin sits at the far edge beside the fold arrow, above the row's stretched
    fold button like the colour square. Quiet until pinned, then the accent. */
 .group-pin {
   position: relative; z-index: 2; margin-left: auto; align-self: center;
-  width: 32px; height: 32px; display: grid; place-items: center;
+  width: 2rem; height: 2rem; display: grid; place-items: center;
   border-radius: var(--r-sm); color: var(--text-muted);
   transition: background 120ms var(--ease-out), color 120ms var(--ease-out);
 }
 .group-pin[aria-pressed="true"] { color: var(--ed-accent-text); }
 .group-pin + .group-fold { margin-left: 0; }
 @media (hover: hover) and (pointer: fine) { .group-pin:hover { background: var(--surface-2); color: var(--text); } }
-@media (pointer: coarse) { .group-pin { width: 44px; height: 44px; margin-block: -6px; } }
+@media (pointer: coarse) { .group-pin { width: 2.75rem; height: 2.75rem; margin-block: -0.375rem; } }
 .group-fold svg { transition: transform 120ms var(--ease-out); }
 .group-fold svg[data-rot="true"] { transform: rotate(-90deg); }
-@media (pointer: coarse) { .group-fold { width: 44px; height: 44px; } }
+@media (pointer: coarse) { .group-fold { width: 2.75rem; height: 2.75rem; } }
 
 /* The row above the list. Right-aligned rather than sitting opposite the
    publisher logo in the band: the band is shared by all three tabs, and a
@@ -1665,9 +1668,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .fold-all {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem;
 }
-.fold-all .btn { gap: 7px; }
+.fold-all .btn { gap: 0.4375rem; }
 /* v132: up to fold everything away, down to open it all (it was the same arrow both ways). */
 .fold-all svg { transition: transform 120ms var(--ease-out); }
 .fold-all svg[data-rot="false"] { transform: rotate(180deg); }
@@ -1701,14 +1704,14 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   top: calc(var(--topbar-h) * -1);
   left: 50%;
   width: calc(100vw - var(--sbw, 0px));
-  height: min(100%, 1400px);
+  height: min(100%, 87.5rem);
   transform: translateX(-50%);
   overflow: hidden;
   pointer-events: none;
   /* The tile grows with the window instead of holding a fixed size, which keeps
      the covers large and the count down: a wider screen gets bigger books, not
      more of them. */
-  --gm-tile-w: clamp(105px, 10.4vw, 304px);
+  --gm-tile-w: clamp(6.5625rem, 10.4vw, 19rem);
   --gm-tile-h: calc(var(--gm-tile-w) * 1.5);
   mask-image: linear-gradient(to bottom, #000 0%, #000 46%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 46%, transparent 100%);
@@ -1800,7 +1803,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
      under that bar; its content and sticky header start below it. */
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.5);
   /* The hub never takes the publisher's colour; the app under it keeps it. */
   --ed-accent: var(--accent);
   --ed-accent-text: var(--accent-text);
@@ -1843,9 +1846,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 
 .suggest {
   display: flex;
-  gap: 16px;
+  gap: 1rem;
   align-items: flex-start;
-  padding: 16px;
+  padding: 1rem;
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   background: var(--surface);
@@ -1853,11 +1856,11 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 /* On anything wider than a phone the text block centres against the cover instead
    of hanging from its top edge, which is what left the card bottom-empty. */
 @media (min-width: 560px) {
-  .suggest { align-items: center; gap: 20px; padding: 20px; }
+  .suggest { align-items: center; gap: 1.25rem; padding: 1.25rem; }
 }
-.suggest-cover { width: 96px; flex-shrink: 0; }
-@media (min-width: 560px) { .suggest-cover { width: 124px; } }
-@media (min-width: 900px) { .suggest-cover { width: 160px; } }
+.suggest-cover { width: 6rem; flex-shrink: 0; }
+@media (min-width: 560px) { .suggest-cover { width: 7.75rem; } }
+@media (min-width: 900px) { .suggest-cover { width: 10rem; } }
 .suggest-body { flex: 1; min-width: 0; }
 .suggest-title {
   font-family: var(--font-display);
@@ -1865,23 +1868,23 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   font-size: clamp(1.25rem, 5vw, 1.75rem);
   line-height: 1.05;
   letter-spacing: -0.025em;
-  margin: 8px 0 0;
+  margin: 0.5rem 0 0;
   text-wrap: balance;
   /* Held to a readable measure so a long title wraps beside the cover rather than
      running out into the empty half of the card as one long line. */
   max-width: 24ch;
 }
-.suggest-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.suggest-actions { display: flex; gap: 0.5rem; margin-top: 0.875rem; flex-wrap: wrap; }
 
 /* The shelf: the collection as texture, blocked by character colour. */
 .wall {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(3.25rem, 1fr));
+  gap: 0.375rem;
 }
-@media (min-width: 560px) { .wall { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; } }
+@media (min-width: 560px) { .wall { grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr)); gap: 0.5rem; } }
 .wall .cover { box-shadow: none; }
-.wall .cover-fb { padding: 6px 5px; }
+.wall .cover-fb { padding: 0.375rem 0.3125rem; }
 .wall .cover-fb-title { font-size: 0.5rem; -webkit-line-clamp: 3; }
 .wall .cover-fb-foot, .wall .cover-rule { display: none; }
 
@@ -1889,8 +1892,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 .hub-section-head h2 {
   margin: 0;
@@ -1904,7 +1907,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    so the rhythm never collapses into a sentence floating between two sections. */
 .hub-note {
   margin: 0;
-  padding: 14px 16px;
+  padding: 0.875rem 1rem;
   border: 1px dashed var(--border-strong);
   border-radius: var(--r);
   color: var(--text-muted);
@@ -1912,21 +1915,21 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   line-height: 1.5;
 }
 
-.prog { display: flex; flex-direction: column; gap: 14px; }
+.prog { display: flex; flex-direction: column; gap: 0.875rem; }
 .prog-row { display: block; width: 100%; text-align: left; }
 .prog-top {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 6px;
+  gap: 0.75rem;
+  margin-bottom: 0.375rem;
 }
-.prog-bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.prog-bar { height: 0.375rem; border-radius: 0.1875rem; background: var(--surface-2); overflow: hidden; }
 .prog-bar i {
   display: block;
   width: 100%;
   height: 100%;
-  border-radius: 3px;
+  border-radius: 0.1875rem;
   background: var(--read);
   transform-origin: left;
   transition: transform 200ms var(--ease-out);
@@ -1936,11 +1939,11 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .prog-bar i[data-tier="baixo"] { background: var(--warm); }
 .prog-bar i[data-tier="medio"] { background: var(--accent); }
 .prog-faltam { color: var(--read); }
-.prog-legenda { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
-.prog-legenda i { width: 10px; height: 6px; border-radius: 3px; background: var(--read); }
+.prog-legenda { display: flex; align-items: center; flex-wrap: wrap; gap: 0.375rem; margin: 0.875rem 0 0; }
+.prog-legenda i { width: 0.625rem; height: 0.375rem; border-radius: 0.1875rem; background: var(--read); }
 .prog-legenda i[data-tier="baixo"] { background: var(--warm); }
 .prog-legenda i[data-tier="medio"] { background: var(--accent); }
-.prog-legenda i:not(:first-child) { margin-left: 8px; }
+.prog-legenda i:not(:first-child) { margin-left: 0.5rem; }
 .prog-faltam[data-tier="medio"] { color: var(--accent-text); }
 .prog-faltam[data-tier="baixo"] { color: var(--warm-text); }
 
@@ -1949,9 +1952,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0.5rem;
   width: 100%;
-  padding: 15px;
+  padding: 0.9375rem;
   border: 1px solid var(--border);
   border-radius: var(--r);
   background: var(--surface);
@@ -1967,18 +1970,18 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 .hub-enter svg { transition: transform 160ms var(--ease-out); }
 @media (hover: hover) and (pointer: fine) {
-  .hub-enter:hover svg { transform: translateY(2px); }
+  .hub-enter:hover svg { transform: translateY(0.125rem); }
 }
 
 .label-wide { display: none; }
-@media (max-width: 559px) { .novo-hub { padding-inline: 12px; min-width: 44px; justify-content: center; } .novo-hub .novo-rotulo { display: none; } }
+@media (max-width: 559px) { .novo-hub { padding-inline: 0.75rem; min-width: 2.75rem; justify-content: center; } .novo-hub .novo-rotulo { display: none; } }
 /* v133: on the tabs "Novo" keeps its word on a phone too, now that the search lives
    in the tab bar: it was an icon-only square beside the filter's identical square
    (critique 4), and the user chose the named button. Only a very narrow screen
    (under 360px) folds it back to its "+", at the 44px touch floor. */
 .topbar-inner .btn-primary svg { flex-shrink: 0; }
 @media (max-width: 359px) {
-  .topbar-inner .btn-primary:has(.novo-rotulo) { padding-inline: 12px; min-width: 44px; justify-content: center; }
+  .topbar-inner .btn-primary:has(.novo-rotulo) { padding-inline: 0.75rem; min-width: 2.75rem; justify-content: center; }
   .topbar-inner .btn-primary .novo-rotulo { display: none; }
 }
 @media (min-width: 560px) { .label-wide { display: inline; } }
@@ -1988,9 +1991,9 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   padding-top: var(--hub-rule-pad);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem;
 }
-.hub-figures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.hub-figures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.875rem; }
 .hub-figure span {
   display: block;
   font-family: var(--font-mono);
@@ -1998,30 +2001,30 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   font-weight: 500;
   letter-spacing: -0.02em;
 }
-.hub-figure small { display: block; margin-top: 2px; color: var(--text-muted); font-size: 0.75rem; }
+.hub-figure small { display: block; margin-top: 0.125rem; color: var(--text-muted); font-size: 0.75rem; }
 
 /* D1 (v89): "Seu acervo". Three plain columns (four with publishers), no cards:
    the numbers carry it. Bars are 6px on a full-width track of --border, each the
    slice's share of the whole collection; labels and values stay in text ink. */
-.retrato { display: grid; grid-template-columns: 1fr; gap: 26px; }
-@media (min-width: 720px) { .retrato { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 36px; } }
+.retrato { display: grid; grid-template-columns: 1fr; gap: 1.625rem; }
+@media (min-width: 720px) { .retrato { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.625rem 2.25rem; } }
 @media (min-width: 1024px) {
   .retrato[data-colunas="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .retrato[data-colunas="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 .retrato-col { min-width: 0; }
-.retrato-col h3 { margin: 0 0 10px; }
+.retrato-col h3 { margin: 0 0 0.625rem; }
 .retrato-lista, .retrato-legenda { list-style: none; margin: 0; padding: 0; }
-.retrato-lista { display: flex; flex-direction: column; gap: 2px; }
+.retrato-lista { display: flex; flex-direction: column; gap: 0.125rem; }
 .retrato-linha {
   display: grid;
   grid-template-columns: minmax(0, 9.5em) minmax(0, 1fr) 2.75em;
   align-items: center;
-  gap: 10px;
-  width: calc(100% + 16px);
-  min-height: 32px;
-  margin-inline: -8px;
-  padding: 0 8px;
+  gap: 0.625rem;
+  width: calc(100% + 1rem);
+  min-height: 2rem;
+  margin-inline: -0.5rem;
+  padding: 0 0.5rem;
   border-radius: var(--r-sm);
   text-align: left;
   color: var(--text);
@@ -2030,8 +2033,8 @@ button.retrato-linha { cursor: pointer; }
 @media (hover: hover) and (pointer: fine) {
   button.retrato-linha:hover { background: var(--surface-2); }
 }
-.retrato-trilho { display: block; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
-.retrato-trilho i { display: block; height: 100%; min-width: 3px; border-radius: 3px; }
+.retrato-trilho { display: block; height: 0.375rem; border-radius: 0.1875rem; background: var(--border); overflow: hidden; }
+.retrato-trilho i { display: block; height: 100%; min-width: 0.1875rem; border-radius: 0.1875rem; }
 .retrato-valor {
   text-align: right;
   font-family: var(--font-mono);
@@ -2039,34 +2042,34 @@ button.retrato-linha { cursor: pointer; }
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
 }
-.retrato-destaque { margin: 0 0 12px; color: var(--text-muted); font-size: 0.8125rem; }
+.retrato-destaque { margin: 0 0 0.75rem; color: var(--text-muted); font-size: 0.8125rem; }
 .retrato-destaque span {
   font-family: var(--font-mono);
   font-size: 1.5rem;
   font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--text);
-  margin-right: 2px;
+  margin-right: 0.125rem;
 }
 /* The reading meter: lidas, lendo, the rest, with a 2px gap of page between them. */
-.retrato-meter { display: flex; gap: 2px; height: 8px; margin-bottom: 12px; }
-.retrato-meter i { display: block; min-width: 3px; border-radius: 3px; background: var(--border); }
+.retrato-meter { display: flex; gap: 0.125rem; height: 0.5rem; margin-bottom: 0.75rem; }
+.retrato-meter i { display: block; min-width: 0.1875rem; border-radius: 0.1875rem; background: var(--border); }
 .retrato-meter i[data-s="lida"] { background: var(--read); }
 .retrato-meter i[data-s="lendo"] { background: var(--retrato-lendo); }
-.retrato-legenda { display: flex; flex-direction: column; gap: 2px; }
+.retrato-legenda { display: flex; flex-direction: column; gap: 0.125rem; }
 .retrato-status {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 30px;
-  margin-inline: -8px;
-  padding: 0 8px;
+  gap: 0.5rem;
+  min-height: 1.875rem;
+  margin-inline: -0.5rem;
+  padding: 0 0.5rem;
   border-radius: var(--r-sm);
   font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
-.retrato-status i { width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); flex-shrink: 0; }
+.retrato-status i { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--border-strong); flex-shrink: 0; }
 .retrato-status[data-s="lida"] i { background: var(--read); }
 .retrato-status[data-s="lendo"] i { background: var(--retrato-lendo); }
 .retrato-status:disabled { color: var(--text-muted); cursor: default; }
@@ -2076,12 +2079,12 @@ button.retrato-linha { cursor: pointer; }
 }
 
 /* v118: finger-sized on touch; here, after their own min-height, so it wins. */
-@media (pointer: coarse) { .retrato-linha, .retrato-status { min-height: 44px; } }
+@media (pointer: coarse) { .retrato-linha, .retrato-status { min-height: 2.75rem; } }
 
 /* Capped, because a readout this quiet should not be the widest thing on the hub. */
-.hub-storage { max-width: 420px; }
-.hub-storage-top { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
-.hub-storage p { margin: 6px 0 0; }
+.hub-storage { max-width: 26.25rem; }
+.hub-storage-top { display: flex; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.375rem; }
+.hub-storage p { margin: 0.375rem 0 0; }
 .hub-storage-warn { color: var(--danger-text); }
 .hub-storage > .hub-backup:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
 /* v88: the last backup, under the storage meter. Overdue reads in full text colour
@@ -2092,9 +2095,9 @@ button.retrato-linha { cursor: pointer; }
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 12px;
-  margin-top: 14px;
-  padding-top: 12px;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.875rem;
+  padding-top: 0.75rem;
   border-top: 1px solid var(--border);
 }
 .hub-storage .hub-backup p { margin: 0; color: var(--text-muted); }
@@ -2102,24 +2105,24 @@ button.retrato-linha { cursor: pointer; }
 
 /* ---------- collections (horizontal shelves) ---------- */
 
-.coll { margin-bottom: 34px; }
+.coll { margin-bottom: 2.125rem; }
 /* Folded to its title (v68): only the head, so the list tightens up. */
-.coll[data-aberta="false"] { margin-bottom: 14px; }
-.coll-acoes { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.coll[data-aberta="false"] { margin-bottom: 0.875rem; }
+.coll-acoes { display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
 .coll-acoes .btn-icon svg[data-rot="true"] { transform: rotate(-90deg); }
 .coll-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 .coll-strip {
   display: flex;
-  gap: 14px;
+  gap: 0.875rem;
   overflow-x: auto;
   scroll-snap-type: x proximity;
-  padding-bottom: 6px;
+  padding-bottom: 0.375rem;
   /* The native bar is hidden and .shelf-bar stands in for it. The old styled bar
      never showed in Chrome: from 121 on, setting scrollbar-width makes it ignore
      every ::-webkit-scrollbar rule, and this rule used to set both. */
@@ -2132,39 +2135,39 @@ button.retrato-linha { cursor: pointer; }
 /* The body ghost paints the picked-up card; its real box remains in the row. */
 .coll-strip .vol[data-drag-hole="true"] { visibility: hidden; }
 .vol[data-drag-ghost="true"] { visibility: visible; cursor: grabbing; }
-.coll-strip > * { scroll-snap-align: start; flex: 0 0 108px; }
-@media (min-width: 640px) { .coll-strip > * { flex-basis: 124px; } }
+.coll-strip > * { scroll-snap-align: start; flex: 0 0 6.75rem; }
+@media (min-width: 640px) { .coll-strip > * { flex-basis: 7.75rem; } }
 
 /* A row of short spines across the whole width, with a lit window over the
    stretch that is on screen. The window moves by transform only: it clips a
    second copy of the spines, shifted back by the same amount, so the lit
    spines stay put while the window slides over them. */
-.shelf-bar { display: flex; align-items: center; gap: 16px; margin-top: 12px; }
+.shelf-bar { display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; }
 /* Unset on purpose when a collection has no colour of its own, so the lit
    spines fall through to the publisher's. */
 .shelf-wrap { min-width: 0; }
 
 /* v120: the heading row also holds "Editar ordem"; each row is number, title, one action. */
-.ordem-topo { display: flex; align-items: center; gap: 8px; }
+.ordem-topo { display: flex; align-items: center; gap: 0.5rem; }
 .ordem-topo .ordem-head { flex: 1; min-width: 0; }
-.ordem-editar { padding: 4px 8px; margin-bottom: 8px; font-size: 0.75rem; flex-shrink: 0; }
+.ordem-editar { padding: 0.25rem 0.5rem; margin-bottom: 0.5rem; font-size: 0.75rem; flex-shrink: 0; }
 .ordem-editar[data-on="true"] { color: var(--accent-text); }
-.ordem-linha { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
-.ordem-num { width: 22px; flex-shrink: 0; }
+.ordem-linha { display: flex; align-items: center; gap: 0.625rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+.ordem-num { width: 1.375rem; flex-shrink: 0; }
 .ordem-texto { flex: 1; min-width: 0; }
 .ordem-texto p { margin: 0; }
 .ordem-titulo { font-weight: 500; }
 .ordem-acoes { display: flex; align-items: center; flex-shrink: 0; }
 .ordem-acoes .btn-icon:disabled { opacity: 0.35; cursor: default; }
 /* The one that takes a volume out stands apart from the two that move it. */
-.ordem-tirar { margin-left: 12px; }
+.ordem-tirar { margin-left: 0.75rem; }
 /* The manage sheet's reading-order heading doubles as its fold (v66). */
 .ordem-head {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0 0 8px;
+  padding: 0 0 0.5rem;
   text-align: left;
   color: var(--text-muted);
 }
@@ -2179,11 +2182,11 @@ button.retrato-linha { cursor: pointer; }
   position: relative;
   flex: 1;
   min-width: 0;
-  height: 30px;
+  height: 1.875rem;
   cursor: pointer;
   touch-action: none;
 }
-.shelf-track:focus-visible { outline: 2px solid var(--ed-accent); outline-offset: 4px; border-radius: var(--r-sm); }
+.shelf-track:focus-visible { outline: 0.125rem solid var(--ed-accent); outline-offset: 0.25rem; border-radius: var(--r-sm); }
 .shelf-spines {
   position: absolute;
   inset: 0;
@@ -2191,7 +2194,7 @@ button.retrato-linha { cursor: pointer; }
   align-items: flex-end;
   justify-content: space-between;
 }
-.shelf-spines i { flex: 0 0 5px; border-radius: 1.5px; background: var(--border-strong); }
+.shelf-spines i { flex: 0 0 0.3125rem; border-radius: 0.0938rem; background: var(--border-strong); }
 .shelf-window { position: absolute; top: 0; bottom: 0; left: 0; overflow: hidden; }
 .shelf-window .shelf-spines { right: auto; }
 .shelf-window .shelf-spines i { background: var(--shelf-cor, var(--ed-accent)); }
@@ -2207,7 +2210,7 @@ button.retrato-linha { cursor: pointer; }
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   color: var(--text-muted);
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
 }
 
 /* ---------- series ---------- */
@@ -2216,11 +2219,11 @@ button.retrato-linha { cursor: pointer; }
   width: 100%;
   text-align: left;
   display: block;
-  padding: 12px 14px;
+  padding: 0.75rem 0.875rem;
   border: 1px solid var(--border);
   border-radius: var(--r);
   background: var(--surface);
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
   transition: transform 120ms var(--ease-out), border-color 120ms var(--ease-out);
 }
 .serie-row:active { transform: scale(0.99); }
@@ -2229,8 +2232,8 @@ button.retrato-linha { cursor: pointer; }
   .serie-row:hover { border-color: var(--border-strong); }
   .serie-row[data-open="true"]:hover { border-color: var(--accent); }
 }
-.serie-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.serie-meta { margin-top: 3px; font-size: 0.75rem; color: var(--text-muted); }
+.serie-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+.serie-meta { margin-top: 0.1875rem; font-size: 0.75rem; color: var(--text-muted); }
 
 /* the run bar: owned vs missing across the numbering */
 /* The capsule ends come from the container, not from rounding the first and
@@ -2243,22 +2246,22 @@ button.retrato-linha { cursor: pointer; }
 .run {
   display: flex;
   gap: 1px;
-  margin-top: 10px;
-  height: 14px;
+  margin-top: 0.625rem;
+  height: 0.875rem;
   align-items: stretch;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   overflow: hidden;
 }
 .run i { flex: 1; min-width: 1px; background: var(--border-strong); border-radius: 1px; }
 .run i[data-owned="true"] { background: var(--read); }
 
-.tiles { display: flex; flex-wrap: wrap; gap: 6px; }
+.tiles { display: flex; flex-wrap: wrap; gap: 0.375rem; }
 /* v133: on a phone the tiles share the row out evenly, so the map fills the sheet
    instead of stopping ~20px short of the right edge. */
-@media (max-width: 767px) { .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); } }
+@media (max-width: 767px) { .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr)); } }
 .tile {
-  min-width: 34px;
-  padding: 5px 7px;
+  min-width: 2.125rem;
+  padding: 0.3125rem 0.4375rem;
   border-radius: var(--r-sm);
   border: 1px solid var(--border-strong);
   background: transparent;
@@ -2273,26 +2276,26 @@ button.retrato-linha { cursor: pointer; }
    so it reads on both a filled (owned) and a dashed (missing) tile. */
 .tile[data-reimp="true"] { position: relative; }
 .tile[data-reimp="true"]::after {
-  content: ""; position: absolute; top: 3px; right: 3px; width: 5px; height: 5px;
+  content: ""; position: absolute; top: 0.1875rem; right: 0.1875rem; width: 0.3125rem; height: 0.3125rem;
   border-radius: 50%; background: currentColor; opacity: 0.75; pointer-events: none;
 }
-.reimp-toggle { margin: 0 0 12px; }
+.reimp-toggle { margin: 0 0 0.75rem; }
 /* v146: the edição's creators, one role per row, label over names. */
-.autores { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px 16px; margin: 10px 0 0; }
+.autores { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.75rem, 1fr)); gap: 0.5rem 1rem; margin: 0.625rem 0 0; }
 .autores div { min-width: 0; }
-.autores dt { margin: 0 0 2px; }
+.autores dt { margin: 0 0 0.125rem; }
 .autores dd { margin: 0; overflow-wrap: anywhere; }
-.check-linha { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
-.check-linha input { width: 18px; height: 18px; accent-color: var(--accent); }
-@media (pointer: coarse) { .tile { min-width: 44px; min-height: 44px; } }
+.check-linha { display: flex; align-items: center; gap: 0.625rem; min-height: 2.75rem; cursor: pointer; }
+.check-linha input { width: 1.125rem; height: 1.125rem; accent-color: var(--accent); }
+@media (pointer: coarse) { .tile { min-width: 2.75rem; min-height: 2.75rem; } }
 /* v143: plain numbers share one width, the block's longest (--nd digits, set by the
    série sheet), and a #1000000 spans two of them plus the gap. --tw resolves on the
    tile, so 1ch is the tile's own mono digit. On a phone the grid already evens the
    columns, so the wide tile just spans two cells. */
-.tiles { --tw: max(34px, calc(var(--nd, 2) * 1ch + 16px)); }
-@media (pointer: coarse) { .tiles { --tw: max(44px, calc(var(--nd, 2) * 1ch + 16px)); } }
+.tiles { --tw: max(2.125rem, calc(var(--nd, 2) * 1ch + 1rem)); }
+@media (pointer: coarse) { .tiles { --tw: max(2.75rem, calc(var(--nd, 2) * 1ch + 1rem)); } }
 .tile[data-forma="comum"] { width: var(--tw); }
-.tile[data-forma="largo"] { width: calc(2 * var(--tw) + 6px); }
+.tile[data-forma="largo"] { width: calc(2 * var(--tw) + 0.375rem); }
 @media (max-width: 767px) {
   .tile[data-forma] { width: auto; }
   .tile[data-forma="largo"] { grid-column: span 2; }
@@ -2309,20 +2312,20 @@ button.retrato-linha { cursor: pointer; }
 /* v121: a missing number is what the collector hunts, so it is no longer the faintest
    thing on the sheet: a dashed empty slot with its number in the body colour. */
 .tile:not([data-owned="true"]) { border-style: dashed; border-color: var(--text-muted); color: var(--text); }
-.mapa-topo { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.mapa-topo { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
 /* v147: dimming is only a reading aid; focused tiles keep their full outline. */
 .tile[data-esmaecido="true"] { opacity: 0.35; }
 .tile[data-esmaecido="true"]:focus-visible { opacity: 1; }
-.destaque-autor { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-.mapa-legenda { display: flex; align-items: center; gap: 6px; margin: 0; }
-.mapa-legenda i { width: 12px; height: 12px; border-radius: 3px; border: 1px dashed var(--text-muted); }
+.destaque-autor { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.mapa-legenda { display: flex; align-items: center; gap: 0.375rem; margin: 0; }
+.mapa-legenda i { width: 0.75rem; height: 0.75rem; border-radius: 0.1875rem; border: 1px dashed var(--text-muted); }
 .mapa-legenda i[data-owned="true"] { background: var(--read); border: 1px solid var(--read); }
-.mapa-legenda i ~ i { margin-left: 8px; }
-.tile[data-sel="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
+.mapa-legenda i ~ i { margin-left: 0.5rem; }
+.tile[data-sel="true"] { outline: 0.125rem solid var(--accent); outline-offset: 1px; }
 
-.bucket { border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 8px; overflow: hidden; }
+.bucket { border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 0.5rem; overflow: hidden; }
 .bucket > summary {
-  padding: 9px 12px;
+  padding: 0.5625rem 0.75rem;
   cursor: pointer;
   font-family: var(--font-mono);
   font-size: 0.8125rem;
@@ -2330,7 +2333,7 @@ button.retrato-linha { cursor: pointer; }
   list-style: none;
 }
 .bucket > summary::-webkit-details-marker { display: none; }
-.bucket > div { padding: 10px 12px 12px; }
+.bucket > div { padding: 0.625rem 0.75rem 0.75rem; }
 
 /* ---------- panels, sheets, modals ---------- */
 
@@ -2376,7 +2379,7 @@ button.retrato-linha { cursor: pointer; }
   pointer-events: none;
   transition: transform 260ms var(--ease-out), filter 260ms var(--ease-out);
 }
-.sheet[data-in="true"][data-behind="true"] { transform: scale(0.96) translateY(-14px); }
+.sheet[data-in="true"][data-behind="true"] { transform: scale(0.96) translateY(-0.875rem); }
 
 /* desktop: right side panel */
 @media (min-width: 768px) {
@@ -2384,7 +2387,7 @@ button.retrato-linha { cursor: pointer; }
     top: 0;
     left: auto;
     bottom: 0;
-    width: min(440px, 92vw);
+    width: min(27.5rem, 92vw);
     max-height: none;
     border-radius: 0;
     border-top: none;
@@ -2393,31 +2396,31 @@ button.retrato-linha { cursor: pointer; }
     transform: translateX(100%);
   }
   .sheet[data-in="true"] { transform: translateX(0); }
-  .sheet[data-in="true"][data-behind="true"] { transform: scale(0.96) translateX(-14px); }
+  .sheet[data-in="true"][data-behind="true"] { transform: scale(0.96) translateX(-0.875rem); }
 }
 
-.sheet-grab { padding: 8px 0 2px; display: flex; justify-content: center; }
-.sheet-grab i { width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong); }
+.sheet-grab { padding: 0.5rem 0 0.125rem; display: flex; justify-content: center; }
+.sheet-grab i { width: 2.25rem; height: 0.25rem; border-radius: 0.125rem; background: var(--border-strong); }
 @media (min-width: 768px) { .sheet-grab { display: none; } }
 
 .sheet-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 16px 12px;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem 0.75rem;
   border-bottom: 1px solid var(--border);
 }
 /* v133: on a phone the title gets the whole width and the actions drop to the row
    of the subtitle and the ‹ 1 de 22 › stepper, so "Batman: Ano Um" no longer breaks
    around four icons. display: contents lets the title column's children join the grid. */
 @media (max-width: 767px) {
-  .sheet-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: center; }
+  .sheet-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 0.5rem; align-items: center; }
   .sheet-head > div:first-child { display: contents; }
   .sheet-head .dialog-titulo { grid-column: 1 / -1; }
   .sheet-head .sheet-actions { grid-column: 2; grid-row: 2 / span 2; align-self: end; }
 }
-.sheet-body { padding: 16px; overflow-y: auto; overflow-x: hidden; flex: 1; display: flex; flex-direction: column; gap: 18px; }
+.sheet-body { padding: 1rem; overflow-y: auto; overflow-x: hidden; flex: 1; display: flex; flex-direction: column; gap: 1.125rem; }
 /* v100: dialog titles are headings now (h2), sized by .t-display as before; the
    body and the modal take focus on open only to route keys, so no ring there. */
 .dialog-titulo { margin: 0; }
@@ -2434,14 +2437,14 @@ button.retrato-linha { cursor: pointer; }
    switches Chrome off the ::-webkit rules, so body puts it back to auto for the rest. */
 html[data-capa="true"] { scrollbar-color: transparent transparent; }
 html[data-capa="true"] body { scrollbar-color: auto; }
-.sug::-webkit-scrollbar, .sheet-body::-webkit-scrollbar, .modal-body::-webkit-scrollbar, .hub-capa::-webkit-scrollbar { width: 10px; }
+.sug::-webkit-scrollbar, .sheet-body::-webkit-scrollbar, .modal-body::-webkit-scrollbar, .hub-capa::-webkit-scrollbar { width: 0.625rem; }
 .sug::-webkit-scrollbar-track, .sheet-body::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track, .hub-capa::-webkit-scrollbar-track { background: transparent; }
 .sug::-webkit-scrollbar-button, .sheet-body::-webkit-scrollbar-button, .modal-body::-webkit-scrollbar-button, .hub-capa::-webkit-scrollbar-button { display: none; }
 .sug::-webkit-scrollbar-thumb, .sheet-body::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb, .hub-capa::-webkit-scrollbar-thumb {
   background: var(--ed-rolagem);
-  border: 3px solid transparent;
+  border: 0.1875rem solid transparent;
   background-clip: padding-box;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
 }
 .sug:hover::-webkit-scrollbar-thumb, .sheet-body:hover::-webkit-scrollbar-thumb, .modal-body:hover::-webkit-scrollbar-thumb { background-color: var(--ed-accent); }
 /* The pointer is always over the hub, so its bar keeps the resting colour and only
@@ -2450,12 +2453,12 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 @supports not selector(::-webkit-scrollbar) {
   .sug, .sheet-body, .modal-body, .hub-capa { scrollbar-width: thin; scrollbar-color: var(--ed-rolagem) transparent; }
 }
-.sheet-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.sheet-actions { display: flex; gap: 0.375rem; flex-shrink: 0; }
 /* v101: Remover leads the row, a clear gap away from Editar/Duplicar, and Fechar
    keeps the far end: before, the trash sat between Duplicar and Fechar. */
-.btn-remover { margin-right: 14px; }
+.btn-remover { margin-right: 0.875rem; }
 @media (pointer: coarse) { .so-teclado { display: none; } }
-.vincular-aqui { margin-top: 8px; }
+.vincular-aqui { margin-top: 0.5rem; }
 /* On touch the 44px boxes already space the icons; a gap would only squeeze the title. */
 @media (pointer: coarse) { .sheet-actions { gap: 0; } }
 
@@ -2463,14 +2466,14 @@ html[data-capa="true"] body { scrollbar-color: auto; }
    header actions, which squeezed the title to three lines; here the title keeps
    the width. At either end the button stays in place, dimmed, so the count never
    shifts under the pointer. */
-.sheet-nav { display: flex; align-items: center; gap: 2px; margin: 6px 0 0 -8px; }
+.sheet-nav { display: flex; align-items: center; gap: 0.125rem; margin: 0.375rem 0 0 -0.5rem; }
 .sheet-nav .btn-icon:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
 .sheet-nav-pos { font-variant-numeric: tabular-nums; min-width: 4.5em; text-align: center; }
 /* The new volume's content comes in from the side it was stepped towards. Only
    opacity and transform, 160ms, and nothing on the first open. */
-@keyframes vol-nav-prox { from { opacity: 0; transform: translateX(16px); } }
-@keyframes vol-nav-ant { from { opacity: 0; transform: translateX(-16px); } }
-.vol-nav { display: flex; flex-direction: column; gap: 18px; }
+@keyframes vol-nav-prox { from { opacity: 0; transform: translateX(1rem); } }
+@keyframes vol-nav-ant { from { opacity: 0; transform: translateX(-1rem); } }
+.vol-nav { display: flex; flex-direction: column; gap: 1.125rem; }
 .vol-nav[data-dir="prox"] { animation: vol-nav-prox 160ms var(--ease-out); }
 .vol-nav[data-dir="ant"] { animation: vol-nav-ant 160ms var(--ease-out); }
 @media (prefers-reduced-motion: reduce) {
@@ -2487,11 +2490,11 @@ html[data-capa="true"] body { scrollbar-color: auto; }
   padding: 0;
   pointer-events: none;
 }
-@media (min-width: 640px) { .modal-wrap { align-items: center; padding: 24px; } }
+@media (min-width: 640px) { .modal-wrap { align-items: center; padding: 1.5rem; } }
 .modal {
   pointer-events: auto;
   width: 100%;
-  max-width: 460px;
+  max-width: 28.75rem;
   max-height: 88dvh;
   display: flex;
   flex-direction: column;
@@ -2507,7 +2510,7 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 @media (min-width: 640px) {
   .modal {
     border-radius: var(--r-lg);
-    transform: translateY(12px) scale(0.97);
+    transform: translateY(0.75rem) scale(0.97);
     opacity: 0;
   }
   .modal[data-in="true"] { transform: translateY(0) scale(1); opacity: 1; }
@@ -2516,17 +2519,17 @@ html[data-capa="true"] body { scrollbar-color: auto; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
   border-bottom: 1px solid var(--border);
 }
-.modal-body { padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+.modal-body { padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.875rem; }
 .modal-foot {
-  padding: 12px 16px;
+  padding: 0.75rem 1rem;
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
   background: var(--surface);
 }
 
@@ -2535,13 +2538,13 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 /* v106: the cover is the content of the volume sheet. Below 1024px it sits centred
    on top of the 440px sheet; from 1024px (PC, tablet on its side) the sheet widens and
    the cover takes a column of its own, holding still while the rest scrolls. */
-.detail-cover { width: min(240px, 62%); align-self: center; display: flex; flex-direction: column; gap: 8px; position: relative; z-index: 1; }
-.detail-cover .cover { box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35); border-color: transparent; }
+.detail-cover { width: min(15rem, 62%); align-self: center; display: flex; flex-direction: column; gap: 0.5rem; position: relative; z-index: 1; }
+.detail-cover .cover { box-shadow: 0 0.5rem 1.375rem rgba(0, 0, 0, 0.35); border-color: transparent; }
 .detail-cover .cover-paste-hint { margin: 0; }
-.vs-info { display: flex; flex-direction: column; gap: 18px; min-width: 0; position: relative; z-index: 1; }
+.vs-info { display: flex; flex-direction: column; gap: 1.125rem; min-width: 0; position: relative; z-index: 1; }
 @media (min-width: 1024px) {
-  .sheet[data-variante="volume"] { width: min(680px, 92vw); }
-  .sheet[data-variante="volume"] .vol-nav { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 22px; align-items: start; }
+  .sheet[data-variante="volume"] { width: min(42.5rem, 92vw); }
+  .sheet[data-variante="volume"] .vol-nav { display: grid; grid-template-columns: 15.625rem minmax(0, 1fr); gap: 1.375rem; align-items: start; }
   /* align-self: start, not the narrow layout's center: in a grid row that means vertical,
      and a long list of edições pushed the cover down to its middle (v107). */
   .sheet[data-variante="volume"] .detail-cover { width: 100%; align-self: start; position: sticky; top: 0; }
@@ -2553,20 +2556,20 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 .sheet { --tinta-forca: 34%; }
 @media (prefers-color-scheme: light) { .sheet { --tinta-forca: 18%; } }
 .sheet-tinta {
-  position: absolute; left: 0; right: 0; top: 0; height: 420px; pointer-events: none;
+  position: absolute; left: 0; right: 0; top: 0; height: 26.25rem; pointer-events: none;
   background: linear-gradient(to bottom, color-mix(in oklab, var(--sheet-tinta) var(--tinta-forca), var(--surface)), var(--surface));
 }
 .sheet-tinta ~ .sheet-head, .sheet-tinta ~ .sheet-grab { position: relative; z-index: 1; }
 .sheet-tinta ~ .sheet-head { border-bottom-color: transparent; }
 .sheet-tinta ~ .sheet-body { position: relative; z-index: 1; }
-.deflist { display: grid; grid-template-columns: auto 1fr; gap: 7px 14px; align-items: baseline; }
+.deflist { display: grid; grid-template-columns: auto 1fr; gap: 0.4375rem 0.875rem; align-items: baseline; }
 .deflist dt { font-size: 0.75rem; color: var(--text-muted); }
 .deflist dd { margin: 0; font-size: 0.8125rem; }
 
-.linked-serie { border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px; margin-bottom: 8px; }
+.linked-serie { border: 1px solid var(--border); border-radius: var(--r); padding: 0.625rem 0.75rem; margin-bottom: 0.5rem; }
 
 /* Full-width series cards reuse the cover fill and wave behind their content. */
-.linked-series { position: relative; display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.linked-series { position: relative; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem; }
 .linked-serie-card { position: relative; isolation: isolate; overflow: hidden; margin-bottom: 0; background: var(--surface); -webkit-user-select: none; user-select: none; }
 .linked-serie-card > .vol-hold, .linked-serie-card > .vol-hold__crest { z-index: 0; }
 .linked-serie-card > div { position: relative; z-index: 1; }
@@ -2587,41 +2590,41 @@ html[data-capa="true"] body { scrollbar-color: auto; }
    scrolls the grid out from under you. */
 .edicao-pinned {
   position: sticky;
-  bottom: -16px;
+  bottom: -1rem;
   z-index: 2;
-  margin: 14px -16px -16px;
-  padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  margin: 0.875rem -1rem -1rem;
+  padding: 0.75rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
   border: none;
   border-top: 1px solid var(--border-strong);
   border-radius: 0;
   background: var(--surface-2);
-  box-shadow: 0 -8px 24px var(--topbar-shadow);
+  box-shadow: 0 -0.5rem 1.5rem var(--topbar-shadow);
 }
 
 .checkline {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 7px 9px;
+  gap: 0.5625rem;
+  padding: 0.4375rem 0.5625rem;
   border-radius: var(--r-sm);
   background: var(--surface-2);
   font-size: 0.8125rem;
   cursor: pointer;
 }
-.checkline input { accent-color: var(--accent); width: 15px; height: 15px; }
+.checkline input { accent-color: var(--accent); width: 0.9375rem; height: 0.9375rem; }
 
 /* ---------- feedback ---------- */
 
 .banner {
   display: flex;
-  gap: 10px;
+  gap: 0.625rem;
   align-items: flex-start;
-  padding: 11px 13px;
+  padding: 0.6875rem 0.8125rem;
   border-radius: var(--r);
   border: 1px solid var(--border-strong);
   background: var(--surface);
   font-size: 0.8125rem;
-  margin-bottom: 18px;
+  margin-bottom: 1.125rem;
 }
 .banner[data-tone="warn"] { border-color: var(--danger); }
 .banner svg { flex-shrink: 0; margin-top: 1px; color: var(--danger-text); }
@@ -2629,9 +2632,9 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--tabbar-h) + 4px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--tabbar-h) + 0.25rem + env(safe-area-inset-bottom, 0px));
   z-index: 60;
-  padding: 10px 16px;
+  padding: 0.625rem 1rem;
   border-radius: var(--r);
   background: var(--surface-2);
   border: 1px solid var(--border-strong);
@@ -2641,11 +2644,11 @@ html[data-capa="true"] body { scrollbar-color: auto; }
      cyan on the hub and on "Todas" (no hue), the publisher's hue otherwise. */
   --toast-luz: var(--accent);
   box-shadow:
-    0 0 22px 1px color-mix(in srgb, var(--toast-luz) 38%, transparent),
-    0 0 64px 10px color-mix(in srgb, var(--toast-luz) 16%, transparent);
+    0 0 1.375rem 1px color-mix(in srgb, var(--toast-luz) 38%, transparent),
+    0 0 4rem 0.625rem color-mix(in srgb, var(--toast-luz) 16%, transparent);
   font-size: 0.8125rem;
-  max-width: calc(100vw - 32px);
-  transform: translate(-50%, 12px);
+  max-width: calc(100vw - 2rem);
+  transform: translate(-50%, 0.75rem);
   opacity: 0;
   transition: transform 300ms ease, opacity 300ms ease;
 }
@@ -2656,25 +2659,25 @@ html[data-capa="true"] body { scrollbar-color: auto; }
    it would sit over the suggestions as you type), and the toast sits at the foot
    of the screen, so its label opens above the button instead of below. */
 .search-field[data-dica]:focus-within::after { opacity: 0; transition-delay: 0ms; }
-.toast [data-dica]::after { top: auto; bottom: calc(100% + 8px); transform: translate(-50%, 3px); }
+.toast [data-dica]::after { top: auto; bottom: calc(100% + 0.5rem); transform: translate(-50%, 0.1875rem); }
 
 /* The list opened with "?". Keys drawn as small key caps, the micro-tile radius. */
-.atalhos { display: flex; flex-direction: column; gap: 18px; }
-.atalhos .t-micro { margin: 0 0 8px; }
-.atalhos dl { margin: 0; display: flex; flex-direction: column; gap: 8px; }
-.atalho { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); align-items: center; gap: 12px; }
-.atalho dt { display: flex; flex-wrap: wrap; gap: 4px; }
+.atalhos { display: flex; flex-direction: column; gap: 1.125rem; }
+.atalhos .t-micro { margin: 0 0 0.5rem; }
+.atalhos dl { margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.atalho { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); align-items: center; gap: 0.75rem; }
+.atalho dt { display: flex; flex-wrap: wrap; gap: 0.25rem; }
 .atalho dd { margin: 0; font-size: 0.8125rem; }
 .atalhos kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 26px;
-  height: 26px;
-  padding: 0 7px;
+  min-width: 1.625rem;
+  height: 1.625rem;
+  padding: 0 0.4375rem;
   border-radius: var(--r-sm);
   border: 1px solid var(--border-strong);
-  border-bottom-width: 2px;
+  border-bottom-width: 0.125rem;
   background: var(--surface-2);
   color: var(--text);
   font-family: var(--font-mono);
@@ -2688,13 +2691,13 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 .toast[data-acao="true"] {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding-block: 4px;
-  padding-right: 6px;
+  gap: 0.875rem;
+  padding-block: 0.25rem;
+  padding-right: 0.375rem;
 }
 .toast-acao {
-  min-height: 32px;
-  padding: 0 10px;
+  min-height: 2rem;
+  padding: 0 0.625rem;
   border-radius: var(--r-sm);
   font-weight: 600;
   color: var(--accent-text);
@@ -2707,19 +2710,19 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 /* v97: at 13px the toast read too small on a desktop screen (user, after the v96
    live-update notice). Phones keep the compact size; from 768px up it grows. */
 @media (min-width: 768px) {
-  .toast { bottom: 24px; padding: 14px 22px; font-size: 1rem; }
-  .toast[data-acao="true"] { gap: 18px; padding-block: 6px; padding-right: 8px; }
-  .toast-acao { min-height: 38px; padding: 0 14px; }
+  .toast { bottom: 1.5rem; padding: 0.875rem 1.375rem; font-size: 1rem; }
+  .toast[data-acao="true"] { gap: 1.125rem; padding-block: 0.375rem; padding-right: 0.5rem; }
+  .toast-acao { min-height: 2.375rem; padding: 0 0.875rem; }
 }
 
 .empty {
   text-align: center;
-  padding: 56px 24px;
+  padding: 3.5rem 1.5rem;
   border: 1px dashed var(--border-strong);
   border-radius: var(--r-lg);
 }
 .empty h3 {
-  margin: 12px 0 4px;
+  margin: 0.75rem 0 0.25rem;
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 1.25rem;
@@ -2733,10 +2736,10 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 /* v132: the keyboard way past the header, shown only when Tab reaches it. */
 .pular {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 8px);
-  left: 8px;
+  top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+  left: 0.5rem;
   z-index: 60;
-  padding: 10px 14px;
+  padding: 0.625rem 0.875rem;
   border-radius: var(--r);
   background: var(--accent);
   color: var(--accent-ink);
@@ -2756,7 +2759,7 @@ html[data-capa="true"] body { scrollbar-color: auto; }
   position: absolute;
   width: 1px;
   height: 1px;
-  margin: -1px;
+  margin: -0.0625rem;
   padding: 0;
   overflow: hidden;
   clip-path: inset(50%);
@@ -2770,38 +2773,38 @@ html[data-capa="true"] body { scrollbar-color: auto; }
   background: var(--surface-2);
   aspect-ratio: 2 / 3;
 }
-.skel-line { height: 9px; border-radius: 3px; background: var(--surface-2); margin-top: 8px; }
+.skel-line { height: 0.5625rem; border-radius: 0.1875rem; background: var(--surface-2); margin-top: 0.5rem; }
 .skel-line[data-w="short"] { width: 58%; }
-.skel-line[data-w="micro"] { width: 22%; height: 7px; }
-.skel-line[data-w="title"] { width: 74%; height: 22px; margin-top: 12px; }
-.skel-line[data-w="head"] { width: 22%; height: 16px; margin-top: 0; }
+.skel-line[data-w="micro"] { width: 22%; height: 0.4375rem; }
+.skel-line[data-w="title"] { width: 74%; height: 1.375rem; margin-top: 0.75rem; }
+.skel-line[data-w="head"] { width: 22%; height: 1rem; margin-top: 0; }
 .skel-line[data-w="row"] { width: 46%; margin-top: 0; }
-.skel-line[data-w="name"] { width: 18%; height: 13px; margin-top: 0; }
-.skel-line[data-w="figure"] { width: 34%; height: 16px; margin-top: 0; }
+.skel-line[data-w="name"] { width: 18%; height: 0.8125rem; margin-top: 0; }
+.skel-line[data-w="figure"] { width: 34%; height: 1rem; margin-top: 0; }
 /* The fold-all button and a collection head's controls, at their real sizes. */
-.skel-line[data-w="fold"] { width: 140px; height: 37px; margin-top: 0; border-radius: var(--r); }
-.skel-line[data-w="acao"] { width: 128px; height: 34px; margin-top: 0; flex-shrink: 0; border-radius: var(--r); }
+.skel-line[data-w="fold"] { width: 8.75rem; height: 2.3125rem; margin-top: 0; border-radius: var(--r); }
+.skel-line[data-w="acao"] { width: 8rem; height: 2.125rem; margin-top: 0; flex-shrink: 0; border-radius: var(--r); }
 /* The Coleções spine bar: short spines at the real bar's 5px + 6px rhythm, one
    height, with room at the right where the count sits. */
 .skel-spines {
-  height: 30px;
-  margin-top: 22px; /* 11px real gap + 11px the placeholder captions are shorter */
-  margin-right: 110px;
-  border-radius: 2px;
-  background: repeating-linear-gradient(to right, var(--surface-2) 0 5px, transparent 5px 11px);
+  height: 1.875rem;
+  margin-top: 1.375rem; /* 11px real gap + 11px the placeholder captions are shorter */
+  margin-right: 6.875rem;
+  border-radius: 0.125rem;
+  background: repeating-linear-gradient(to right, var(--surface-2) 0 0.3125rem, transparent 0.3125rem 0.6875rem);
 }
 /* Spacing measured off the loaded tabs at 1707px, so nothing jumps on arrival:
    HQs 28px from band to cover; Séries closed bands 30px apart; Coleções a 49px
    head, 13px to the strip, and the 19px order number over each cover. */
-.skel-hqs .skel-head { margin-bottom: 28px; }
+.skel-hqs .skel-head { margin-bottom: 1.75rem; }
 .skel-series .skel-head { margin-bottom: 0; }
-.skel-series .group { margin-bottom: 30px; }
-.skel-colecoes .coll-head { min-height: 49px; margin-bottom: 13px; }
-.skel-colecoes .coll-strip > div { padding-top: 19px; }
+.skel-series .group { margin-bottom: 1.875rem; }
+.skel-colecoes .coll-head { min-height: 3.0625rem; margin-bottom: 0.8125rem; }
+.skel-colecoes .coll-strip > div { padding-top: 1.1875rem; }
 
 /* Stands in for the run bar, which is the same height but made of segments the
    loading state has no numbers for yet. */
-.skel-run { height: 14px; border-radius: 3px; background: var(--surface-2); margin-top: 10px; }
+.skel-run { height: 0.875rem; border-radius: 0.1875rem; background: var(--surface-2); margin-top: 0.625rem; }
 
 /* The character band the Séries tab groups under, without the sticky behaviour
    or the character tint: there is no character to take a colour from yet. */
@@ -2809,12 +2812,12 @@ html[data-capa="true"] body { scrollbar-color: auto; }
   /* The real head is 52px since its fold chevron (v57); matching it keeps the
      covers from jumping when the library arrives (v68). */
   box-sizing: border-box;
-  min-height: 52px;
+  min-height: 3.25rem;
   display: flex;
   align-items: center;
-  padding: 8px 12px 7px;
-  margin-inline: -12px;
-  margin-bottom: 20px;
+  padding: 0.5rem 0.75rem 0.4375rem;
+  margin-inline: -0.75rem;
+  margin-bottom: 1.25rem;
   border-radius: var(--r);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -2822,40 +2825,40 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 
 /* Maintenance info, so it stays neutral: the accent is reserved for the actions
    you actually take. It only earns a colour once it is close to the cap. */
-.meter { height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.meter { height: 0.3125rem; border-radius: 0.1875rem; background: var(--surface-2); overflow: hidden; }
 .meter i { display: block; height: 100%; background: var(--text-muted); }
 .meter i[data-over="true"] { background: var(--danger); }
 
-.stats { border: 1px solid var(--border); border-radius: var(--r); padding: 14px; background: var(--surface); margin-bottom: 18px; }
+.stats { border: 1px solid var(--border); border-radius: var(--r); padding: 0.875rem; background: var(--surface); margin-bottom: 1.125rem; }
 
 .divider { height: 1px; background: var(--border); border: none; margin: 0; }
 
 .footer-actions {
   display: flex;
   justify-content: center;
-  gap: 18px;
+  gap: 1.125rem;
   margin-top: var(--hub-gap);
   padding-top: var(--hub-rule-pad);
   border-top: 1px solid var(--border);
 }
-.footer-sep { width: 1px; align-self: stretch; margin: 6px 0; background: var(--border); }
+.footer-sep { width: 1px; align-self: stretch; margin: 0.375rem 0; background: var(--border); }
 /* v118: at 390px the row ran off both edges. The rule turns into the line break, so
    Exportar sits alone and the two that replace the library stay together below it. */
 @media (max-width: 480px) {
-  .footer-actions { flex-wrap: wrap; row-gap: 4px; }
+  .footer-actions { flex-wrap: wrap; row-gap: 0.25rem; }
   .footer-sep { flex-basis: 100%; height: 0; margin: 0; background: none; }
 }
 
 /* v99: import preview, current library vs the file, before anything is replaced. */
 .import-compara { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-.import-compara th, .import-compara td { padding: 6px 0; text-align: right; border-bottom: 1px solid var(--border); }
+.import-compara th, .import-compara td { padding: 0.375rem 0; text-align: right; border-bottom: 1px solid var(--border); }
 .import-compara th:first-child { text-align: left; font-weight: 500; }
 .import-compara thead th { color: var(--text-muted); font-weight: 500; font-size: 0.75rem; }
 .import-compara td { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .import-compara td[data-menos="true"] { color: var(--danger-text); }
 
 .cover-paste-hint {
-  margin: 6px 0 0;
+  margin: 0.375rem 0 0;
   text-align: center;
   font-size: 0.6875rem;
   color: var(--text-muted);
@@ -2870,10 +2873,10 @@ html[data-capa="true"] body { scrollbar-color: auto; }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 0.375rem;
   width: 100%;
-  margin-top: 8px;
-  padding: 7px;
+  margin-top: 0.5rem;
+  padding: 0.4375rem;
   border-radius: var(--r);
   border: 1px dashed var(--border-strong);
   color: var(--text-muted);
@@ -2891,7 +2894,7 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 @media (prefers-reduced-motion: no-preference) {
   .stagger > * {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(0.5rem);
     animation: rise 300ms var(--ease-out) forwards;
     animation-delay: calc(var(--i, 0) * 30ms);
   }
@@ -2943,36 +2946,36 @@ html[data-capa="true"] body { scrollbar-color: auto; }
 
 /* v114: "Lidas até aqui" in a collection's reading order, and the read mark beside the character. */
 /* v120: quiet until pointed at or focused; fourteen of them in the accent outweighed the titles. */
-.ordem-ate { padding: 4px 8px; font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; white-space: nowrap; }
+.ordem-ate { padding: 0.25rem 0.5rem; font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; white-space: nowrap; }
 .ordem-ate:focus-visible { color: var(--accent-text); }
 @media (hover: hover) and (pointer: fine) { .ordem-ate:hover { color: var(--accent-text); } }
-@media (pointer: coarse) { .ordem-ate { min-height: 44px; } }
+@media (pointer: coarse) { .ordem-ate { min-height: 2.75rem; } }
 /* v115: the cover field of the "Novo volume" form, a full-width strip like its neighbours. */
-.capa-nova { display: flex; align-items: center; gap: 8px; }
+.capa-nova { display: flex; align-items: center; gap: 0.5rem; }
 .capa-nova-faixa {
-  flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; cursor: pointer;
-  padding: 8px 12px 8px 8px; min-height: 64px;
-  background: var(--surface-2); border: 1.5px dashed var(--border-strong); border-radius: var(--r);
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 0.75rem; cursor: pointer;
+  padding: 0.5rem 0.75rem 0.5rem 0.5rem; min-height: 4rem;
+  background: var(--surface-2); border: 0.0938rem dashed var(--border-strong); border-radius: var(--r);
   transition: border-color 120ms var(--ease-out);
 }
 .capa-nova-mini {
-  width: 32px; height: 48px; flex-shrink: 0; overflow: hidden; border-radius: 4px;
+  width: 2rem; height: 3rem; flex-shrink: 0; overflow: hidden; border-radius: 0.25rem;
   display: grid; place-items: center; background: var(--surface); color: var(--text-muted);
 }
 .capa-nova-mini img { width: 100%; height: 100%; object-fit: cover; }
-.capa-nova-texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.capa-nova-texto { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
 .capa-nova-texto strong { font-size: 0.8125rem; font-weight: 600; }
 .capa-nova-texto small { font-size: 0.75rem; color: var(--text-muted); }
-.capa-nova-faixa:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.capa-nova-faixa:has(input:focus-visible) { outline: 0.125rem solid var(--accent); outline-offset: 0.125rem; }
 @media (hover: hover) and (pointer: fine) {
   .capa-nova-faixa:hover { border-color: var(--accent); }
   .capa-nova-faixa:hover .capa-nova-mini { color: var(--accent-text); }
 }
 /* v115: status of a read volume in a collection's reading order, to set it back. */
 .ordem-status {
-  flex-shrink: 0; height: 30px; padding: 0 26px 0 8px; font: 500 0.75rem var(--font-body);
-  color: var(--read); background-color: var(--surface-2); background-position: right 7px center; background-size: 12px 12px;
+  flex-shrink: 0; height: 1.875rem; padding: 0 1.625rem 0 0.5rem; font: 500 0.75rem var(--font-body);
+  color: var(--read); background-color: var(--surface-2); background-position: right 0.4375rem center; background-size: 0.75rem 0.75rem;
   border: 1px solid var(--border); border-radius: var(--r-sm);
 }
 .pfiltro:has(> .ordem-status) { flex-shrink: 0; }
-@media (pointer: coarse) { .ordem-status { height: 44px; } }
+@media (pointer: coarse) { .ordem-status { height: 2.75rem; } }

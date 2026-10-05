@@ -429,7 +429,7 @@ if (scenario === "seeded") {
   console.log("  character band: headings tinted " +
     (heads.length > 0 && tinted.length === heads.length ? "PASS (" + heads.length + ")" : "FAIL (" + tinted.length + " of " + heads.length + ")") +
     ", mixed not alpha " + (cssSrcTop.includes("color-mix(in srgb, var(--grp-cor, var(--bg)) 8%, var(--bg))") ? "PASS" : "FAIL") +
-    ", rounded and bled " + (fs.readFileSync("src/styles.css","utf8").includes("margin-inline: -12px;") ? "PASS" : "FAIL") + ", stays opaque " + (!cssSrcTop.includes("var(--grp-cor) 15%, transparent") ? "PASS" : "FAIL"));
+    ", rounded and bled " + (fs.readFileSync("src/styles.css","utf8").includes("margin-inline: -0.75rem;") ? "PASS" : "FAIL") + ", stays opaque " + (!cssSrcTop.includes("var(--grp-cor) 15%, transparent") ? "PASS" : "FAIL"));
 
   // The ink on the primary button is chosen by measured contrast, because at one
   // HSL lightness a yellow and a blue are nowhere near the same brightness. Run
@@ -464,7 +464,7 @@ if (scenario === "seeded") {
   // window's own edge, so the strip is still covered, by a cheaper route.
   const malhaUsaToken = cssSrcTop.includes(".cursor-grid {") &&
     /\.cursor-grid \{[^}]*position: fixed;[^}]*bottom: 0;/.test(cssSrcTop);
-  const desktop = cssSrcTop.includes("--app-pad-b: 48px;");
+  const desktop = cssSrcTop.includes("--app-pad-b: 3rem;");
   console.log("  mobile tab bar room: kept " + (temToken && desktop ? "PASS" : "FAIL") +
     ", app reads it " + (appUsaToken ? "PASS" : "FAIL") +
     ", lattice reaches it " + (malhaUsaToken ? "PASS" : "FAIL"));

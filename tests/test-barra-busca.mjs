@@ -119,7 +119,7 @@ console.log("=== v133: topo do celular numa linha ===");
   check("no PC não há ícone na faixa", !pc.$(".ed-band .ed-dobra"));
   const css = fs.readFileSync("src/styles.css", "utf8");
   check("celular esconde a linha própria do Esconder todas", css.includes(".aba .fold-all { display: none; }"));
-  check("o mapa da série divide a linha no celular", css.includes("grid-template-columns: repeat(auto-fill, minmax(44px, 1fr))"));
+  check("o mapa da série divide a linha no celular", css.includes("grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr))"));
   check("o título do card ganha a largura toda", css.includes(".sheet-head .dialog-titulo { grid-column: 1 / -1; }"));
   check("o Novo mantém o nome no celular (opção B)", !/@media \(max-width: 479px\) \{[^}]*\.novo-rotulo \{ display: none; \}/.test(css) && css.includes("@media (max-width: 359px)"));
 }

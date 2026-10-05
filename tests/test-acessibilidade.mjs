@@ -134,8 +134,8 @@ console.log("=== detalhes ===");
 console.log("=== sem zoom do iOS ===");
 {
   const css = fs.readFileSync("src/styles.css", "utf8");
-  const m = css.match(/@media \(pointer: coarse\) \{ ([^{]*)\{ font-size: 16px; \}/);
-  check("campos de toque têm 16px", !!m && [".input", ".select", ".textarea", ".pfiltro-input", ".search input"].every((s) => m[1].includes(s)), m && m[1]);
+  const m = css.match(/@media \(pointer: coarse\) \{ ([^{]*)\{ font-size: 1rem; \}/);
+  check("campos de toque têm 16px (1rem, raiz 100% no toque)", !!m && [".input", ".select", ".textarea", ".pfiltro-input", ".search input"].every((s) => m[1].includes(s)), m && m[1]);
 }
 
 // v157: the top inset belongs to touch devices; a PC with a fine pointer must not keep a strip above the header.

@@ -2816,3 +2816,21 @@ reversal mid-flight restarts a card with zero velocity, and an ease-in made each
 After: frames over 20 ms 3-6, worst 29-35 ms, the trajectory leaves fast and settles (frame dump checked).
 Method note: `elementsFromPoint` cannot be used to prove the stacking during a drag (the covers drop out of
 hit-testing); the proof is the measured computed z-index of grid, section and head. test-duas-editoras 73.
+
+**v162 (branch v162-escala, NOT the live Longbox: published only as a separate preview artifact) - desktop 90%.**
+The user always browses at 90% browser zoom and wants that as the default on a PC. `zoom: 90%` (v58) broke
+the drag math and an earlier ~v80 multiplier (never in git, git starts at v86) shrank things too much, most
+likely because rem text and px values were scaled twice. This time ONE ruler: `scripts/px-para-rem.mjs`
+(written by Codex) converts every px length of `src/styles.css` to rem (639 converted; kept: 65 `1px`
+hairlines, 16 `0px`, 40 media/@supports conditions, 69 in comments; idempotent, run twice = 0 more), and
+`@media (hover: hover) and (pointer: fine) and (min-width: 1280px) { html { font-size: 90% } }` does the
+scaling on a PC only. Real browser zoom 90% also widens the CSS viewport by 1/0.9, so the grid fits more
+columns; a root font-size reproduces that, `zoom` would not. Checked against REAL Chrome zoom (puppeteer
+deviceScaleFactor 0.9 at 1707x960 CSS px vs mine at 1536x864, the app's own rule neutralised in the real
+run), same DOM, 107 elements on HQs: root 14.4px vs 14.4px, covers 111.6x206.9 in both, mean position error
+1.2 px, max 2.8 px (Colecoes 1.4/2.7, Series 1.0/2.7, volume sheet open 1.1/3.5): the residual is the 1px
+hairlines (not scaled, like zoom floors them) and unscaled px in JSX inline styles / SVG icon sizes (audited
+by Codex, deliberately left). Tests that asserted px now assert rem (16px -> 1rem in test-acessibilidade,
+44px, -12px, 48px). Preview artifact: separate, db copied from the real library (the preview's db came up
+EMPTY, unlike what DESIGN.md says for a second artifact; 270 docs copied with ArtifactData batches), contract
+pinned to 0.2.46. Covers: asset ids belong to the real artifact's store, expect drawn/missing covers there.
