@@ -43,6 +43,22 @@ locks, pre-flight. Not applied: landing-page rules (hero, eyebrow budget, logo w
 
 ## Tokens
 
+### Scale (v162): lengths are rem, a desktop root font-size does the 90%
+
+The user browses at 90% zoom, so on a PC the app renders at 90% by itself:
+`@media (hover: hover) and (pointer: fine) and (min-width: 1280px) { html { font-size: 90%; } }`
+(right after the first `:root`). Phones and touch tablets stay at 100%. Everything scales through ONE
+ruler, so every length in `src/styles.css` is `rem`. **A new length is written in rem** (or run
+`node scripts/px-para-rem.mjs`, idempotent, which converts any `px` left in the file). It leaves alone:
+`1px` hairlines, `0px`, media/@supports conditions (breakpoints are window pixels), comments, urls and
+strings. Do not use `zoom` (v58: it breaks the pointer/transform math of the drags) and never multiply px by
+0.9 on top of this (it scales rem text twice). To change the scale or go back, edit or delete that one
+rule. Not scaled on purpose: hairlines, unitless SVG icon sizes and some inline JSX spacing, the canvas
+lattice (`CursorGrid`, 38px cells) and the hub backdrop drift (300px). Verified against REAL Chrome zoom 90%
+(puppeteer `deviceScaleFactor: 0.9` at W/0.9 CSS px vs the app at W with the rule): mean position error
+0.5-1.4px, max 3.5px on HQs, Séries, Coleções, an open volume sheet and the hub with the GridMotion
+tiles (216.4x272.9 vs 216.3x272.8). With the browser itself at 90% the app would show at 81%.
+
 ### Color
 
 Dark is the designed default; light is the inverted pair under `prefers-color-scheme: light`.
