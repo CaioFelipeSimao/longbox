@@ -52,6 +52,7 @@ const SUITES = [
   { args: ["tests/test-tiles-volume.mjs"], minimo: 6 },
   // Fixed-slot geometry, both scroll axes and chrome-aware page limits.
   { args: ["tests/test-arrasto-seguir.mjs"], minimo: 94 },
+  { args: ["tests/test-mola.mjs"], minimo: 17 },
   { args: ["tests/test-arrastar-colecao.mjs"], minimo: 52 },
   { args: ["tests/test-arrastar-series.mjs"], minimo: 60 },
 ];

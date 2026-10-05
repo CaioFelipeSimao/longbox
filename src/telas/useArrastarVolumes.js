@@ -4,6 +4,7 @@ import { swatchColors } from "../lib/cores";
 import { HOLD_EASE_LINEAR, HOLD_EASE_OUT, prefersReducedMotion } from "../lib/hooks";
 import { ordenarGrupoVolumes } from "../ui/VolumeCard";
 import { slotNoPonto, reordenarParaSlot, pontoNaCaixaExpandida, velocidadeAutoScroll, transformSeguir, lerLimitesDeRolagemDaPagina } from "../lib/arrastoSeguir";
+import { passo2D, emRepouso } from "../lib/mola";
 
 // Below the chrome: .topbar/.tabbar 20, .ed-band 15, HQs filters 12.
 // Above static sibling groups and the .aba (0)/content lattice (1) layers.
@@ -18,8 +19,6 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   // on a tablet. 450ms, raised from 350: the user found 350 too easy to trigger
   // by accident while just scrolling or tapping a cover.
   const HOLD_MS = 450;
-  // Neighbours glide for 260ms; target decisions never wait for their animation.
-  const FLIP_MS = 260;
   const SETTLE_MS = 200;
   // How long the fill takes to let go once the pointer comes up. Matches the
   // old CSS transition's own release timing, kept here now that release is
@@ -51,8 +50,9 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   }, []);
   const cardNodesRef = useRef(new Map()); // volume id -> its .vol DOM node, for FLIP
   const flipSnapshotRef = useRef(null); // rects captured just before a live reorder
-  const flipCleanupRef = useRef(new Map()); // volume id -> fallback timer clearing its transform
-  const flipVersionRef = useRef(new Map()); // invalidates superseded FLIP rAF callbacks
+  const molasRef = useRef(new Map()); // volume id -> visual offset and velocity
+  const rafMolaRef = useRef(0);
+  const lastMolaRef = useRef(0);
   const followRafRef = useRef(0);
   const settleRef = useRef(null);
   const layersRef = useRef([]);
@@ -224,17 +224,35 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
     return rects;
   }
 
-  // FLIP: the previous render's rects were captured synchronously before this
-  // update: invert every card straight to where it used to be (no transition),
-  // force layout, then release into a transition to its real spot. Only
-  // transform animates, per the rule that padding/width/height touch layout.
-  // The release is scheduled on rAF, which is the usual way to guarantee the
-  // inverted state actually painted first — but a rAF callback that never gets
-  // a turn (a backgrounded tab, a dropped frame) would leave the transform
-  // stuck forever, and the next flip would then invert from that already-offset
-  // position instead of a clean one. flipCleanupRef holds one fallback timer per
-  // card, past FLIP_MS, that force-clears it regardless; a healthy rAF beats it
-  // to the punch every time, so this only ever fires as real insurance.
+  // One clock drives every neighbour, including after pointerup.
+  function frameMola() {
+    // performance.now(), not the rAF timestamp: that one marks the START of the frame and can
+    // be earlier than the instant the spring was created, giving a negative first dt (the
+    // spring then stepped backwards and invented thousands of px/s). Never below zero either.
+    const now = performance.now();
+    const dt = Math.max(0, Math.min((now - lastMolaRef.current) / 1000, 1 / 30));
+    lastMolaRef.current = now;
+    const reduced = prefersReducedMotion();
+    molasRef.current.forEach((mola, id) => {
+      const estado = passo2D(mola, dt);
+      Object.assign(mola, estado);
+      if (reduced || (emRepouso({ x: mola.ox, v: mola.vx }) && emRepouso({ x: mola.oy, v: mola.vy }))) {
+        mola.el.style.transform = "";
+        mola.el.style.transition = "";
+        molasRef.current.delete(id);
+      } else {
+        mola.el.style.transform = `translate3d(${mola.ox}px, ${mola.oy}px, 0)`;
+      }
+    });
+    if (molasRef.current.size) rafMolaRef.current = requestAnimationFrame(frameMola);
+    else {
+      cancelAnimationFrame(rafMolaRef.current);
+      rafMolaRef.current = 0;
+    }
+  }
+
+  // FLIP rebases visual offsets after React moves the keyed nodes. Retargets
+  // keep velocity, so a neighbour never stops and relaunches between slots.
   useLayoutEffect(() => {
     const before = flipSnapshotRef.current;
     flipSnapshotRef.current = null;
@@ -248,35 +266,22 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
         if (id === draggedId) return; // the picked-up card is NEVER part of FLIP
         const el = cardNodesRef.current.get(id);
         if (!el) return;
-        clearTimeout(flipCleanupRef.current.get(id));
-        const version = {};
-        flipVersionRef.current.set(id, version);
         el.style.transition = "none";
         el.style.transform = "";
-        cards.push({ id, el, prevRect, version });
+        cards.push({ id, el, prevRect });
       });
       cards.forEach((card) => { card.now = card.el.getBoundingClientRect(); });
-      const releases = [];
-      cards.forEach(({ id, el, prevRect, now, version }) => {
+      cards.forEach(({ id, el, prevRect, now }) => {
         const dx = prevRect.left - now.left;
         const dy = prevRect.top - now.top;
-        if (!dx && !dy) { el.style.transition = ""; el.style.transform = ""; return; }
-        el.style.transform = "translate(" + dx + "px," + dy + "px)";
-        const liberar = () => {
-          if (flipVersionRef.current.get(id) !== version) return;
-          if (dragRef.current.active && dragRef.current.id === id) return;
-          // Retargeting mid-flight needs an ease-out start to avoid stopping at each new target.
-          el.style.transition = "transform " + FLIP_MS + "ms var(--ease-out)";
-          el.style.transform = "";
-        };
-        releases.push({ id, liberar });
+        const anterior = molasRef.current.get(id);
+        if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01 && !anterior) { el.style.transition = ""; return; }
+        molasRef.current.set(id, { el, ox: dx, oy: dy, vx: anterior?.vx ?? 0, vy: anterior?.vy ?? 0 });
+        el.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
       });
-      if (releases.length) {
-        document.body.getBoundingClientRect(); // one reflow commits every inverted transform
-        releases.forEach(({ id, liberar }) => {
-          requestAnimationFrame(liberar);
-          flipCleanupRef.current.set(id, setTimeout(liberar, FLIP_MS + 150));
-        });
+      if (molasRef.current.size && !rafMolaRef.current) {
+        lastMolaRef.current = performance.now();
+        rafMolaRef.current = requestAnimationFrame(frameMola);
       }
     }
     if (info.active) {
@@ -409,8 +414,7 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
         const node = cardNodesRef.current.get(id);
         if (node) { node.style.animation = "none"; node.style.opacity = "1"; }
       });
-      clearTimeout(flipCleanupRef.current.get(info.id));
-      flipVersionRef.current.delete(info.id);
+      molasRef.current.delete(info.id); // the pointer takes ownership of this card
       target.style.transition = "none";
       target.style.transform = "none";
       target.style.transformOrigin = `${info.grabOffset.x}px ${info.grabOffset.y}px`;
@@ -503,8 +507,13 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   useEffect(() => () => {
     clearTimeout(dragRef.current.timer);
     clearTimeout(settleRef.current?.timer);
-    flipCleanupRef.current.forEach((timer) => clearTimeout(timer));
-    flipVersionRef.current.clear();
+    cancelAnimationFrame(rafMolaRef.current);
+    rafMolaRef.current = 0;
+    molasRef.current.forEach(({ el }) => {
+      el.style.transform = "";
+      el.style.transition = "";
+    });
+    molasRef.current.clear();
     cancelAnimationFrame(followRafRef.current);
     cancelAnimationFrame(holdMotionRef.current.raf);
     restaurarCamadas();

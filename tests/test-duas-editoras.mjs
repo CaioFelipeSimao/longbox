@@ -226,7 +226,7 @@ check("drag mantém o mesmo nó DOM ao trocar de slot", drag.cards()[1] === prim
 check("drag segue o ponto de pega no slot atual", primeiro.style.transform === "translate(20px, 0px) scale(1.06)", primeiro.style.transform);
 check("drag renova captura após a mudança de slot", captures >= 3, captures);
 check("drag impede o movimento nativo do ponteiro", moveAllowed === false);
-check("drag não aplica FLIP ao card levantado", primeiro.style.transition === "none" && outro.style.transition === "transform 260ms var(--ease-out)");
+check("drag não aplica FLIP ao card levantado; o vizinho anda por mola (v163)", primeiro.style.transition === "none" && outro.style.transition === "none" && outro.style.transform.startsWith("translate3d"), outro.style.transition + " | " + outro.style.transform);
 pointer("pointermove", 40); await sleep(100);
 check("drag aceita novo alvo durante os 260ms de FLIP", drag.cards()[0] === primeiro);
 pointer("pointermove", 160); await sleep(100);

@@ -2834,3 +2834,19 @@ by Codex, deliberately left). Tests that asserted px now assert rem (16px -> 1re
 44px, -12px, 48px). Preview artifact: separate, db copied from the real library (the preview's db came up
 EMPTY, unlike what DESIGN.md says for a second artifact; 270 docs copied with ArtifactData batches), contract
 pinned to 0.2.46. Covers: asset ids belong to the real artifact's store, expect drawn/missing covers there.
+
+**v163 HQs drag: spring glide that keeps velocity.** The user (phone) found v161's glide still abrupt,
+mostly when a card changes row (it crosses the row diagonally) and when the dragged cover is flipped between
+two slots: a CSS transition restarts a mid-flight neighbour with ZERO velocity. The neighbours now ride a
+critically damped spring (`src/lib/mola.js`, `OMEGA = 20` rad/s, exact analytic step so any dt is stable,
+rest at < 0.3 px and < 8 px/s). `useArrastarVolumes` keeps `molasRef` (id -> visual offset + velocity); on every
+reorder it rebases the offset to the new natural slot (position continuity from the rect captured before the
+render) and KEEPS the velocity (velocity continuity); one shared rAF loop writes `translate3d` and lets the
+springs settle even after pointerup. Codex wrote it from a brief; its first version had a real bug found in a
+temporary log: it used the rAF timestamp (frame START) against `performance.now()` taken in the layout effect,
+so the first dt was NEGATIVE (-25 ms), the spring stepped backwards and invented -4600 px/s (the card jumped
+50 px forward and back). Fixed with `performance.now()` in the frame, dt clamped to [0, 1/30], and
+`passoMola` itself ignores dt < 0 (test). Measured in headless Chrome (390px phone viewport, CPU 4x, 14 covers,
+dragged cover flipped slot 1 <-> 9): max frame-to-frame acceleration 33-36 px -> 8.5-16 px, max step 33-36 ->
+17-25 px, direction reversals 80 -> 48-66. Feel on the iPhone is the user's to confirm; knob = OMEGA.
+tests: test-mola (17), test-duas-editoras now asserts the neighbour has `transition: none` + `translate3d`.
