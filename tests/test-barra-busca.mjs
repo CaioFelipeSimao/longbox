@@ -128,8 +128,8 @@ console.log("=== v130: o vidro fica numa camada vazia ===");
 {
   const css = fs.readFileSync("src/styles.css", "utf8");
   const regra = (sel) => { const i = css.indexOf(sel + " {"); return i < 0 ? "" : css.slice(i, css.indexOf("}", i)); };
-  const caixa = regra(".tabbar-capsula,\n.search-barra .search-field");
-  const vidro = regra(".tabbar-capsula::before,\n.search-barra .search-field::before");
+  const caixa = regra(".tabbar-capsula,\n.search-barra .search-field,\n.tabbar-carrinho");
+  const vidro = regra(".tabbar-capsula::before,\n.search-barra .search-field::before,\n.tabbar-carrinho::before");
   check("o desfoque está na camada de trás", /backdrop-filter: blur/.test(vidro) && /z-index: -1/.test(vidro), vidro.slice(0, 80));
   check("e não na caixa que segura os botões", !!caixa && !/backdrop-filter/.test(caixa) && !/overflow: hidden/.test(regra(".tabbar-capsula")), caixa.slice(0, 80));
 }

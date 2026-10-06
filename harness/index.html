@@ -57,6 +57,19 @@
   docs.set("library/volumes", { items: lib.volumes });
   docs.set("library/colecoes", { items: lib.colecoes });
   docs.set("library/series", { items: lib.series });
+  // v165: wish list samples (Nightwing collection 15-17, a second collection, loose ones).
+  var desejos = [], dcol = [];
+  function d(id, titulo, personagem, editora, tipo) { desejos.push({ id: id, titulo: titulo, personagem: personagem, editora: editora, tipo: tipo || "Encadernado (TPB)", ano: "2024", notas: id === "dw15" ? "Amazon R$ 89,90, promo até sexta" : "", edicoesColetadasIds: [] }); }
+  d("dw15", "Nightwing vol. 15", "Nightwing", "DC Comics"); d("dw16", "Nightwing vol. 16", "Nightwing", "DC Comics"); d("dw17", "Nightwing vol. 17", "Nightwing", "DC Comics");
+  d("dn1", "Nightwing: Rebirth Omnibus", "Nightwing", "DC Comics", "Omnibus"); d("dn2", "Nightwing by Tom Taylor Deluxe", "Nightwing", "DC Comics", "Hardcover");
+  d("dx1", "Batman Inc. vol. 1", "Batman", "DC Comics"); d("dx2", "Batman Inc. vol. 2", "Batman", "DC Comics"); d("db1", "Batman: Hush Absolute", "Batman", "DC Comics", "Absolute Edition");
+  d("dm1", "Demolidor: Born Again Omnibus", "Demolidor", "Marvel", "Omnibus");
+  dcol.push({ id: "dc1", nome: "Asa Noturna: a saga", colecaoId: "c1", membros: ["dw15", "dw16", "dw17"], ordem: 0 });
+  d("dg1", "Grayson vol. 1", "Nightwing", "DC Comics"); d("dg2", "Grayson vol. 2", "Nightwing", "DC Comics");
+  dcol.push({ id: "dc3", nome: "Grayson", corBarra: { h: 140, s: 50, l: 45 }, descricao: "", membros: ["dg1", "dg2"], ordem: 1 });
+  dcol.push({ id: "dc2", nome: "Batman Incorporated", corBarra: { h: 210, s: 70, l: 50 }, descricao: "", membros: ["dx1", "dx2"], ordem: 0 });
+  docs.set("library/desejos", { items: desejos });
+  docs.set("library/desejosColecoes", { items: dcol });
   docs.set("library/cores", { mapa: {} });
   docs.set("library/editoras", { itens: lib.editoras, selecionada: null });
   var edShards = new Map();

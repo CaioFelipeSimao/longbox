@@ -1849,7 +1849,8 @@ export function App() {
 
           {/* v129: on a phone the search sits in the floating tab bar; the spacer
               keeps the header's buttons on the right. */}
-          {cartButton}
+          {/* v165: on a phone the cart is a glass circle in the tab bar (no room up here). */}
+          {!celular && cartButton}
           {celular ? <div style={{ flex: 1 }} /> : (
             <SearchBox query={query} setQuery={setQuery} sugestoes={sugestoes} onPick={escolherSugestao} />
           )}
@@ -2131,6 +2132,11 @@ export function App() {
             onPick={escolherSugestao}
           />
         )}
+        {celular && !buscaNaBarra && (
+          <button className="tabbar-carrinho" onClick={() => setDesejosAberto((s) => !s)} aria-label={"Lista de desejos, " + lib.desejos.length + " itens"} aria-expanded={desejosAberto}>
+            <ShoppingCart size={20} />{lib.desejos.length > 0 && <span className="btn-badge" aria-hidden="true">{lib.desejos.length}</span>}
+          </button>
+        )}
       </nav>
       </div>
 
@@ -2218,7 +2224,7 @@ export function App() {
         abrirDesejo={(id) => abrirVolume(id, { tipo: "desejo" })}
         novoDesejo={() => openNovoVolume(true)}
         onClose={() => setDesejosAberto(false)}
-        cartButton={cartButton}
+        cartButton={celular ? null : cartButton}
       />}
       {/* Outside both layers: neither inert under the cover nor gone with it. */}
       <input

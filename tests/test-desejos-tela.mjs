@@ -119,7 +119,7 @@ await m.click(m.root.querySelector(".toast button"));
 check("Desfazer exclusão restaura desejo e ficha", !!m.lista().querySelector('[data-vid="' + n4?.id + '"]') && m.sheet()?.querySelector(".sheet-head .t-display")?.textContent === n4?.titulo);
 check("textos da lista e ficha não usam travessão nem meia-risca", !/[\u2013\u2014]/.test(m.lista().textContent + m.sheet()?.textContent));
 const phone = await montar(true, true);
-check("no celular o carrinho vem antes do espaçador", phone.cart()?.nextElementSibling?.style.flexGrow === "1");
+check("no celular o carrinho fica na barra de baixo, não no topo", !phone.cart() && !!phone.root.querySelector(".tabbar .tabbar-carrinho"));
 check("sem erros de renderização", [vazio, m, phone].every((x) => !x.erros.length));
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);

@@ -574,7 +574,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    shadow, and z-index 0 makes it a stacking context so the -1 layer stays inside
    it; no overflow clip on the box either, which WebKit also turns into a layer. */
 .tabbar-capsula,
-.search-barra .search-field {
+.search-barra .search-field,
+.tabbar-carrinho {
   position: relative;
   z-index: 0;
   height: var(--vidro-h);
@@ -583,7 +584,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   box-shadow: var(--vidro-sombra);
 }
 .tabbar-capsula::before,
-.search-barra .search-field::before {
+.search-barra .search-field::before,
+.tabbar-carrinho::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -598,7 +600,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 /* v131: solid for 0.7s after a tab switch, while the Claude iOS app would draw the
    glass in stale tiles over the new tab's covers; then it fades back to glass. */
 .tabbar[data-trocando="true"] .tabbar-capsula::before,
-.tabbar[data-trocando="true"] .search-barra .search-field::before {
+.tabbar[data-trocando="true"] .search-barra .search-field::before,
+.tabbar[data-trocando="true"] .tabbar-carrinho::before {
   /* As opaque as the probe bar that tested clean (0.96): unblurred covers must not show through. */
   background: color-mix(in srgb, var(--bg) 96%, transparent);
   backdrop-filter: none;
@@ -653,6 +656,17 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   color: var(--accent-text);
 }
 .tabbar[data-buscando="true"] .tabbar-capsula { flex-basis: var(--vidro-h); }
+/* v165: the wish-list cart, a second glass circle; gone while the search is open. */
+.tabbar-carrinho {
+  flex: 0 0 var(--vidro-h);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--text);
+  background: none;
+}
+.tabbar-carrinho .btn-badge { top: 0.375rem; right: 0.375rem; }
+.tabbar[data-buscando="false"]:has(.tabbar-carrinho) .tabbar-capsula { flex-basis: calc(100% - 2 * var(--vidro-h) - 1.25rem); }
 .tabbar[data-buscando="true"] .tabbar-capsula > button:not(.tabbar-voltar),
 .tabbar[data-buscando="true"] .tabbar-pill { opacity: 0; pointer-events: none; }
 @media (min-width: 768px) { .tabbar { display: none; } }
@@ -1833,6 +1847,10 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .app .desejos-capa > .topbar { background: var(--bg); }
 .desejos-capa > .topbar::before { height: env(safe-area-inset-top, 0rem); }
 .btn-desejos { position: relative; flex-shrink: 0; }
+/* v165: on a PC the cart sits just left of the search, which normally takes the
+   auto margin; the cart takes it instead and the search follows at the gap. */
+.topbar-inner > .btn-desejos:has(+ .search) { margin-left: auto; }
+.topbar-inner > .btn-desejos + .search { margin-left: 0; }
 .desejos-topo { flex-wrap: wrap; height: auto; min-height: var(--topbar-h); }
 .desejos-topo h1 { margin: 0; font-size: 1.125rem; }
 .desejos-busca { flex: 1; min-width: 8rem; width: auto; }
@@ -1846,18 +1864,22 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .desejo-colecao-head { border-left: 0.1875rem solid var(--desejo-colecao-cor, var(--border-strong)); padding-left: 0.75rem; user-select: none; -webkit-user-select: none; }
 .desejo-colecao-head h3 { margin: 0; min-width: 0; }
 .desejo-colecao-head > span { flex-shrink: 0; }
-.desejos-colecoes[data-recolhido="true"] .desejo-colecao { border-radius: var(--r); background: var(--surface); }
-.desejos-colecoes[data-recolhido="true"] .desejo-colecao-head { min-height: 3rem; margin: 0; padding: 0.625rem 0.75rem; }
-.desejos-colecoes[data-recolhido="true"] h3 { font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The ghost lives on <body>, outside the list, so it repeats the collapsed-row look. */
+.desejos-colecoes[data-recolhido="true"] .desejo-colecao, .desejo-colecao.desejo-colecao-ghost { border-radius: var(--r); background: var(--surface); }
+.desejos-colecoes[data-recolhido="true"] .desejo-colecao-head, .desejo-colecao-ghost .desejo-colecao-head { min-height: 3rem; margin: 0; padding: 0.625rem 0.75rem; }
+.desejos-colecoes[data-recolhido="true"] h3, .desejo-colecao-ghost h3 { font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .desejo-comprar { width: 100%; }
 .desejo-notas { padding: 0.875rem; border: 0.0625rem solid var(--ed-borda); border-radius: var(--r); background: var(--surface); white-space: pre-wrap; }
 @media (hover: hover) and (pointer: fine) {
   .desejos-capa { padding-top: 0; }
 }
 @media (max-width: 47.9375rem) {
-  .desejos-topo h1 { flex: 1; flex-basis: calc(100% - 6.5rem); font-size: 1rem; }
-  .desejos-busca, .desejos-topo > .btn-filtros, .desejos-topo > .btn-primary { order: 2; }
-  .desejos-dobra { order: 2; }
+  /* Two rows: back, title and "+" on top; search, filters and fold below. */
+  .desejos-topo h1 { flex: 1; min-width: 0; font-size: 1rem; }
+  .desejos-topo > .btn-primary { padding-inline: 0.75rem; min-width: 2.75rem; justify-content: center; }
+  .desejos-topo > .btn-primary .novo-rotulo { display: none; }
+  .desejos-busca { flex-basis: calc(100% - 6.75rem); }
+  .desejos-busca, .desejos-topo > .btn-filtros, .desejos-dobra { order: 2; }
   .desejos-dobra { min-width: 2.5rem; padding-inline: 0.5rem; }
   .desejos-dobra span { display: none; }
   .desejos-filtros > .pfiltro { flex-basis: 100%; }
