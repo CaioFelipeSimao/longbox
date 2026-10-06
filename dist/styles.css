@@ -1862,6 +1862,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .desejos-editora + .desejos-editora { margin-top: 2.5rem; }
 .desejos-editora-head { display: flex; align-items: center; gap: 0.75rem; border-bottom: 0.125rem solid var(--desejo-editora-cor, var(--border-strong)); padding-bottom: 0.75rem; margin-bottom: 1.25rem; color: var(--desejo-editora-cor, var(--text)); }
 .desejos-editora-head h2 { margin: 0; }
+.desejos-editora-head .desejos-dobra-editora { flex-shrink: 0; color: var(--text-muted, inherit); }
 .desejos-colecoes { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
 .desejo-colecao { margin: 0; }
 .desejo-colecao-head { border-left: 0.1875rem solid var(--desejo-colecao-cor, var(--border-strong)); padding-left: 0.75rem; user-select: none; -webkit-user-select: none; }
@@ -1877,14 +1878,15 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   .desejos-capa { padding-top: 0; }
 }
 @media (max-width: 47.9375rem) {
-  /* Two rows: back, title and the tabs' fold icon on top; search, filters and "+" below. */
-  .desejos-topo h1 { flex: 1; min-width: 0; font-size: 1rem; }
+  /* Two rows: back, title and the tabs' fold icon beside it on top; search, filters and "+" below. */
+  .desejos-topo h1 { flex: 0 1 auto; min-width: 0; font-size: 1rem; }
   .desejos-topo > .btn-primary { padding-inline: 0.75rem; min-width: 2.75rem; justify-content: center; }
   .desejos-topo > .btn-primary .novo-rotulo { display: none; }
   .desejos-busca { flex-basis: calc(100% - 6.75rem); }
   .desejos-busca, .desejos-topo > .btn-filtros, .desejos-topo > .btn-primary { order: 2; }
   .desejos-dobra { display: none; }
-  .desejos-dobra-cel { display: inline-flex; flex-shrink: 0; }
+  /* Right after the count (user's choice), the rest of the row left empty. */
+  .desejos-dobra-cel { display: inline-flex; flex-shrink: 0; margin-right: auto; }
   .desejos-filtros > .pfiltro { flex-basis: 100%; }
 }
 /* The publisher gradient belongs to the app's own header, never the hub's. */

@@ -82,9 +82,17 @@ export const TelaDesejos = forwardRef(function TelaDesejos({ lib, persist, fixad
         </div>}
         {!grupos.length ? <EmptyState icon={ShoppingCart} title={!lib.desejos.length ? "Nada na lista ainda" : "Nada encontrado na lista"}>
           {!lib.desejos.length ? <button className="btn btn-primary" onClick={novoDesejo}><Plus size={15} />Novo desejo</button> : "Tente outro termo de busca ou limpe os filtros."}
-        </EmptyState> : grupos.map((g) => <section className="desejos-editora" key={g.editora}>
+        </EmptyState> : grupos.map((g) => {
+          // v165: each publisher folds its own characters; the header button folds them all.
+          const daEditora = g.personagens.map((p) => chaveGrupo(g.editora, p.nome));
+          const editoraAberta = daEditora.some((k) => !fechados.has(k));
+          return <section className="desejos-editora" key={g.editora}>
           <div className="desejos-editora-head" style={{ "--desejo-editora-cor": corEditora(lib, g.editora) }}>
             <EditoraLogo editora={lib.editoras.find((e) => e.nome.toLowerCase() === g.editora.toLowerCase())} size="2rem" /><h2 className="t-display">{g.editora}</h2>
+            {!buscando && <button type="button" className="btn-icon desejos-dobra-editora" aria-label={(editoraAberta ? "Esconder" : "Mostrar") + " os personagens de " + g.editora}
+              onClick={() => setFechados((s) => { const next = new Set(s); daEditora.forEach((k) => (editoraAberta ? next.add(k) : next.delete(k))); return next; })}>
+              {editoraAberta ? <ChevronsDownUp size={18} /> : <ChevronsUpDown size={18} />}
+            </button>}
           </div>
           {g.personagens.map((p) => {
             const chave = chaveGrupo(g.editora, p.nome);
@@ -93,7 +101,8 @@ export const TelaDesejos = forwardRef(function TelaDesejos({ lib, persist, fixad
               {(buscando || !fechados.has(chave)) && <GrupoDesejos lib={lib} persist={persist} grupo={p} visiveis={visiveis} reordenavel={!buscando && !ativos} abrirDesejo={abrirDesejo} />}
             </section>;
           })}
-        </section>)}
+        </section>;
+        })}
       </main>
     </div>
   );
