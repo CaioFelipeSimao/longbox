@@ -2135,6 +2135,10 @@ button.retrato-linha { cursor: pointer; }
 /* The body ghost paints the picked-up card; its real box remains in the row. */
 .coll-strip .vol[data-drag-hole="true"] { visibility: hidden; }
 .vol[data-drag-ghost="true"] { visibility: visible; cursor: grabbing; }
+
+/* Collapsed wish-list collection rows: lift with a shadow only. */
+.desejo-colecao-hole { visibility: hidden; }
+.desejo-colecao-ghost { visibility: visible; cursor: grabbing; box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.18); }
 .coll-strip > * { scroll-snap-align: start; flex: 0 0 6.75rem; }
 @media (min-width: 640px) { .coll-strip > * { flex-basis: 7.75rem; } }
 

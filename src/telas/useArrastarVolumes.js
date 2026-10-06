@@ -12,7 +12,8 @@ const DRAG_Z_INDEX = 14;
 // Long-press to arm, then drag an HQ within its own personagem group (v30-v49).
 // Everything the gesture needs lives here; App only wires the returned handlers
 // into the cards and reads dragVisual to draw the live order.
-export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
+export function useArrastarVolumes(lib, persist, volumesDaFaixa, chave = "volumes") {
+  volumesDaFaixa = volumesDaFaixa ?? lib[chave];
   // A long press tells a hold apart from a tap or the start of a scroll. Pointer
   // events cover mouse and touch alike, which native HTML5 drag and drop does not
   // on a tablet. 450ms, raised from 350: the user found 350 too easy to trigger
@@ -339,7 +340,7 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa = lib.volumes) {
   function persistirOrdemGrupo(ids) {
     // ordem is shared between bands; never persist a projected publisher/character.
     const ordens = new Map(ids.map((id, i) => [id, i]));
-    persist({ ...lib, volumes: lib.volumes.map((v) =>
+    persist({ ...lib, [chave]: lib[chave].map((v) =>
       ordens.has(v.id) ? { ...v, ordem: ordens.get(v.id) } : v) });
   }
 

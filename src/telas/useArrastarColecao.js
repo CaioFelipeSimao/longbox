@@ -6,14 +6,14 @@ import { pontoNaCaixaExpandida, pontoNoConteudo, rectNoConteudo, reordenarParaSl
 
 // Each occurrence has its original member index as its identity, including
 // duplicate volume ids. Only this collection's membros is ever committed.
-export function useArrastarColecao(colecao, lib, persist) {
+export function useArrastarColecao(colecao, lib, persist, chave = "colecoes") {
   const [visual, setVisual] = useState(null);
   const dragRef = useRef(null), settlingRef = useRef(null);
   const nodes = useRef(new Map()), flipRef = useRef(null), flips = useRef(new Map());
   const raf = useRef(0), hold = useRef({ raf: 0, p: 0, el: null });
   const suppressClickRef = useRef(false);
-  const latest = useRef({ colecao, lib, persist });
-  latest.current = { colecao, lib, persist };
+  const latest = useRef({ colecao, lib, persist, chave });
+  latest.current = { colecao, lib, persist, chave };
 
   function registrar(indice, el) {
     if (el) nodes.current.set(indice, el); else nodes.current.delete(indice);
@@ -180,7 +180,7 @@ export function useArrastarColecao(colecao, lib, persist) {
       const commit = e?.type === "pointerup" && unchanged && info.strip.isConnected &&
         pontoNaCaixaExpandida(info.pointer, info.strip.getBoundingClientRect());
       if (!commit) { flipRef.current = snapshot(); info.order = info.originalOrder.slice(); }
-      if (commit) current.persist({ ...current.lib, colecoes: current.lib.colecoes.map((c) =>
+      if (commit) current.persist({ ...current.lib, [current.chave]: current.lib[current.chave].map((c) =>
         c.id === current.colecao.id ? { ...c, membros: info.order.map((i) => info.membros[i]) } : c) });
       suppressClickRef.current = true;
       settlingRef.current = { ...info, started: false };
