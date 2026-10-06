@@ -2865,3 +2865,27 @@ change their problem (measured too: spring alone -6% travel). So v163's `src/lib
 removed (tag v163 keeps them). Finger-path measurement (390px viewport, CPU 4x, continuous 10px steps every
 16 ms through intermediate slots and out of the group's box and back): order changes 22 -> 12, neighbours' total
 travel ~13700 -> ~6800 px. tests: test-duas-editoras 75 (quick pass changes nothing, release applies at once).
+
+**v165 Lista de desejos (wish list).** Designed with the user on 2026-10-06 (spec
+docs/superpowers/specs/2026-10-06-lista-de-desejos-design.md, plan docs/superpowers/plans/2026-10-06-lista-de-desejos.md).
+A cart, not a tab: phone = a third glass circle in the floating tab bar (no room in the top bar: measured 46px
+over at 393px; user chose it over folding "Novo volume"); PC = just left of the search; hub = left of "Novo
+volume"; key 4. The list is a fixed layer (z 35) over the current tab, grouped by publisher (ignores the band),
+then by character (GroupHead, own 3 pins in library/fixadosDesejos), loose covers first (HQs drag, `chave`
+"desejos"), then the character's wish collections (strip numbered n+i+1 after the linked acervo collection, so
+A Saga do Flash shows 18-21). Long-press on a collection title collapses that character's collections into
+rows and drags one (useArrastarColecoesDesejo, shadow only, no tilt/breath). Search (title + collection name),
+filters formato/personagem/editora, fold all (PC button; phone icon right after the count) plus one fold per
+publisher heading (user asked for both). A wish is a volume without status, `notas` for shop/price. "Comprei"
+(sheet, undo, no confirm) moves it to library/volumes as nao_lida and into the linked collection at n+i, or
+creates the acervo collection from the wish one and links it; an emptied wish collection disappears. Data:
+library/desejos + library/desejosColecoes in DOCS (merge, live sync, echo), deleteSerie/deleteEdicao clean
+wishes, EMPTY_LIB has both (its absence broke "Zerar tudo" + undo, caught by test-desfazer). Ownership still
+reads library/volumes only. Known corner: buying a collection's volumes out of order appends (fix by dragging
+in Coleções). Fixes after the user's iPhone preview: character heads stuck under the list's own header
+(measured height, no publisher strip), the strip-drag ghost was drawn under the z-35 layer (criarGhost lifts it
+to 40 inside .desejos-capa), ghost of a collapsed row styled as a row, phone header two rows (back, title, fold /
+search, filters, +). Codex (gpt-6.1-sol high) wrote tasks 1-4 from briefs; Claude built, fixed, verified in
+headless Chrome and the user checked a preview artifact (KLSkJe9wExoWs7xRhGEFq8, theirs to delete). Bundle
+ceiling raised 450 -> 500 KB (production is ~464 KB now). tests: test-desejos-dados 24, test-desejos 26,
+test-arrastar-colecoes-desejo 48, test-desejos-tela, test-sincronia 92.

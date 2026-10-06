@@ -309,6 +309,9 @@ per artifact, bodies must be objects (not arrays) at the top level.
 library/volumes    {items: [...]}    all volumes
 library/colecoes   {items: [...]}    all collections
 library/fixados    {personagens: [...]}  up to 3 pinned characters, first on HQs and Séries (v141; live via onSnapshot since v142)
+library/desejos    {items: [...]}    wish list volumes: a volume without status (v165)
+library/desejosColecoes {items: [...]}  wish collections {id, nome, corBarra?, descricao, membros, colecaoId?, ordem} (v165)
+library/fixadosDesejos {personagens: [...]}  the wish list's own 3 pins, like library/fixados (v165)
 library/series     {items: [...]}    series metadata only, small
 library/cores      {mapa: {...}}     character name -> colour spec
 library/editoras   {itens, selecionada}  publishers, and the last one browsed
@@ -670,6 +673,29 @@ device's and show "atualizada em outro aparelho" after save after save.
 **The hold fill's wave** is only drawn while `--hold-p` > 0 (v159); before a press `--hold-h` does not
 exist and the default band would sit inside a tall card. **Image Comics** (white) sets `data-ed-neutro` on
 the header and band: light buttons with dark ink in dark mode, graphite with white ink in light mode.
+
+## Wish list (v165)
+
+Spec: `docs/superpowers/specs/2026-10-06-lista-de-desejos-design.md`. What holds now:
+
+- **Never owned.** Wishes live in their own documents; every ownership count (tiles, stats, hub, série
+  progress) reads `library/volumes` only. A série created for a wish shows 0/N on Séries, which the user accepts.
+- **Way in.** Cart icon with a count badge: PC left of the search (it takes the search's auto margin), phone a
+  third glass circle in the tab bar (hidden while the search is open; the top bar had no room), hub left of
+  "Novo volume". Key 4 toggles; while open, Q folds and N makes a wish; Esc closes a sheet first, then the list.
+- **Screen** (`telas/TelaDesejos.jsx`): fixed layer at z-index 35, own scroll and header. Publisher headings
+  (the band is ignored), each with its own fold; character groups below them stick under the list's header
+  (`--desejos-topo-h`, measured, since there is no publisher strip). PC: "Esconder todas" in the header; phone:
+  two header rows (back, title, fold icon / search, filters, "+").
+- **Per character:** loose covers (the HQs drag, `useArrastarVolumes(..., "desejos")`), then wish collections:
+  strip numbered `n + i + 1` after the linked acervo collection (`lib/desejos.js numeroNaFaixa`), strip drag
+  as on Coleções, and a long-press on a collection title collapses the character's collections to rows and
+  reorders them (`useArrastarColecoesDesejo`; shadow only, never tilt, shake or breathe).
+- **Ghosts over the layer:** `criarGhost` lifts its ghost to z-index 40 inside `.desejos-capa`; a body ghost at
+  the default 14 is invisible under the list.
+- **Comprei** (`comprarDesejo`): one mutation, undoable from the toast: wish -> volume `nao_lida`; into the
+  linked collection at `n + i` (capped at the end, so an out-of-order purchase appends) or into a new acervo
+  collection copied from the wish one, which then links to it; an emptied wish collection is removed.
 
 ## Decided not to build
 
