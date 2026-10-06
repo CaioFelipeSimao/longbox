@@ -20,7 +20,7 @@ import {
 } from "../lib/capas";
 import { useCelular, useHubUnlock, useLarguraDaBarra, usePonteiroFino } from "../lib/hooks";
 import {
-  lerAbaSalva, lerColecoesFechadas, lerFiltroSeries, lerFiltros, lerGruposAbertos, lerGruposFechados,
+  FILTRO_COLECOES_KEY, lerAbaSalva, lerColecoesFechadas, lerFiltroSeries, lerFiltros, lerGruposAbertos, lerGruposFechados,
   lerOrdemRecolhida, lerCorRecolhida, lerAbaBase, salvarAba, salvarAbaBase,salvarColecoesFechadas, salvarFiltroSeries, salvarFiltros, salvarGruposAbertos,
   salvarGruposFechados, salvarOrdemRecolhida, salvarCorRecolhida, dobrar, lerFiltroAutor, salvarFiltroAutor,
 } from "../lib/sessao";
@@ -267,6 +267,7 @@ export function App() {
   const [filtroTipo, setFiltroTipo] = useState(filtrosSalvos.tipo);
   const [filtroPersonagem, setFiltroPersonagem] = useState(filtrosSalvos.personagem);
   const [filtroSerie, setFiltroSerie] = useState(lerFiltroSeries);
+  const [filtroColecao, setFiltroColecao] = useState(() => lerFiltroSeries(FILTRO_COLECOES_KEY));
   const [filtroAutor, setFiltroAutor] = useState(lerFiltroAutor);
   const [showFiltros, setShowFiltros] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -283,9 +284,11 @@ export function App() {
   // filtered shelf with nothing on screen saying so.
   const filtrosAtivos = [filtroStatus, filtroTipo, filtroPersonagem].filter(Boolean).length;
   useEffect(() => { salvarFiltroSeries(filtroSerie); }, [filtroSerie]);
+  useEffect(() => { salvarFiltroSeries(filtroColecao, FILTRO_COLECOES_KEY); }, [filtroColecao]);
   useEffect(() => { salvarFiltroAutor(filtroAutor); }, [filtroAutor]);
   // What the filter button counts: each tab has its own filters.
-  const filtrosAtivosAba = tab === "series" ? (filtroSerie ? 1 : 0) + (filtroAutor ? 1 : 0) : filtrosAtivos;
+  const filtrosAtivosAba = tab === "series" ? (filtroSerie ? 1 : 0) + (filtroAutor ? 1 : 0)
+    : tab === "colecoes" ? (filtroColecao ? 1 : 0) : filtrosAtivos;
 
   const buscando = query.trim().length > 0;
   const editoraAtual = useMemo(
@@ -692,22 +695,53 @@ export function App() {
   const [colecaoForm, setColecaoForm] = useState(null);
   const [colecaoErrors, setColecaoErrors] = useState({});
 
-  const colecoesFiltradas = useMemo(() => {
+  // v165: a collection belongs to every character any of its volumes has, within the
+  // band's publisher (a crossover saga shows under each character in it; user's choice).
+  const personagensNaFaixa = useCallback((c) => {
+    const sel = lib.editoraSel || ED_TODAS;
+    const nomeBanda = (editoraAtual?.nome || "").trim().toLowerCase();
+    const nomes = new Set();
+    c.membros.forEach((vid) => {
+      const v = lib.volumes.find((x) => x.id === vid);
+      if (!v) return;
+      if (sel === ED_SEM) { if (!presencas(v).length && v.personagem) nomes.add(v.personagem); return; }
+      presencas(v).forEach((p) => {
+        if (p.personagem && (sel === ED_TODAS || p.editora.toLowerCase() === nomeBanda)) nomes.add(p.personagem);
+      });
+    });
+    return nomes;
+  }, [lib.volumes, lib.editoraSel, editoraAtual]);
+
+  const colecoesDaFaixa = useMemo(() => lib.colecoes.filter((c) => {
     // A collection has no publisher of its own, so it inherits from its members:
     // it shows under any publisher it holds a volume from, which is what a
     // crossover saga should do.
-    let cs = lib.colecoes.filter((c) => {
-      if ((lib.editoraSel || ED_TODAS) === ED_TODAS) return true;
-      const membros = c.membros.map((vid) => lib.volumes.find((v) => v.id === vid)).filter(Boolean);
-      if (!membros.length) return (lib.editoraSel || ED_TODAS) === ED_SEM;
-      return membros.some(casaEditora);
-    });
+    if ((lib.editoraSel || ED_TODAS) === ED_TODAS) return true;
+    const membros = c.membros.map((vid) => lib.volumes.find((v) => v.id === vid)).filter(Boolean);
+    if (!membros.length) return (lib.editoraSel || ED_TODAS) === ED_SEM;
+    return membros.some(casaEditora);
+  }), [lib.colecoes, lib.volumes, lib.editoraSel, casaEditora]);
+
+  const personagensDasColecoes = useMemo(() => {
+    const n = {};
+    colecoesDaFaixa.forEach((c) => personagensNaFaixa(c).forEach((nome) => { n[nome] = (n[nome] || 0) + 1; }));
+    return Object.keys(n).sort((x, y) => x.localeCompare(y, "pt-BR")).map((nome) => ({ nome, n: n[nome] }));
+  }, [colecoesDaFaixa, personagensNaFaixa]);
+  // Released when the band leaves the character with no collection, as on Séries.
+  useEffect(() => {
+    if (loading || !filtroColecao) return;
+    if (!personagensDasColecoes.some((o) => o.nome === filtroColecao)) setFiltroColecao("");
+  }, [loading, filtroColecao, personagensDasColecoes]);
+
+  const colecoesFiltradas = useMemo(() => {
+    let cs = colecoesDaFaixa;
+    if (filtroColecao) cs = cs.filter((c) => personagensNaFaixa(c).has(filtroColecao));
     if (query.trim()) {
       const q = query.toLowerCase();
       cs = cs.filter((c) => c.nome.toLowerCase().includes(q));
     }
     return cs.slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR", { numeric: true }));
-  }, [lib.colecoes, lib.volumes, query, buscando, lib.editoraSel, casaEditora]);
+  }, [colecoesDaFaixa, filtroColecao, personagensNaFaixa, query, buscando]);
 
   const openColecao = lib.colecoes.find((c) => c.id === openColecaoId) || null;
 
@@ -1859,7 +1893,7 @@ export function App() {
           <button className="btn-icon so-teclado" onClick={() => setShowAtalhos(true)} aria-label="Atalhos do teclado" data-dica="Atalhos · ?">
             <Keyboard size={16} />
           </button>
-          {(tab === "volumes" || tab === "series") && (
+          {(tab === "volumes" || tab === "series" || tab === "colecoes") && (
             <button
               className="btn-icon btn-filtros"
               data-active={showFiltros ? "true" : "false"}
@@ -1992,6 +2026,28 @@ export function App() {
               disabled={!filtroSerie && !filtroAutor}
               aria-label="Limpar filtros"
               onClick={() => { setFiltroSerie(""); setFiltroAutor(""); }}
+            >
+              <X size={14} /> <span className="label-wide">Limpar filtros</span>
+            </button>
+          </div>
+          </div>
+        )}
+
+        {tab === "colecoes" && showFiltros && (
+          <div className="filtros-hqs" style={{ marginBottom: 20 }}>
+          <div className="filtros-linha" data-campos="1">
+            <PersonagemFiltro
+              id="filtro-personagem-colecoes"
+              valor={filtroColecao}
+              opcoes={personagensDasColecoes}
+              onChange={setFiltroColecao}
+            />
+            <button
+              type="button"
+              className="btn btn-quiet filtros-limpar"
+              disabled={!filtroColecao}
+              aria-label="Limpar filtros"
+              onClick={() => setFiltroColecao("")}
             >
               <X size={14} /> <span className="label-wide">Limpar filtros</span>
             </button>

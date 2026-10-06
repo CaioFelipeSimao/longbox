@@ -37,6 +37,7 @@ const SUITES = [
   { args: ["tests/test-atalhos.mjs"], minimo: 69 },
   { args: ["tests/test-desejos-tela.mjs"], minimo: 28 },
   { args: ["tests/test-filtro-series.mjs"], minimo: 27 },
+  { args: ["tests/test-filtro-colecoes.mjs"], minimo: 9 },
   { args: ["tests/test-fixados.mjs"], minimo: 13 },
   { args: ["tests/test-formatos.mjs"], minimo: 24 },
   { args: ["tests/test-sincronia.mjs"], minimo: 92 },

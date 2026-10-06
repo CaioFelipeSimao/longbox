@@ -238,20 +238,23 @@ export function salvarFiltros(f) {
 // nothing here saying why. Same lifetime as the HQs filters.
 export const FILTRO_SERIES_KEY = "longbox:filtro-series";
 
-export function lerFiltroSeries() {
+// v165: the Coleções character filter, same lifetime, through the same two functions.
+export const FILTRO_COLECOES_KEY = "longbox:filtro-colecoes";
+
+export function lerFiltroSeries(chave = FILTRO_SERIES_KEY) {
   try {
     if (typeof window === "undefined") return "";
-    return window.sessionStorage.getItem(FILTRO_SERIES_KEY) || "";
+    return window.sessionStorage.getItem(chave) || "";
   } catch {
     return "";
   }
 }
 
-export function salvarFiltroSeries(personagem) {
+export function salvarFiltroSeries(personagem, chave = FILTRO_SERIES_KEY) {
   try {
     if (typeof window === "undefined") return;
-    if (!personagem) window.sessionStorage.removeItem(FILTRO_SERIES_KEY);
-    else window.sessionStorage.setItem(FILTRO_SERIES_KEY, personagem);
+    if (!personagem) window.sessionStorage.removeItem(chave);
+    else window.sessionStorage.setItem(chave, personagem);
   } catch {
     // Not remembered here, and the filter still works for this page load.
   }

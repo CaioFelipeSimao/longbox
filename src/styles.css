@@ -2811,7 +2811,8 @@ html[data-capa="true"] body { scrollbar-color: auto; }
   letter-spacing: -0.015em;
 }
 .empty p { margin: 0; color: var(--text-muted); font-size: 0.8125rem; }
-.empty svg { color: var(--text-muted); }
+/* Only the state's own icon; a button inside keeps its text colour (v165). */
+.empty > svg { color: var(--text-muted); }
 
 /* Read aloud, never drawn. Clipped rather than hidden, because display:none and
    visibility:hidden both take it out of the accessibility tree too. */
