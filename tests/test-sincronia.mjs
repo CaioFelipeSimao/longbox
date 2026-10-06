@@ -1,6 +1,6 @@
 import { JSDOM } from "jsdom";
 import fs from "node:fs";
-import * as esbuild from "esbuild";
+import { importarLib } from "./helpers/importar-lib.mjs";
 
 // v96: the app no longer overwrites what was written elsewhere. 2026-09-24, a tab
 // opened before Claude catalogued 20 volumes reordered three and saved its whole
@@ -18,8 +18,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /* ---------- the merge itself ---------- */
 console.log("=== mescla de três vias ===");
-const out = esbuild.buildSync({ entryPoints: ["src/lib/mesclar.js"], bundle: true, format: "esm", write: false });
-const M = await import("data:text/javascript;base64," + Buffer.from(out.outputFiles[0].text).toString("base64"));
+const M = await importarLib("mesclar");
 const it = (id, x = {}) => ({ id, t: id, ...x });
 const ids = (l) => l.map((x) => x.id).join(",");
 {
@@ -68,6 +67,181 @@ const ids = (l) => l.map((x) => x.id).join(",");
   check("editoras: a faixa escolhida aqui fica e a editora nova de lá entra", r.selecionada === "marvel" && ids(r.itens) === "dc,marvel");
 }
 
+/* ---------- storage source, without a build or wishlist UI ---------- */
+const A = await importarLib("armazenamento");
+const copia = (x) => JSON.parse(JSON.stringify(x));
+// Same sorted-key responses as the real server, including nested objects.
+const ordenarDados = (x) => Array.isArray(x) ? x.map(ordenarDados) : x && typeof x === "object"
+  ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, ordenarDados(x[k])])) : x;
+async function montarDados({ ausentes = false, ecoAtraso = 5 } = {}) {
+  const docs = new Map(["volumes", "colecoes", "series", "desejos", "desejosColecoes"].map((k) => ["library/" + k, { items: [] }]));
+  docs.set("library/cores", { mapa: {} });
+  docs.set("library/editoras", { itens: [], selecionada: "__todas__" });
+  if (ausentes) { docs.delete("library/desejos"); docs.delete("library/desejosColecoes"); }
+  else {
+    docs.set("library/desejos", { items: [{ titulo: "Flash", id: "d1", edicoesColetadasIds: [], tambem: [{ personagem: "Batman", editora: "DC Comics" }] }] });
+    docs.set("library/desejosColecoes", { items: [{ nome: "Saga", id: "cd1", membros: ["d1"], colecaoId: "c1", ordem: 2 }] });
+  }
+  const leituras = [], escritas = [], ouvintes = new Map(), ecos = new Set();
+  const snap = (path) => {
+    const body = docs.has(path) ? ordenarDados(copia(docs.get(path))) : null;
+    return { exists: body !== null, data: () => body, metadata: { hasPendingWrites: false } };
+  };
+  const emitir = (path, s = snap(path)) => (ouvintes.get(path) || []).forEach((fn) => fn(s));
+  const db = {
+    doc: (path) => ({
+      get: async () => { leituras.push(path); return snap(path); },
+      set: async (body) => {
+        escritas.push(path); docs.set(path, copia(body));
+        const s = snap(path);
+        const timer = setTimeout(() => { ecos.delete(timer); emitir(path, s); }, ecoAtraso);
+        ecos.add(timer);
+      },
+      onSnapshot: (fn) => {
+        if (!ouvintes.has(path)) ouvintes.set(path, new Set());
+        ouvintes.get(path).add(fn);
+        queueMicrotask(() => fn(snap(path)));
+        return () => ouvintes.get(path).delete(fn);
+      },
+    }),
+    collection: () => ({ get: async () => ({ docs: [] }), onSnapshot: () => () => {} }),
+  };
+  let lib = await A.loadLibrary(db);
+  Object.assign(A.store, { db, fila: Promise.resolve(), timer: null, pendente: null, inFlight: 0, estado: null });
+  const avisos = [], erros = [];
+  A.store.lerLib = () => lib;
+  A.store.onError = (erro) => erros.push(erro);
+  A.store.aoMesclar = (mudancas, origem) => {
+    lib = A.aplicarMescladas(lib, mudancas);
+    avisos.push({ mudancas, origem }); // App uses this callback to show the other-device toast.
+    A.scheduleSave(lib);
+  };
+  const parar = A.ouvirMudancas(db);
+  await sleep(180); // Let the initial snapshots settle, as montar() does for App.
+  return {
+    db, docs, leituras, escritas, avisos, erros, ouvintes,
+    lib: () => lib,
+    editar: (chave, items) => { lib = { ...lib, [chave]: items }; },
+    externo: (path, body, aoVivo = true) => { docs.set(path, copia(body)); if (aoVivo) emitir(path); },
+    salvar: async () => { A.salvarPendente(); await A.store.fila; },
+    fechar: () => {
+      parar(); ecos.forEach(clearTimeout);
+      if (A.store.timer) clearTimeout(A.store.timer);
+      Object.assign(A.store, { db: null, timer: null, pendente: null, lerLib: null, aoMesclar: null, onError: null });
+    },
+  };
+}
+
+console.log("=== documentos de desejos no boot ===");
+check("store declara lastDesejos e lastDesejosColecoes", A.store.lastDesejos === "" && A.store.lastDesejosColecoes === "");
+{
+  const m = await montarDados();
+  for (const [chave, last] of [["desejos", "lastDesejos"], ["desejosColecoes", "lastDesejosColecoes"]]) {
+    check("boot lê library/" + chave, m.leituras.includes("library/" + chave) && m.lib()[chave]?.length === 1);
+    check("boot guarda " + last + " com chaves canônicas", A.store[last] === JSON.stringify(ordenarDados(m.docs.get("library/" + chave).items)));
+    check("snapshot assina library/" + chave, m.ouvintes.has("library/" + chave));
+  }
+  await A.flushLibrary(m.lib());
+  check("boot normalizado não regrava documentos iguais", m.escritas.length === 0);
+  m.fechar();
+  check("cancelar desinscreve os documentos novos", m.ouvintes.get("library/desejos")?.size === 0 && m.ouvintes.get("library/desejosColecoes")?.size === 0);
+}
+{
+  const m = await montarDados({ ausentes: true });
+  check("boot sem documentos novos dá duas listas vazias", m.lib().desejos?.length === 0 && m.lib().desejosColecoes?.length === 0);
+  await A.flushLibrary(m.lib());
+  check("biblioteca antiga parada não cria documentos vazios", m.escritas.length === 0);
+  m.fechar();
+}
+
+for (const [chave, campo, id1, id2] of [["desejos", "titulo", "d1", "d2"], ["desejosColecoes", "nome", "cd1", "cd2"]]) {
+  const path = "library/" + chave;
+  const novo = chave === "desejos" ? { id: id2, titulo: "Novo", edicoesColetadasIds: [] } : { id: id2, nome: "Nova", membros: ["d2"] };
+  console.log("=== fusão e eco de " + chave + " ===");
+  for (const aoVivo of [false, true]) {
+    const m = await montarDados();
+    const base = m.docs.get(path).items;
+    m.editar(chave, base.map((x) => ({ ...x, [campo]: "Edição local " + aoVivo })));
+    A.scheduleSave(m.lib());
+    m.externo(path, { items: [...base, novo] }, aoVivo);
+    await sleep(180);
+    check(chave + ": snapshot aguarda a edição pendente (aoVivo=" + aoVivo + ")", m.avisos.length === 0);
+    await m.salvar();
+    const items = m.docs.get(path).items;
+    check(chave + ": salvar mantém adição externa e edição local (aoVivo=" + aoVivo + ")", ids(items) === id1 + "," + id2 && items[0][campo] === "Edição local " + aoVivo);
+    check(chave + ": fusão volta para a biblioteca (aoVivo=" + aoVivo + ")", ids(m.lib()[chave] || []) === id1 + "," + id2 && m.avisos.some((a) => a.mudancas.some((x) => x.chave === chave)));
+    check(chave + ": grava apenas o documento alterado (aoVivo=" + aoVivo + ")", m.escritas.join() === path && m.erros.length === 0);
+    m.fechar();
+  }
+  {
+    const m = await montarDados();
+    m.externo(path, { items: [...m.docs.get(path).items, novo] });
+    await sleep(220);
+    check(chave + ": adição externa chega ao vivo", ids(m.lib()[chave] || []) === id1 + "," + id2 && m.avisos.length === 1);
+    await m.salvar();
+    check(chave + ": chegada externa não provoca regravação", m.escritas.length === 0);
+    m.externo(path, { items: [] });
+    await sleep(220);
+    check(chave + ": remoção externa esvazia a lista", m.lib()[chave]?.length === 0);
+    m.fechar();
+  }
+  {
+    const m = await montarDados({ ecoAtraso: 250 });
+    for (const nome of ["Primeira gravação " + chave, "Segunda gravação " + chave]) {
+      m.editar(chave, m.docs.get(path).items.map((x) => ({ ...x, [campo]: nome })));
+      await A.flushLibrary(m.lib());
+      if (nome.startsWith("Primeira")) await sleep(180);
+    }
+    check(chave + ": duas edições geram duas gravações", m.escritas.length === 2 && m.escritas.every((p) => p === path));
+    await sleep(450);
+    check(chave + ": eco atrasado com chaves ordenadas não anuncia outro aparelho", m.avisos.length === 0 && m.erros.length === 0);
+    check(chave + ": eco anterior não desfaz a edição mais recente", m.lib()[chave]?.[0]?.[campo] === "Segunda gravação " + chave);
+    const antes = m.escritas.length;
+    await A.flushLibrary(m.lib());
+    check(chave + ": comparação canônica evita outra gravação", m.escritas.length === antes);
+    m.fechar();
+  }
+}
+
+console.log("=== fixados independentes por caminho ===");
+{
+  const m = await montarDados({ ecoAtraso: 250 });
+  const padrao = "library/fixados", desejos = "library/fixadosDesejos";
+  m.docs.set(padrao, { personagens: ["Batman"] });
+  m.docs.set(desejos, { personagens: ["Superman"] });
+  check("lerFixados sem caminho mantém o documento antigo", (await A.lerFixados(m.db)).join() === "Batman");
+  check("lerFixados aceita o caminho da lista", (await A.lerFixados(m.db, desejos)).join() === "Superman");
+  const vistos = [], vistosDesejos = [];
+  const parar = A.ouvirFixados(m.db, (x) => vistos.push(x));
+  const pararDesejos = A.ouvirFixados(m.db, (x) => vistosDesejos.push(x), desejos);
+  await sleep(10);
+  vistos.length = vistosDesejos.length = 0;
+  await A.gravarFixados(["Flash"]);
+  check("gravarFixados sem caminho mantém o documento antigo", m.docs.get(padrao).personagens.join() === "Flash" && m.docs.get(desejos).personagens.join() === "Superman");
+  m.externo(desejos, { personagens: ["Flash"] });
+  check("eco próprio de HQs não oculta mudança externa igual na lista", vistosDesejos.length === 1 && vistosDesejos[0].join() === "Flash");
+  await A.gravarFixados(["Thor"], desejos);
+  check("gravarFixados no caminho da lista preserva HQs", m.docs.get(desejos).personagens.join() === "Thor" && m.docs.get(padrao).personagens.join() === "Flash");
+  m.externo(padrao, { personagens: ["Thor"] });
+  check("eco próprio da lista não oculta mudança externa igual em HQs", vistos.length === 1 && vistos[0].join() === "Thor");
+  await A.gravarFixados(["Hulk"], desejos);
+  await sleep(350);
+  check("mudança externa em HQs não limpa memória de ecos da lista", vistosDesejos.length === 1);
+  m.externo(desejos, { personagens: ["Mulher-Maravilha"] });
+  check("ouvirFixados entrega mudança externa no caminho da lista", vistosDesejos.at(-1)?.join() === "Mulher-Maravilha");
+  parar(); pararDesejos();
+  check("cancelar remove ambas as assinaturas de fixados", m.ouvintes.get(padrao)?.size === 0 && m.ouvintes.get(desejos)?.size === 0);
+  check("fixados da lista não entram na biblioteca", !Object.hasOwn(m.lib(), "fixadosDesejos"));
+  m.fechar();
+}
+
+// Run the source-only suites here when the app build is unavailable. The normal
+// invocation still runs all existing integration cases against a fresh dist.
+if (process.argv.includes("--dados")) {
+  console.log("\n" + passes + " passaram, " + falhas + " falharam");
+  process.exit(falhas ? 1 : 0);
+}
+
 /* ---------- the app with a db that can change under it ---------- */
 const bundle = fs.readFileSync("dist/app.js", "utf8");
 // ordenarChaves: the real server hands objects back with their keys sorted, whatever order they were written in.
@@ -89,6 +263,8 @@ async function montar({ ecoAtraso = 5, ordenarChaves = false, docsExtra = null }
   const docs = new Map([
     ["library/volumes", { items: ["b0", "b1", "b2", "b3"].map(v) }],
     ["library/colecoes", { items: [] }],
+    ["library/desejos", { items: [] }],
+    ["library/desejosColecoes", { items: [] }],
     ["library/series", { items: [{ id: "s1", nome: "Batman (Volume 1)", personagens: ["Batman"], editora: "DC Comics", anoInicio: "1940", anoFim: "2011", totalEdicoes: 1, ordem: null }] }],
     ["library/cores", { mapa: {} }],
     ["library/editoras", { itens: [{ id: "dc-comics", nome: "DC Comics", cor: null, logoAssetId: null, logoFundo: "nenhum" }], selecionada: "__todas__" }],
@@ -294,5 +470,5 @@ console.log("=== biblioteca parada não custa nada ===");
   check("sem erros (parada)", m.erros.length === 0, m.erros[0]);
 }
 
-console.log(falhas ? "\n" + falhas + " FAIL" : "\nTUDO PASSOU");
+console.log("\n" + passes + " passaram, " + falhas + " falharam");
 process.exit(falhas ? 1 : 0);

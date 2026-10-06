@@ -11,6 +11,15 @@ export function deleteVolume(lib, id) {
   };
 }
 export function deleteColecao(lib, id) { return { ...lib, colecoes: withoutId(lib.colecoes, id) }; }
+export function deleteDesejo(lib, id) {
+  return {
+    ...lib,
+    desejos: withoutId(lib.desejos, id),
+    desejosColecoes: lib.desejosColecoes
+      .map((c) => ({ ...c, membros: c.membros.filter((d) => d !== id) }))
+      .filter((c) => c.membros.length),
+  };
+}
 export function deleteSerie(lib, id) {
   const edIds = lib.edicoes.filter((e) => e.serieId === id).map((e) => e.id);
   return {
@@ -21,6 +30,10 @@ export function deleteSerie(lib, id) {
       ...v,
       edicoesColetadasIds: v.edicoesColetadasIds.filter((eid) => !edIds.includes(eid)),
     })),
+    desejos: lib.desejos.map((v) => ({
+      ...v,
+      edicoesColetadasIds: v.edicoesColetadasIds.filter((eid) => !edIds.includes(eid)),
+    })),
   };
 }
 export function deleteEdicao(lib, id) {
@@ -28,6 +41,10 @@ export function deleteEdicao(lib, id) {
     ...lib,
     edicoes: withoutId(lib.edicoes, id),
     volumes: lib.volumes.map((v) => ({
+      ...v,
+      edicoesColetadasIds: v.edicoesColetadasIds.filter((eid) => eid !== id),
+    })),
+    desejos: lib.desejos.map((v) => ({
       ...v,
       edicoesColetadasIds: v.edicoesColetadasIds.filter((eid) => eid !== id),
     })),
@@ -139,28 +156,40 @@ export function anoRange(s) {
   return ini + "-" + fim;
 }
 
+function normalizarVolume(v) {
+  const { tambem, ordemSeries, ...volume } = v;
+  const validas = Array.isArray(tambem) ? tambem.filter((p) =>
+    typeof p?.editora === "string" && p.editora.trim() && typeof p.personagem === "string"
+  ).map((p) => ({ editora: p.editora.trim(), personagem: p.personagem.trim() })) : [];
+  return {
+    ...volume,
+    ...(Array.isArray(ordemSeries) && ordemSeries.every((id) => typeof id === "string" && id.trim())
+      ? { ordemSeries: ordemSeries.slice() } : {}),
+    ...(validas.length ? { tambem: validas } : {}),
+    ...(TIPOS_RENOMEADOS[v.tipo] ? { tipo: TIPOS_RENOMEADOS[v.tipo] } : null),
+    edicoesColetadasIds: Array.isArray(v.edicoesColetadasIds) ? v.edicoesColetadasIds : [],
+  };
+}
+
 export function normalizeLib(raw) {
   const lib = {
     volumes: Array.isArray(raw?.volumes) ? raw.volumes : [],
     colecoes: Array.isArray(raw?.colecoes) ? raw.colecoes : [],
+    desejos: Array.isArray(raw?.desejos) ? raw.desejos : [],
+    desejosColecoes: Array.isArray(raw?.desejosColecoes) ? raw.desejosColecoes : [],
     series: Array.isArray(raw?.series) ? raw.series : [],
     edicoes: Array.isArray(raw?.edicoes) ? raw.edicoes : [],
   };
-  lib.volumes = lib.volumes.map((v) => {
-    const { tambem, ordemSeries, ...volume } = v;
-    const validas = Array.isArray(tambem) ? tambem.filter((p) =>
-      typeof p?.editora === "string" && p.editora.trim() && typeof p.personagem === "string"
-    ).map((p) => ({ editora: p.editora.trim(), personagem: p.personagem.trim() })) : [];
-    return {
-      ...volume,
-      ...(Array.isArray(ordemSeries) && ordemSeries.every((id) => typeof id === "string" && id.trim())
-        ? { ordemSeries: ordemSeries.slice() } : {}),
-      ...(validas.length ? { tambem: validas } : {}),
-      ...(TIPOS_RENOMEADOS[v.tipo] ? { tipo: TIPOS_RENOMEADOS[v.tipo] } : null),
-      edicoesColetadasIds: Array.isArray(v.edicoesColetadasIds) ? v.edicoesColetadasIds : [],
-    };
+  lib.volumes = lib.volumes.map(normalizarVolume);
+  lib.desejos = lib.desejos.map((v) => {
+    const { status, ...desejo } = normalizarVolume(v);
+    return desejo;
   });
   lib.colecoes = lib.colecoes.map((c) => ({
+    ...c,
+    membros: Array.isArray(c.membros) ? c.membros : [],
+  }));
+  lib.desejosColecoes = lib.desejosColecoes.map((c) => ({
     ...c,
     membros: Array.isArray(c.membros) ? c.membros : [],
   }));

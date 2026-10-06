@@ -113,7 +113,7 @@ export function seededPick(arr, n, seed) {
 }
 
 export const EMPTY_LIB = {
-  volumes: [], colecoes: [], series: [], edicoes: [], cores: {},
+  volumes: [], colecoes: [], desejos: [], desejosColecoes: [], series: [], edicoes: [], cores: {},
   editoras: [], editoraSel: null,
 };
 

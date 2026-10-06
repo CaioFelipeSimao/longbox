@@ -10,6 +10,8 @@ export const store = {
   downloads: null,
   lastVolumes: "",
   lastColecoes: "",
+  lastDesejos: "",
+  lastDesejosColecoes: "",
   lastSeries: "",
   lastCores: "",
   lastEditoras: "",
@@ -33,6 +35,8 @@ export const store = {
 const DOCS = {
   volumes: { path: "library/volumes", parte: (d) => d?.items || [], corpo: (p) => ({ items: p }), mesclar: mesclarLista, last: "lastVolumes", daLib: (lib) => lib.volumes },
   colecoes: { path: "library/colecoes", parte: (d) => d?.items || [], corpo: (p) => ({ items: p }), mesclar: mesclarLista, last: "lastColecoes", daLib: (lib) => lib.colecoes },
+  desejos: { path: "library/desejos", parte: (d) => d?.items || [], corpo: (p) => ({ items: p }), mesclar: mesclarLista, last: "lastDesejos", daLib: (lib) => lib.desejos },
+  desejosColecoes: { path: "library/desejosColecoes", parte: (d) => d?.items || [], corpo: (p) => ({ items: p }), mesclar: mesclarLista, last: "lastDesejosColecoes", daLib: (lib) => lib.desejosColecoes },
   series: { path: "library/series", parte: (d) => d?.items || [], corpo: (p) => ({ items: p }), mesclar: mesclarLista, last: "lastSeries", daLib: (lib) => lib.series },
   cores: { path: "library/cores", parte: (d) => d?.mapa || {}, corpo: (p) => ({ mapa: p }), mesclar: mesclarMapa, last: "lastCores", daLib: (lib) => lib.cores || {} },
   editoras: {
@@ -101,9 +105,11 @@ export function shardEdicoes(edicoes) {
 }
 
 export async function loadLibrary(db) {
-  const [volSnap, colSnap, serSnap, corSnap, ediSnap, edSnap] = await Promise.all([
+  const [volSnap, colSnap, desSnap, desColSnap, serSnap, corSnap, ediSnap, edSnap] = await Promise.all([
     db.doc("library/volumes").get(),
     db.doc("library/colecoes").get(),
+    db.doc("library/desejos").get(),
+    db.doc("library/desejosColecoes").get(),
     db.doc("library/series").get(),
     db.doc("library/cores").get(),
     db.doc("library/editoras").get(),
@@ -111,6 +117,8 @@ export async function loadLibrary(db) {
   ]);
   const volumes = volSnap.exists ? volSnap.data().items || [] : [];
   const colecoes = colSnap.exists ? colSnap.data().items || [] : [];
+  const desejos = desSnap.exists ? desSnap.data().items || [] : [];
+  const desejosColecoes = desColSnap.exists ? desColSnap.data().items || [] : [];
   const series = serSnap.exists ? serSnap.data().items || [] : [];
   const cores = corSnap.exists ? corSnap.data().mapa || {} : {};
   const editoras = ediSnap.exists ? ediSnap.data().itens || [] : [];
@@ -123,13 +131,15 @@ export async function loadLibrary(db) {
 
   store.lastVolumes = canon(volumes);
   store.lastColecoes = canon(colecoes);
+  store.lastDesejos = canon(desejos);
+  store.lastDesejosColecoes = canon(desejosColecoes);
   store.lastSeries = canon(series);
   store.lastCores = canon(cores);
   store.lastEditoras = canon({ itens: editoras, selecionada: editoraSel });
   store.lastEdicoes = new Map();
   shardEdicoes(edicoes).forEach((items, sid) => store.lastEdicoes.set(sid, canon(items)));
 
-  return normalizeLib({ volumes, colecoes, series, edicoes, cores, editoras, editoraSel });
+  return normalizeLib({ volumes, colecoes, desejos, desejosColecoes, series, edicoes, cores, editoras, editoraSel });
 }
 
 export function dbErrorMessage(e) {
@@ -319,36 +329,37 @@ export async function gravarUltimoBackup(quando) {
 // (two quick pins would otherwise flicker to the first); a change from the other
 // device arrives through onSnapshot. ponytail: last write wins, no merge; a pin on
 // both devices at the same instant keeps whichever saved last.
-const fixadosProprios = new Set();
-export function ouvirFixados(db, aoMudar) {
+const fixadosProprios = new Map(); // path -> Set de escritas próprias
+export function ouvirFixados(db, aoMudar, path = "library/fixados") {
   let ultimo = null;
-  return db.doc("library/fixados").onSnapshot((snap) => {
+  return db.doc(path).onSnapshot((snap) => {
     if (snap.metadata?.hasPendingWrites) return;
     const d = snap.exists ? snap.data() : null;
     if (d === ultimo) return;
     ultimo = d;
     const lista = (d && d.personagens) || [];
-    const json = JSON.stringify(lista);
-    if (fixadosProprios.has(json)) return;
-    fixadosProprios.clear();
+    const json = canon(lista);
+    if (fixadosProprios.get(path)?.has(json)) return;
+    fixadosProprios.delete(path);
     aoMudar(lista);
   }, () => {});
 }
 
-export async function lerFixados(db) {
+export async function lerFixados(db, path = "library/fixados") {
   try {
-    const snap = await db.doc("library/fixados").get();
+    const snap = await db.doc(path).get();
     return snap.exists ? snap.data().personagens || [] : [];
   } catch (e) {
     return [];
   }
 }
 
-export async function gravarFixados(personagens) {
+export async function gravarFixados(personagens, path = "library/fixados") {
   if (!store.db) return;
   try {
-    fixadosProprios.add(JSON.stringify(personagens));
-    await store.db.doc("library/fixados").set({ personagens });
+    if (!fixadosProprios.has(path)) fixadosProprios.set(path, new Set());
+    fixadosProprios.get(path).add(canon(personagens));
+    await store.db.doc(path).set({ personagens });
   } catch (e) {
     if (store.onError) store.onError(dbErrorMessage(e));
   }
