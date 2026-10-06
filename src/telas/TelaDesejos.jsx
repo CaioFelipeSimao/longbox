@@ -22,6 +22,16 @@ export const TelaDesejos = forwardRef(function TelaDesejos({ lib, persist, fixad
   const [fechados, setFechados] = useState(new Set());
   const [rolado, setRolado] = useState(false);
   const voltarRef = useRef(null);
+  // v165: the character heads stick right under this header, whose height changes
+  // (one row on a PC, two on a phone); there is no publisher strip here.
+  const topoRef = useRef(null);
+  useEffect(() => {
+    const el = topoRef.current;
+    if (!el || typeof ResizeObserver !== "function") return undefined;
+    const ro = new ResizeObserver(() => el.parentElement?.style.setProperty("--desejos-topo-h", el.offsetHeight + "px"));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   useEffect(() => {
     const antes = document.activeElement;
     voltarRef.current?.focus();
@@ -44,7 +54,7 @@ export const TelaDesejos = forwardRef(function TelaDesejos({ lib, persist, fixad
   const nomesPersonagens = [...new Set(pares.map((p) => p.personagem).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
   return (
     <div className="desejos-capa" onScroll={(e) => setRolado(e.currentTarget.scrollTop > 0)}>
-      <header className="topbar" data-scrolled={rolado ? "true" : "false"}>
+      <header className="topbar" ref={topoRef} data-scrolled={rolado ? "true" : "false"}>
         <div className="topbar-inner desejos-topo">
           <button ref={voltarRef} className="btn-icon" aria-label="Voltar da lista de desejos" onClick={onClose}><ChevronLeft size={18} /></button>
           <h1 className="t-display">Lista de desejos · {lib.desejos.length}</h1>

@@ -21,6 +21,8 @@ export function criarGhost(card, grabOffset, reduced = false, { zIndex = 14 } = 
     width: rect.width + "px", height: rect.height + "px", margin: "0",
     pointerEvents: "none", zIndex: String(zIndex), animation: "none", opacity: "1",
     transition: "none", transformOrigin: `${grabOffset.x}px ${grabOffset.y}px` });
+  // v165: the wish list is a fixed layer at z-index 35; a ghost under it was invisible.
+  if (card.closest(".desejos-capa")) node.style.zIndex = "40";
   card.ownerDocument.body.appendChild(node);
   card.dataset.dragHole = "true";
   let timer = 0, removed = false;

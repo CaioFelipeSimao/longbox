@@ -2157,8 +2157,8 @@ export function App() {
                 <span className="wordmark">LONG<b>BOX</b></span>
               </span>
               {avisoSalvamento}
-              {cartButton}
               <div style={{ flex: 1 }} />
+              {cartButton}
               {/* v118: on a narrow hub "Novo" folds to its icon so the primary button keeps
                   its whole name; "Coleção" alone read as the Coleções tab below it. */}
               <button className="btn btn-quiet novo-hub" onClick={openNovoVolume} data-dica="Novo volume · N" aria-label="Novo volume">

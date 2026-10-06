@@ -1847,6 +1847,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .app .desejos-capa > .topbar { background: var(--bg); }
 .desejos-capa > .topbar::before { height: env(safe-area-inset-top, 0rem); }
 .btn-desejos { position: relative; flex-shrink: 0; }
+/* No publisher strip in the wish list: heads stick right under its own header. */
+.desejos-capa .group-head { top: var(--desejos-topo-h, var(--topbar-h)); }
 /* v165: on a PC the cart sits just left of the search, which normally takes the
    auto margin; the cart takes it instead and the search follows at the gap. */
 .topbar-inner > .btn-desejos:has(+ .search) { margin-left: auto; }
