@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from "react";
-import { Plus, X, Download, Upload, Library, AlertTriangle, RotateCcw, SlidersHorizontal, ChevronLeft, Copy, Keyboard } from "lucide-react";
+import { Plus, X, Download, Upload, Library, AlertTriangle, RotateCcw, SlidersHorizontal, ChevronLeft, Copy, Keyboard, ShoppingCart } from "lucide-react";
 import CursorGrid from "../components/CursorGrid/CursorGrid";
 
 import {
@@ -9,7 +9,7 @@ import { parseNum, porFixados, uid } from "../lib/util";
 import { autoresDasSeries as contarAutoresDasSeries, autoresDe, parseAutores, textoAutores, autoresPossuidos, serieTemAutor, indiceEdicoes, coberturaDe, edicoesCobertas, aplicarFormEdicao } from "../lib/edicoes";
 import { COR_LONGBOX, CoresContext, swatchColors, tintaSobre } from "../lib/cores";
 import {
-  anoRange, bytesOf, deleteColecao, deleteEdicao, deleteSerie, deleteVolume, ensureAvulsa,
+  anoRange, bytesOf, deleteColecao, deleteEdicao, deleteSerie, deleteVolume, deleteDesejo, ensureAvulsa,
   ensureRange, normalizeLib, parseImportText, personagensDaSerie, SEM_PERSONAGEM, serieDoGrupo, semearEditoras,
 } from "../lib/biblioteca";
 import {
@@ -35,7 +35,9 @@ import { AbaColecoes } from "./AbaColecoes";
 import { AbaHqs } from "./AbaHqs";
 import { AbaSeries } from "./AbaSeries";
 import { ColecaoSheet } from "./ColecaoSheet";
-import { FormColecao, FormEdicao, FormSerie, FormVolume, ImportarEdicoes } from "./Formularios";
+import { FormColecao, FormEdicao, FormSerie, FormVolume, ImportarEdicoes, salvarDesejoDoForm } from "./Formularios";
+import { colecaoDoDesejo, comprarDesejo } from "../lib/desejos";
+import { TelaDesejos } from "./TelaDesejos";
 import { Hub } from "./Hub";
 import { PainelAtalhos } from "./PainelAtalhos";
 import { SerieSheet } from "./SerieSheet";
@@ -66,6 +68,9 @@ export function App() {
   }, [salvamento]);
   const [ultimoBackup, setUltimoBackup] = useState(null);
   const [fixados, setFixados] = useState([]);
+  const [fixadosDesejos, setFixadosDesejos] = useState([]);
+  const [desejosAberto, setDesejosAberto] = useState(false);
+  const desejosTelaRef = useRef(null);
   const [corPersonagem, setCorPersonagem] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const sentinelRef = useRef(null);
@@ -112,6 +117,7 @@ export function App() {
         // footer can fill this in a moment later (v88).
         lerUltimoBackup(db).then((quando) => { if (!cancelled) setUltimoBackup(quando); });
         lerFixados(db).then((lista) => { if (!cancelled) setFixados(lista); });
+        lerFixados(db, "library/fixadosDesejos").then((lista) => { if (!cancelled) setFixadosDesejos(lista); });
         try {
           const loaded = await loadLibrary(db);
           const semeado = semearEditoras(loaded);
@@ -125,7 +131,8 @@ export function App() {
           if (!cancelled && typeof db.doc("library/volumes").onSnapshot === "function") {
             const pararLib = ouvirMudancas(db);
             const pararPins = ouvirFixados(db, (lista) => { if (!cancelled) setFixados(lista); });
-            pararDeOuvir = () => { pararLib(); pararPins(); };
+            const pararPinsDesejos = ouvirFixados(db, (lista) => { if (!cancelled) setFixadosDesejos(lista); }, "library/fixadosDesejos");
+            pararDeOuvir = () => { pararLib(); pararPins(); pararPinsDesejos(); };
           }
         } catch (e) {
           if (!cancelled) showToast("Não consegui carregar a biblioteca. Recarregue a página.");
@@ -134,7 +141,7 @@ export function App() {
         await esperarMiniaturas(400);
         // v123: known before the first shelf renders, so no full cover starts
         // downloading for a volume that has a shared thumbnail.
-        registrarMiniRemotas(libRef.current.volumes);
+        registrarMiniRemotas([...libRef.current.volumes, ...libRef.current.desejos]);
         if (!cancelled) setLoading(false);
       }
 
@@ -250,6 +257,7 @@ export function App() {
   const [navVolume, setNavVolume] = useState({ tipo: "todas" });
   const [navDirecao, setNavDirecao] = useState(null);
   const [showVolumeForm, setShowVolumeForm] = useState(false);
+  const [formDesejo, setFormDesejo] = useState(false);
   const [volumeForm, setVolumeForm] = useState(null);
   const [volumeErrors, setVolumeErrors] = useState({});
   const [volumeDupWarning, setVolumeDupWarning] = useState(null);
@@ -469,7 +477,9 @@ export function App() {
     abrirVolume(volumeId, { tipo: "hqs" });
   }
 
-  const openVolume = lib.volumes.find((v) => v.id === openVolumeId) || null;
+  const volumeDesejo = navVolume.tipo === "desejo";
+  const openVolume = (volumeDesejo ? lib.desejos : lib.volumes).find((v) => v.id === openVolumeId) || null;
+  const chaveVolumeAberto = volumeDesejo ? "desejos" : "volumes";
 
   /* ---------- stepping between volumes in the open sheet (v88) ---------- */
   // contexto is { tipo: "hqs" } for the HQs tab, { tipo: "colecao", id } for a
@@ -487,6 +497,7 @@ export function App() {
   // hub and the search ignore it too. A volume missing from its own sequence (a
   // filter changed under it) falls back to the full order.
   function sequenciaDoVolume() {
+    if (volumeDesejo) return lib.desejos.map((v) => v.id);
     let seq = null;
     if (navVolume.tipo === "hqs") {
       seq = volumesFiltrados.filter((g) => grupoAbertoVolumes(g.personagem)).flatMap((g) => g.itens.map((v) => v.id));
@@ -521,16 +532,19 @@ export function App() {
     setLinkSerieId(null);
   }
 
-  function openNovoVolume() {
+  function openNovoVolume(desejo = false) {
+    desejo = desejo === true;
+    setFormDesejo(desejo);
     // Prefilled from whichever publisher is being browsed, so cataloguing inside
     // a publisher view does not leave the field blank and drop the volume into
     // the "Sem editora" bucket.
-    const ed = editoraAtual ? editoraAtual.nome : "";
+    const ed = !desejo && editoraAtual ? editoraAtual.nome : "";
     setVolumeForm({ id: null, titulo: "", personagem: "", tipo: TIPOS[0], editora: ed, editora2: "", personagem2: "", ano: "", status: "nao_lida", notas: "" });
     setVolumeErrors({}); setVolumeDupWarning(null); setShowVolumeForm(true);
   }
 
-  function duplicarVolume(v) {
+  function duplicarVolume(v, desejo = false) {
+    setFormDesejo(desejo);
     setVolumeForm({
       id: null,
       titulo: v.titulo,
@@ -549,8 +563,11 @@ export function App() {
     setVolumeDupWarning(null);
     setShowVolumeForm(true);
   }
-  function openEditarVolume(v) {
+  function openEditarVolume(v, desejo = false) {
+    setFormDesejo(desejo);
+    const colecao = desejo ? colecaoDoDesejo(lib, v.id) : null;
     setVolumeForm({ ...v,
+      ...(desejo ? { colecaoDesejoEscolhida: colecao ? "desejo:" + colecao.id : "" } : {}),
       editora2: Array.isArray(v.tambem) ? v.tambem[0]?.editora || "" : "",
       personagem2: Array.isArray(v.tambem) ? v.tambem[0]?.personagem || "" : "",
     }); setVolumeErrors({}); setVolumeDupWarning(null); setShowVolumeForm(true);
@@ -558,8 +575,9 @@ export function App() {
 
   function validarVolume() {
     const errs = {};
-    if (!volumeForm.titulo.trim()) errs.titulo = "Informe o título do volume";
+    if (!volumeForm.titulo.trim()) errs.titulo = formDesejo ? "Informe o título do desejo" : "Informe o título do volume";
     if (!volumeForm.personagem.trim()) errs.personagem = "Informe o personagem principal";
+    if (formDesejo && volumeForm.colecaoDesejoEscolhida === "nova" && !volumeForm.novaColecaoNome?.trim()) errs.novaColecaoNome = "Informe o nome da coleção";
     if (volumeForm.editora2?.trim() && volumeForm.editora2.trim().toLowerCase() === (volumeForm.editora || "").trim().toLowerCase()) {
       errs.editora2 = "Escolha uma editora diferente da editora principal";
     }
@@ -568,11 +586,11 @@ export function App() {
   }
 
   function tituloDuplicado(titulo) {
-    return lib.volumes.find((v) => v.titulo.trim().toLowerCase() === titulo.trim().toLowerCase());
+    return (formDesejo ? lib.desejos : lib.volumes).find((v) => v.titulo.trim().toLowerCase() === titulo.trim().toLowerCase());
   }
 
   function volumeDoForm(base = {}) {
-    const { editora2, personagem2, tambem, ...volume } = { ...base, ...volumeForm };
+    const { editora2, personagem2, tambem, colecaoDesejoEscolhida, novaColecaoNome, ...volume } = { ...base, ...volumeForm };
     const segunda = (editora2 || "").trim();
     return {
       ...volume,
@@ -587,18 +605,23 @@ export function App() {
       if (dup) { setVolumeDupWarning('Já existe "' + dup.titulo + '" cadastrado. Toque em Salvar de novo pra criar mesmo assim.'); return; }
     }
     let next, novoId = volumeForm.id;
-    if (volumeForm.id) {
+    if (formDesejo) {
+      novoId = novoId || uid();
+      const base = lib.desejos.find((d) => d.id === novoId) || { edicoesColetadasIds: [] };
+      next = salvarDesejoDoForm(lib, { ...volumeDoForm(base), id: novoId }, volumeForm.colecaoDesejoEscolhida, volumeForm.novaColecaoNome);
+    } else if (volumeForm.id) {
       next = { ...lib, volumes: lib.volumes.map((v) => (v.id === volumeForm.id ? volumeDoForm(v) : v)) };
     } else {
       novoId = uid();
       next = { ...lib, volumes: [...lib.volumes, { ...volumeDoForm(), id: novoId, edicoesColetadasIds: [] }] };
     }
     persist(next);
-    if (!volumeForm.id && capaNova) handleCoverPick(novoId, capaNova);
+    if (!volumeForm.id && capaNova) handleCoverPick(novoId, capaNova, formDesejo ? "desejos" : "volumes");
     setShowVolumeForm(false);
     setVolumeDupWarning(null);
-    setOpenVolumeId(novoId);
-    showToast(volumeForm.id ? "Volume atualizado." : "Volume adicionado.");
+    if (formDesejo || volumeDesejo) abrirVolume(novoId, { tipo: formDesejo ? "desejo" : "todas" });
+    else setOpenVolumeId(novoId);
+    showToast(formDesejo ? (volumeForm.id ? "Desejo atualizado." : "Desejo adicionado.") : (volumeForm.id ? "Volume atualizado." : "Volume adicionado."));
   }
 
   function salvarVolumeEContinuar() {
@@ -608,13 +631,14 @@ export function App() {
       if (dup) { setVolumeDupWarning('Já existe "' + dup.titulo + '" cadastrado. Toque em "Salvar e cadastrar outro" de novo pra criar mesmo assim.'); return; }
     }
     const novo = { ...volumeDoForm(), id: uid(), edicoesColetadasIds: [] };
-    persist({ ...lib, volumes: [...lib.volumes, novo] });
-    if (capaNova) handleCoverPick(novo.id, capaNova);
+    persist(formDesejo ? salvarDesejoDoForm(lib, novo, volumeForm.colecaoDesejoEscolhida, volumeForm.novaColecaoNome) : { ...lib, volumes: [...lib.volumes, novo] });
+    if (capaNova) handleCoverPick(novo.id, capaNova, formDesejo ? "desejos" : "volumes");
     setCapaNova(null);
     showToast('"' + novo.titulo + '" adicionado. Pronto pro próximo.');
     setVolumeForm((f) => ({
       id: null, titulo: "", personagem: f.personagem, tipo: f.tipo,
       editora: f.editora, editora2: f.editora2, personagem2: f.personagem2, ano: "", status: "nao_lida", notas: "",
+      ...(formDesejo ? { colecaoDesejoEscolhida: colecaoDoDesejo(libRef.current, novo.id) ? "desejo:" + colecaoDoDesejo(libRef.current, novo.id).id : "" } : {}),
     }));
     setVolumeErrors({});
     setVolumeDupWarning(null);
@@ -625,6 +649,7 @@ export function App() {
   // offers Desfazer (and Ctrl+Z), like a removal. Nothing under the série, colour or
   // publisher sheets, or a collection sheet alone (its rows are not covers).
   function marcarStatusTecla(status, alvo) {
+    if (desejosAberto || (openVolume && volumeDesejo)) return false;
     if (openSerieId || corPersonagem || showEditoras) return false;
     if (openVolumeId) { setStatusVolume(openVolumeId, status); return true; }
     if (openColecaoId) return false;
@@ -643,7 +668,7 @@ export function App() {
     persist({ ...lib, volumes: lib.volumes.map((v) => (v.id === volumeId ? { ...v, status } : v)) });
   }
 
-  async function handleCoverPick(volumeId, file) {
+  async function handleCoverPick(volumeId, file, chave = "volumes") {
     if (!file) return;
     setUploadingCover(true);
     try {
@@ -651,7 +676,7 @@ export function App() {
       const current = libRef.current;
       persist({
         ...current,
-        volumes: current.volumes.map((v) => (v.id === volumeId ? { ...v, capaAssetId: res.id } : v)),
+        [chave]: current[chave].map((v) => (v.id === volumeId ? { ...v, capaAssetId: res.id } : v)),
       });
       showToast("Capa atualizada.");
     } catch (e) {
@@ -963,13 +988,23 @@ export function App() {
   }, [lib.editoraSel, query, loading, tab, volumesFiltrados, volumesDaFaixa, seriesFiltradas, colecoesFiltradas, lib.volumes, lib.series, lib.colecoes, casaEditora, textoBusca, edicoesPorSerie, ownedEdicaoIds]);
 
   // v141: pin a character to the top of the HQs and Séries tabs, three at most.
-  function alternarFixado(personagem) {
+  function alternarFixado(personagem, desejo = false) {
+    const lista = desejo ? fixadosDesejos : fixados;
     let proxima;
-    if (fixados.includes(personagem)) proxima = fixados.filter((p) => p !== personagem);
-    else if (fixados.length >= 3) { showToast("Você já fixou 3. Desafixe um para fixar outro."); return; }
-    else proxima = [...fixados, personagem];
-    setFixados(proxima);
-    gravarFixados(proxima);
+    if (lista.includes(personagem)) proxima = lista.filter((p) => p !== personagem);
+    else if (lista.length >= 3) { showToast("Você já fixou 3. Desafixe um para fixar outro."); return; }
+    else proxima = [...lista, personagem];
+    (desejo ? setFixadosDesejos : setFixados)(proxima);
+    gravarFixados(proxima, desejo ? "library/fixadosDesejos" : "library/fixados");
+  }
+
+  function comprarDesejoAberto() {
+    if (!openVolume || !volumeDesejo) return;
+    const antes = libRef.current;
+    const depois = comprarDesejo(antes, openVolume.id);
+    persist(depois);
+    setOpenVolumeId(null); setLinkSerieId(null);
+    showToast("Movido para o acervo", { antes, depois });
   }
 
   const openSerie = lib.series.find((s) => s.id === openSerieId) || null;
@@ -1089,10 +1124,10 @@ export function App() {
   const [rangeAte, setRangeAte] = useState("");
   const [avulsoNum, setAvulsoNum] = useState("");
 
-  function toggleLigacaoEdicao(volumeId, edicaoId) {
+  function toggleLigacaoEdicao(volumeId, edicaoId, chave = "volumes") {
     persist({
       ...lib,
-      volumes: lib.volumes.map((v) => {
+      [chave]: lib[chave].map((v) => {
         if (v.id !== volumeId) return v;
         const has = v.edicoesColetadasIds.includes(edicaoId);
         return {
@@ -1105,14 +1140,14 @@ export function App() {
     });
   }
 
-  function vincularIntervalo(volumeId, serieId) {
+  function vincularIntervalo(volumeId, serieId, chave = "volumes") {
     const de = parseInt(rangeDe, 10), ate = parseInt(rangeAte, 10);
     if (!de || !ate || ate < de) { showToast("Intervalo inválido."); return; }
     const { edicoes, ids } = ensureRange(lib, serieId, de, ate);
     persist({
       ...lib,
       edicoes,
-      volumes: lib.volumes.map((v) => (v.id === volumeId
+      [chave]: lib[chave].map((v) => (v.id === volumeId
         ? { ...v, edicoesColetadasIds: Array.from(new Set([...v.edicoesColetadasIds, ...ids])) }
         : v)),
     });
@@ -1120,13 +1155,13 @@ export function App() {
     showToast("Vinculado do " + de + " ao " + ate + ".");
   }
 
-  function vincularAvulsa(volumeId, serieId) {
+  function vincularAvulsa(volumeId, serieId, chave = "volumes") {
     if (!avulsoNum.trim()) return;
     const { edicoes, id } = ensureAvulsa(lib, serieId, avulsoNum);
     persist({
       ...lib,
       edicoes,
-      volumes: lib.volumes.map((v) => (v.id === volumeId
+      [chave]: lib[chave].map((v) => (v.id === volumeId
         ? { ...v, edicoesColetadasIds: Array.from(new Set([...v.edicoesColetadasIds, id])) }
         : v)),
     });
@@ -1171,6 +1206,10 @@ export function App() {
     const antes = lib;
     let next = lib;
     let reabrir = null;
+    if (type === "desejo") {
+      next = deleteDesejo(lib, id);
+      if (openVolumeId === id) { setOpenVolumeId(null); setLinkSerieId(null); reabrir = () => { setDesejosAberto(true); abrirVolume(id, { tipo: "desejo" }); }; }
+    }
     if (type === "volume") {
       next = deleteVolume(lib, id);
       if (openVolumeId === id) { setOpenVolumeId(null); reabrir = () => setOpenVolumeId(id); }
@@ -1201,6 +1240,10 @@ export function App() {
   // v121: and names it, so a slip on the tablet is recognisable. "saiu" for a volume,
   // since a title can be either gender; "Série X removida" agrees with "Série".
   function avisoRemocao(type, id, antes) {
+    if (type === "desejo") {
+      const d = antes.desejos.find((x) => x.id === id);
+      return d ? d.titulo + " saiu da lista de desejos." : "Desejo removido.";
+    }
     if (type === "volume") {
       const v = antes.volumes.find((x) => x.id === id);
       return v ? v.titulo + " saiu da biblioteca." : AVISO_REMOCAO.volume;
@@ -1377,16 +1420,17 @@ export function App() {
   // v123: the key also moves when a shared thumbnail is recorded (here or on
   // another device), and the effect reruns once uploads become possible.
   const idsCapas = useMemo(
-    () => [...new Set(lib.volumes.filter((v) => v.capaAssetId).map((v) => v.capaAssetId + ":" + (v.mini ? v.mini.capa + v.mini.id : "")))].join("|"),
-    [lib.volumes]
+    () => [...new Set([...lib.volumes, ...lib.desejos].filter((v) => v.capaAssetId).map((v) => v.capaAssetId + ":" + (v.mini ? v.mini.capa + v.mini.id : "")))].join("|"),
+    [lib.volumes, lib.desejos]
   );
   useEffect(() => {
     if (loading || !idsCapas) return;
-    prepararMiniaturas(libRef.current.volumes, (lote) => {
+    prepararMiniaturas([...libRef.current.volumes, ...libRef.current.desejos], (lote) => {
       const atual = libRef.current;
       persist({
         ...atual,
         volumes: atual.volumes.map((v) => (lote[v.capaAssetId] ? { ...v, mini: { capa: v.capaAssetId, id: lote[v.capaAssetId] } } : v)),
+        desejos: atual.desejos.map((v) => (lote[v.capaAssetId] ? { ...v, mini: { capa: v.capaAssetId, id: lote[v.capaAssetId] } } : v)),
       });
     });
   }, [loading, idsCapas, canUpload]);
@@ -1615,7 +1659,8 @@ export function App() {
     return true;
   }
   function novoNaAba() {
-    if (isHub) openNovoVolume();
+    if (desejosAberto) openNovoVolume(true);
+    else if (isHub) openNovoVolume();
     else if (tab === "colecoes") openNovaColecao();
     else if (tab === "series") openNovaSerie();
     else openNovoVolume();
@@ -1627,13 +1672,14 @@ export function App() {
   // the one in front.
   function editarAberto() {
     if (openSerie) { openEditarSerie(openSerie); return true; }
-    if (openVolume) { openEditarVolume(openVolume); return true; }
+    if (openVolume) { openEditarVolume(openVolume, volumeDesejo); return true; }
     if (openColecao) { openEditarColecao(openColecao); return true; }
     return false;
   }
   // The search box lives under the hub, so from the hub "/" lifts the cover first
   // and focuses the box once it is no longer inert.
   function focarBusca() {
+    if (desejosAberto) { desejosTelaRef.current?.focarBusca(); return; }
     if (isHub) entrarNaColecao();
     let tentativas = 0;
     const tentar = () => {
@@ -1647,6 +1693,7 @@ export function App() {
   // while that button is on screen (not during a search, not under the séries
   // character filter), so the key never acts on a state the user cannot see.
   function alternarDobra() {
+    if (desejosAberto) return desejosTelaRef.current?.alternarTudo() || false;
     if (buscando) return false;
     if (tab === "volumes" && volumesFiltrados.length) {
       alternarTodosVolumes(volumesFiltrados, !volumesFiltrados.every((g) => !gruposFechados.has(g.personagem)));
@@ -1661,7 +1708,15 @@ export function App() {
   // v115: sheets can open over the hub now, and scrolling inside one must not
   // count as scrolling past the hub's end into the collection.
   const folhaAberta = !!(openVolumeId || openSerieId || openColecaoId || corPersonagem || showEditoras);
-  useHubUnlock(isHub && !loading && !folhaAberta, hubElRef, entrarNaColecao);
+  useHubUnlock(isHub && !desejosAberto && !loading && !folhaAberta, hubElRef, entrarNaColecao);
+  useEffect(() => {
+    if (!desejosAberto) return;
+    const h = (e) => {
+      if (e.key === "Escape" && !folhaAberta && !document.querySelector(".modal, .sheet")) setDesejosAberto(false);
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [desejosAberto, folhaAberta]);
   useAtalhos({
     alternarDobra,
     podeDesfazer: !!desfazerAtual,
@@ -1671,12 +1726,16 @@ export function App() {
     editarAberto,
     focarBusca,
     abrirAba: switchTab,
+    alternarDesejos: () => setDesejosAberto((s) => !s),
     novo: novoNaAba,
     novaEdicaoNaFicha,
     marcarStatus: marcarStatusTecla,
   });
 
   /* ============================ render ============================ */
+  const cartButton = <button className="btn-icon btn-desejos" onClick={() => setDesejosAberto((s) => !s)} aria-label={"Lista de desejos, " + lib.desejos.length + " itens"} aria-expanded={desejosAberto} data-dica="Lista de desejos · 4">
+    <ShoppingCart size={18} />{lib.desejos.length > 0 && <span className="btn-badge" aria-hidden="true">{lib.desejos.length}</span>}
+  </button>;
 
   function pularParaConteudo(e) {
     e.preventDefault();
@@ -1760,7 +1819,7 @@ export function App() {
           Tab and screen readers stay on the hub; the sheets sit outside it because
           they open over the hub too. display: contents keeps the sticky header and
           band working as before. */}
-      <div className="app-base" inert={isHub ? "" : undefined}>
+      <div className="app-base" inert={isHub || desejosAberto ? "" : undefined}>
       {/* v132: the keyboard way past the header to the tab's first item. */}
       <a className="pular" href="#conteudo" onClick={pularParaConteudo}>
         {tab === "series" ? "Pular para as séries" : tab === "colecoes" ? "Pular para as coleções" : "Pular para as capas"}
@@ -1790,6 +1849,7 @@ export function App() {
 
           {/* v129: on a phone the search sits in the floating tab bar; the spacer
               keeps the header's buttons on the right. */}
+          {cartButton}
           {celular ? <div style={{ flex: 1 }} /> : (
             <SearchBox query={query} setQuery={setQuery} sugestoes={sugestoes} onPick={escolherSugestao} />
           )}
@@ -2079,6 +2139,7 @@ export function App() {
       {isHub && (
         <div
           className="hub-capa"
+          inert={desejosAberto ? "" : undefined}
           ref={hubElRef}
           data-returning={hubReturning ? "true" : "false"}
           onScroll={(e) => setHubRolado(e.currentTarget.scrollTop > 0)}
@@ -2090,6 +2151,7 @@ export function App() {
                 <span className="wordmark">LONG<b>BOX</b></span>
               </span>
               {avisoSalvamento}
+              {cartButton}
               <div style={{ flex: 1 }} />
               {/* v118: on a narrow hub "Novo" folds to its icon so the primary button keeps
                   its whole name; "Coleção" alone read as the Coleções tab below it. */}
@@ -2146,6 +2208,18 @@ export function App() {
           </main>
         </div>
       )}
+      {desejosAberto && <TelaDesejos
+        ref={desejosTelaRef}
+        lib={lib}
+        persist={persist}
+        fixados={fixadosDesejos}
+        alternarFixado={(p) => alternarFixado(p, true)}
+        setCorPersonagem={setCorPersonagem}
+        abrirDesejo={(id) => abrirVolume(id, { tipo: "desejo" })}
+        novoDesejo={() => openNovoVolume(true)}
+        onClose={() => setDesejosAberto(false)}
+        cartButton={cartButton}
+      />}
       {/* Outside both layers: neither inert under the cover nor gone with it. */}
       <input
         ref={fileInputRef}
@@ -2158,21 +2232,23 @@ export function App() {
       {/* ===================== volume detail ===================== */}
       <VolumeSheet
         volume={openVolume}
+        desejo={volumeDesejo}
+        onComprar={comprarDesejoAberto}
         onClose={() => { setOpenVolumeId(null); setLinkSerieId(null); }}
-        onEdit={() => openEditarVolume(openVolume)}
-        onDuplicate={() => duplicarVolume(openVolume)}
-        onDelete={() => remover({ type: "volume", id: openVolume.id })}
+        onEdit={() => openEditarVolume(openVolume, volumeDesejo)}
+        onDuplicate={() => duplicarVolume(openVolume, volumeDesejo)}
+        onDelete={() => remover({ type: volumeDesejo ? "desejo" : "volume", id: openVolume.id })}
         onStatus={(s) => setStatusVolume(openVolume.id, s)}
-        colecoes={openVolume ? colecoesDoVolume(openVolume.id) : []}
+        colecoes={openVolume ? (volumeDesejo ? lib.desejosColecoes.filter((c) => c.membros.includes(openVolume.id)) : colecoesDoVolume(openVolume.id)) : []}
         grupos={openVolume ? edicoesDoVolumeAgrupadas(openVolume) : []}
         onReordenarSeries={(volumeId, keys) => {
           const atual = libRef.current;
-          persist({ ...atual, volumes: atual.volumes.map((v) =>
+          persist({ ...atual, [chaveVolumeAberto]: atual[chaveVolumeAberto].map((v) =>
             v.id === volumeId ? { ...v, ordemSeries: keys.slice() } : v) });
         }}
         canUpload={canUpload}
         uploading={uploadingCover}
-        onCoverPick={(f) => handleCoverPick(openVolume.id, f)}
+        onCoverPick={(f) => handleCoverPick(openVolume.id, f, chaveVolumeAberto)}
         series={lib.series}
         edicoesPorSerie={edicoesPorSerie}
         linkSerieId={linkSerieId}
@@ -2180,9 +2256,9 @@ export function App() {
         rangeDe={rangeDe} setRangeDe={setRangeDe}
         rangeAte={rangeAte} setRangeAte={setRangeAte}
         avulsoNum={avulsoNum} setAvulsoNum={setAvulsoNum}
-        onRange={() => vincularIntervalo(openVolume.id, linkSerieId)}
-        onAvulsa={() => vincularAvulsa(openVolume.id, linkSerieId)}
-        onToggle={(edId) => toggleLigacaoEdicao(openVolume.id, edId)}
+        onRange={() => vincularIntervalo(openVolume.id, linkSerieId, chaveVolumeAberto)}
+        onAvulsa={() => vincularAvulsa(openVolume.id, linkSerieId, chaveVolumeAberto)}
+        onToggle={(edId) => toggleLigacaoEdicao(openVolume.id, edId, chaveVolumeAberto)}
         onOpenEdicaoNaSerie={abrirEdicaoNaSerie}
         recede={!!openSerieId}
         anterior={vizinhosDoVolume.anterior}
@@ -2248,6 +2324,9 @@ export function App() {
 
       {/* ===================== forms ===================== */}
       <FormVolume
+        desejo={formDesejo}
+        desejosColecoes={lib.desejosColecoes}
+        colecoes={lib.colecoes}
         personagens={personagens}
         editoras={lib.editoras}
         showVolumeForm={showVolumeForm}

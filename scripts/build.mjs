@@ -14,9 +14,9 @@ import { build } from "esbuild";
 import fs from "node:fs";
 
 const claro = process.argv.includes("--claro");
-// A production bundle is ~350 KB; React's development build pushes it past 540.
+// A production bundle is ~465 KB (v165); React's development build adds ~190 KB.
 // Anything over this ceiling means the define did not land.
-const TETO_KB = 450;
+const TETO_KB = 500;
 
 await build({
   entryPoints: ["src/main.jsx"],

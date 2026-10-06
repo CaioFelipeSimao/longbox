@@ -7,8 +7,9 @@ const GRUPOS = [
     [["/"], "Ir para a busca"],
     [["0"], "Voltar ao início"],
     [["1", "2", "3"], "Abrir HQs, Coleções ou Séries"],
-    [["N"], "Novo na aba aberta (volume, coleção ou série)"],
-    [["Q"], "Esconder ou mostrar todos os grupos (HQs e Séries)"],
+    [["4"], "Abrir ou fechar a lista de desejos"],
+    [["N"], "Novo na tela aberta (volume, coleção, série ou desejo)"],
+    [["Q"], "Esconder ou mostrar todos os grupos (HQs, Séries e desejos)"],
     [["?"], "Esta lista"],
   ]],
   ["Numa estante de capas", [

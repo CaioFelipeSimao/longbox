@@ -5,6 +5,34 @@ import { STATUS, STATUS_ORDER, tiposDaEditora } from "../lib/constantes";
 import { usePasteImage } from "../lib/hooks";
 import { Field, Modal } from "../ui/base";
 import { OpcaoFiltro } from "../ui/Filtros";
+import { uid } from "../lib/util";
+
+// Form-only collection choices never become fields on the saved wish.
+export function salvarDesejoDoForm(lib, dados, escolha, nomeNovo) {
+  const { status, ...desejo } = dados;
+  let colecoes = lib.desejosColecoes;
+  let destino = escolha?.startsWith("desejo:") ? colecoes.find((c) => c.id === escolha.slice(7)) : null;
+  if (escolha?.startsWith("acervo:")) {
+    const c = lib.colecoes.find((c) => c.id === escolha.slice(7));
+    if (c) {
+      destino = colecoes.find((cd) => cd.colecaoId === c.id);
+      if (!destino) {
+        destino = { id: uid(), colecaoId: c.id, nome: c.nome, corBarra: c.corBarra, descricao: c.descricao || "", membros: [] };
+        colecoes = [...colecoes, destino];
+      }
+    }
+  } else if (escolha === "nova") {
+    destino = { id: uid(), nome: nomeNovo.trim(), descricao: "", membros: [] };
+    colecoes = [...colecoes, destino];
+  }
+  colecoes = colecoes.flatMap((c) => {
+    if (c.id === destino?.id) return [{ ...c, membros: c.membros.includes(desejo.id) ? c.membros : [...c.membros, desejo.id] }];
+    if (!c.membros.includes(desejo.id)) return [c];
+    const membros = c.membros.filter((id) => id !== desejo.id);
+    return membros.length ? [{ ...c, membros }] : [];
+  });
+  return { ...lib, desejos: lib.desejos.some((d) => d.id === desejo.id) ? lib.desejos.map((d) => d.id === desejo.id ? desejo : d) : [...lib.desejos, desejo], desejosColecoes: colecoes };
+}
 
 // v95: the publisher is picked from the registered ones (Gerenciar editoras), so a
 // typo cannot leave a volume under a publisher of its own with no formats. A value
@@ -34,7 +62,7 @@ function SeletorEditora({ id, editoras, valor, onChange, rotulo = "Editora", tod
 export function FormVolume({
   personagens, editoras, showVolumeForm, setShowVolumeForm, volumeForm, setVolumeForm,
   volumeErrors, volumeDupWarning, salvarVolume, salvarVolumeEContinuar,
-  canUpload, capaNova, setCapaNova,
+  canUpload, capaNova, setCapaNova, desejo = false, desejosColecoes = [], colecoes = [],
 }) {
   // v114: a new volume can take its cover in the same pass (file or Ctrl+V). The
   // file waits here and is uploaded right after the volume is saved.
@@ -73,7 +101,7 @@ export function FormVolume({
         <Modal
           open={showVolumeForm}
           onClose={() => setShowVolumeForm(false)}
-          title={volumeForm.id ? "Editar volume" : "Novo volume"}
+          title={desejo ? (volumeForm.id ? "Editar desejo" : "Novo desejo") : (volumeForm.id ? "Editar volume" : "Novo volume")}
           footer={
             volumeForm.id ? (
               <div className="row">
@@ -142,7 +170,7 @@ export function FormVolume({
               <input className="input" value={volumeForm.ano} onChange={(e) => setVolumeForm((f) => ({ ...f, ano: e.target.value }))} />
             </Field>
           </div>
-          <Field label="Status de leitura">
+          {!desejo && <Field label="Status de leitura">
             <div className="seg3">
               {STATUS_ORDER.map((k) => (
                 <button
@@ -156,7 +184,19 @@ export function FormVolume({
                 </button>
               ))}
             </div>
-          </Field>
+          </Field>}
+          {desejo && <>
+            <Field label="Coleção">
+              <OpcaoFiltro id="form-desejo-colecao" rotulo="Coleção" valor={volumeForm.colecaoDesejoEscolhida || ""} todos="Sem coleção" opcoes={[
+                ...desejosColecoes.map((c) => ({ valor: "desejo:" + c.id, rotulo: c.nome + " (lista)" })),
+                ...colecoes.map((c) => ({ valor: "acervo:" + c.id, rotulo: c.nome + " (acervo)" })),
+                { valor: "nova", rotulo: "Nova coleção" },
+              ]} onChange={(colecaoDesejoEscolhida) => setVolumeForm((f) => ({ ...f, colecaoDesejoEscolhida }))} />
+            </Field>
+            {volumeForm.colecaoDesejoEscolhida === "nova" && <Field label="Nome da coleção" error={volumeErrors.novaColecaoNome}>
+              <input className="input" aria-label="Nome da coleção" value={volumeForm.novaColecaoNome || ""} onChange={(e) => setVolumeForm((f) => ({ ...f, novaColecaoNome: e.target.value }))} />
+            </Field>}
+          </>}
           <Field label="Notas">
             <textarea className="textarea" value={volumeForm.notas} onChange={(e) => setVolumeForm((f) => ({ ...f, notas: e.target.value }))} />
           </Field>

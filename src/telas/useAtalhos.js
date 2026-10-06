@@ -44,6 +44,7 @@ export function useAtalhos(acoes) {
       }
       if ((k === "n" || k === "N") && a.novaEdicaoNaFicha && a.novaEdicaoNaFicha()) { e.preventDefault(); return; }
       if (a.fichaAberta) return;
+      if (k === "4") { e.preventDefault(); a.alternarDesejos(); return; }
       if (k === "/") { e.preventDefault(); a.focarBusca(); return; }
       if (k === "0" || k === "1" || k === "2" || k === "3") {
         e.preventDefault();

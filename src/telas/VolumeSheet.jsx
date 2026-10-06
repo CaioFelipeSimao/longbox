@@ -19,7 +19,7 @@ export function VolumeSheet({
   linkSerieId, setLinkSerieId,
   rangeDe, setRangeDe, rangeAte, setRangeAte, avulsoNum, setAvulsoNum,
   onRange, onAvulsa, onToggle, onOpenEdicaoNaSerie, onReordenarSeries, recede,
-  anterior, proximo, posicao, total, onNavegar, direcao,
+  anterior, proximo, posicao, total, onNavegar, direcao, desejo = false, onComprar,
 }) {
   const inputRef = useRef(null);
   const kept = useRef(null);
@@ -179,7 +179,7 @@ export function VolumeSheet({
               )}
             </dl>
 
-          <div>
+          {!desejo && <div>
             <p className="t-micro" style={{ margin: "0 0 8px" }}>Status de leitura</p>
             <div className="seg3">
               {STATUS_ORDER.map((k) => (
@@ -188,10 +188,12 @@ export function VolumeSheet({
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
+
+          {desejo && <button className="btn btn-primary desejo-comprar" onClick={onComprar}>Comprei</button>}
 
           {v.notas && (
-            <div>
+            <div className={desejo ? "desejo-notas" : undefined}>
               <p className="t-micro" style={{ margin: "0 0 6px" }}>Notas</p>
               <p className="t-small" style={{ margin: 0 }}>{v.notas}</p>
             </div>

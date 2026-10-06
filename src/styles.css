@@ -1811,6 +1811,57 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   --ed-rolagem: var(--border-strong);
   --topo: 0px;
 }
+
+/* Wish-list cover: the hub's scroll and safe-area geometry, below sheets. */
+.desejos-capa {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  overflow-y: auto;
+  overflow-x: clip;
+  overscroll-behavior: none;
+  background: var(--bg);
+  padding-top: env(safe-area-inset-top, 0rem);
+  padding-bottom: env(safe-area-inset-bottom, 0rem);
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.5);
+  --topo: 0rem;
+  --ed-accent: var(--accent);
+  --ed-accent-text: var(--accent-text);
+  --ed-borda: var(--border-strong);
+  --ed-rolagem: var(--border-strong);
+}
+.app .desejos-capa > .topbar { background: var(--bg); }
+.desejos-capa > .topbar::before { height: env(safe-area-inset-top, 0rem); }
+.btn-desejos { position: relative; flex-shrink: 0; }
+.desejos-topo { flex-wrap: wrap; height: auto; min-height: var(--topbar-h); }
+.desejos-topo h1 { margin: 0; font-size: 1.125rem; }
+.desejos-busca { flex: 1; min-width: 8rem; width: auto; }
+.desejos-filtros { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; }
+.desejos-filtros > .pfiltro { flex: 1; min-width: 10rem; }
+.desejos-editora + .desejos-editora { margin-top: 2.5rem; }
+.desejos-editora-head { display: flex; align-items: center; gap: 0.75rem; border-bottom: 0.125rem solid var(--desejo-editora-cor, var(--border-strong)); padding-bottom: 0.75rem; margin-bottom: 1.25rem; color: var(--desejo-editora-cor, var(--text)); }
+.desejos-editora-head h2 { margin: 0; }
+.desejos-colecoes { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+.desejo-colecao { margin: 0; }
+.desejo-colecao-head { border-left: 0.1875rem solid var(--desejo-colecao-cor, var(--border-strong)); padding-left: 0.75rem; user-select: none; -webkit-user-select: none; }
+.desejo-colecao-head h3 { margin: 0; min-width: 0; }
+.desejo-colecao-head > span { flex-shrink: 0; }
+.desejos-colecoes[data-recolhido="true"] .desejo-colecao { border-radius: var(--r); background: var(--surface); }
+.desejos-colecoes[data-recolhido="true"] .desejo-colecao-head { min-height: 3rem; margin: 0; padding: 0.625rem 0.75rem; }
+.desejos-colecoes[data-recolhido="true"] h3 { font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.desejo-comprar { width: 100%; }
+.desejo-notas { padding: 0.875rem; border: 0.0625rem solid var(--ed-borda); border-radius: var(--r); background: var(--surface); white-space: pre-wrap; }
+@media (hover: hover) and (pointer: fine) {
+  .desejos-capa { padding-top: 0; }
+}
+@media (max-width: 47.9375rem) {
+  .desejos-topo h1 { flex: 1; flex-basis: calc(100% - 6.5rem); font-size: 1rem; }
+  .desejos-busca, .desejos-topo > .btn-filtros, .desejos-topo > .btn-primary { order: 2; }
+  .desejos-dobra { order: 2; }
+  .desejos-dobra { min-width: 2.5rem; padding-inline: 0.5rem; }
+  .desejos-dobra span { display: none; }
+  .desejos-filtros > .pfiltro { flex-basis: 100%; }
+}
 /* The publisher gradient belongs to the app's own header, never the hub's. */
 .app .hub-capa > .topbar { background-image: none; }
 /* v135: the sticky header keeps top: 0. Inside a padded scroller a sticky offset is

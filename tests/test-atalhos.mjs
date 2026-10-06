@@ -33,6 +33,7 @@ async function montar(aba) {
     ["library/volumes", { items: [v("a"), v("b")] }],
     ["library/colecoes", { items: [{ id: "c1", nome: "Saga", descricao: "", membros: ["a"] }] }],
     ["library/series", { items: [{ id: "s1", nome: "Batman (Volume 1)", personagens: [{ nome: "Batman", de: null, ate: null }], editora: "DC Comics", anoInicio: "1940", anoFim: "", totalEdicoes: 2, ordem: null }] }],
+    ["library/desejos", { items: [{ ...v("d1"), status: undefined }] }],
     ["library/cores", { mapa: {} }],
   ]);
   const makeDoc = (path) => ({
@@ -75,6 +76,28 @@ check("0 volta ao início", m.abaAtiva() === "hub", m.abaAtiva());
 await m.tecla("1");
 await m.tecla("2", { ctrlKey: true });
 check("Ctrl+2 fica para o navegador", m.abaAtiva() === "volumes", m.abaAtiva());
+
+await m.tecla("4");
+check("4 abre a lista de desejos", !!m.root.querySelector(".desejos-capa"));
+await m.tecla("q");
+check("Q dobra os grupos da lista", m.root.querySelectorAll(".desejos-capa .vol").length === 0 && m.root.querySelectorAll('.aba[data-ativa="true"] .vol').length === 2);
+await m.tecla("q");
+check("Q reabre os grupos da lista", m.root.querySelectorAll(".desejos-capa .vol").length === 1);
+m.root.querySelector('.desejos-capa [data-vid="d1"]').click();
+await sleep(200);
+await m.tecla("Escape");
+await sleep(300);
+check("Esc fecha a ficha do desejo antes da lista", m.tituloSheet() === null && !!m.root.querySelector(".desejos-capa"));
+await m.tecla("4");
+check("4 fecha a lista de desejos", !m.root.querySelector(".desejos-capa"));
+await m.tecla("4");
+await m.tecla("n");
+check("N na lista abre Novo desejo sem status", m.tituloModal() === "Novo desejo" && !m.root.querySelector(".modal [data-kind]"));
+await m.tecla("Escape");
+await sleep(300);
+check("Esc fecha o formulário antes da lista", m.tituloModal() === null && !!m.root.querySelector(".desejos-capa"));
+await m.tecla("Escape");
+check("Esc fecha a lista de desejos", !m.root.querySelector(".desejos-capa"));
 
 // v94: Q is the tab's "Esconder todas / Mostrar todas".
 const visiveis = (sel) => m.root.querySelectorAll('.aba[data-ativa="true"] ' + sel).length;
@@ -154,7 +177,7 @@ console.log("=== painel ===");
 await m.tecla("?", { shiftKey: true });
 check("? abre a lista de atalhos", m.tituloModal() === "Atalhos do teclado", m.tituloModal());
 const teclas = [...(m.root.querySelector(".modal")?.querySelectorAll("kbd") || [])].map((k) => k.textContent);
-const esperadas = ["/", "0", "1", "2", "3", "N", "Q", "?", "E", "←", "→", "Ctrl+V", "Esc", "Ctrl+Z"];
+const esperadas = ["/", "0", "1", "2", "3", "4", "N", "Q", "?", "E", "←", "→", "Ctrl+V", "Esc", "Ctrl+Z"];
 check("a lista traz todas as teclas", esperadas.every((t) => teclas.includes(t)), teclas.join(" "));
 const escLista = await m.tecla("Escape");
 await sleep(300);
