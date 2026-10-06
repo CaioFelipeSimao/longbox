@@ -2889,3 +2889,11 @@ search, filters, +). Codex (gpt-6.1-sol high) wrote tasks 1-4 from briefs; Claud
 headless Chrome and the user checked a preview artifact (KLSkJe9wExoWs7xRhGEFq8, theirs to delete). Bundle
 ceiling raised 450 -> 500 KB (production is ~464 KB now). tests: test-desejos-dados 24, test-desejos 26,
 test-arrastar-colecoes-desejo 48, test-desejos-tela, test-sincronia 92.
+
+**v166 Coleções character filter; empty-state button icon.** The filter button now shows on Coleções too,
+with one "Filtrar por personagem" field (same PersonagemFiltro as Séries, collection counts per name). A
+collection belongs to every character any of its volumes has (user's choice A: a crossover saga shows under
+each), counted only within the publisher band (presencas of each member, editora matched to the band); the
+choice is released when the band leaves the character with nothing, and lasts the session
+(`longbox:filtro-colecoes`, through lerFiltroSeries/salvarFiltroSeries with a key). `.empty svg` greyed every
+icon in an empty state, the "+" of "Novo desejo" included; now `.empty > svg`. tests: test-filtro-colecoes 9.
