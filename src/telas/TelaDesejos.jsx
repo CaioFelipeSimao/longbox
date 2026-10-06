@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronDown, Plus, ShoppingCart, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronsDownUp, ChevronsUpDown, Plus, ShoppingCart, SlidersHorizontal } from "lucide-react";
 import { agruparDesejos, filtrarDesejos, numeroNaFaixa } from "../lib/desejos";
 import { presencas } from "../lib/constantes";
 import { swatchColors } from "../lib/cores";
@@ -65,6 +65,10 @@ export const TelaDesejos = forwardRef(function TelaDesejos({ lib, persist, fixad
           </button>
           {!buscando && <button className="btn btn-quiet desejos-dobra" onClick={alternarTudo} data-dica={(todosAbertos ? "Esconder todas" : "Mostrar todas") + " · Q"} aria-label={todosAbertos ? "Esconder todas" : "Mostrar todas"}>
             <ChevronDown size={16} data-rot={todosAbertos ? "false" : "true"} /><span>{todosAbertos ? "Esconder todas" : "Mostrar todas"}</span>
+          </button>}
+          {/* Phone: the tabs' fold icon (v133 ed-dobra), on the title row. */}
+          {!buscando && <button type="button" className="btn-icon desejos-dobra-cel" onClick={alternarTudo} aria-label={todosAbertos ? "Esconder todas" : "Mostrar todas"}>
+            {todosAbertos ? <ChevronsDownUp size={18} /> : <ChevronsUpDown size={18} />}
           </button>}
           <button className="btn btn-primary" onClick={novoDesejo} data-dica="Novo desejo · N" aria-label="Novo desejo"><Plus size={15} /><span className="novo-rotulo">Novo desejo</span></button>
         </div>

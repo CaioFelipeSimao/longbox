@@ -1847,6 +1847,7 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .app .desejos-capa > .topbar { background: var(--bg); }
 .desejos-capa > .topbar::before { height: env(safe-area-inset-top, 0rem); }
 .btn-desejos { position: relative; flex-shrink: 0; }
+.desejos-dobra-cel { display: none; }
 /* No publisher strip in the wish list: heads stick right under its own header. */
 .desejos-capa .group-head { top: var(--desejos-topo-h, var(--topbar-h)); }
 /* v165: on a PC the cart sits just left of the search, which normally takes the
@@ -1876,14 +1877,14 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
   .desejos-capa { padding-top: 0; }
 }
 @media (max-width: 47.9375rem) {
-  /* Two rows: back, title and "+" on top; search, filters and fold below. */
+  /* Two rows: back, title and the tabs' fold icon on top; search, filters and "+" below. */
   .desejos-topo h1 { flex: 1; min-width: 0; font-size: 1rem; }
   .desejos-topo > .btn-primary { padding-inline: 0.75rem; min-width: 2.75rem; justify-content: center; }
   .desejos-topo > .btn-primary .novo-rotulo { display: none; }
   .desejos-busca { flex-basis: calc(100% - 6.75rem); }
-  .desejos-busca, .desejos-topo > .btn-filtros, .desejos-dobra { order: 2; }
-  .desejos-dobra { min-width: 2.5rem; padding-inline: 0.5rem; }
-  .desejos-dobra span { display: none; }
+  .desejos-busca, .desejos-topo > .btn-filtros, .desejos-topo > .btn-primary { order: 2; }
+  .desejos-dobra { display: none; }
+  .desejos-dobra-cel { display: inline-flex; flex-shrink: 0; }
   .desejos-filtros > .pfiltro { flex-basis: 100%; }
 }
 /* The publisher gradient belongs to the app's own header, never the hub's. */
