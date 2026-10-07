@@ -659,6 +659,10 @@ ghost); the chrome is .topbar 20, .ed-band 15, so lifted layers stay under it. S
 heights, so the insertion index comes from stacked midpoints as if the dragged card were absent
 (`indiceDeInsercaoVertical`). Geometry lives in src/lib/arrastoSeguir.js (pure, tested).
 
+**v167 End drop zone.** In HQs, Coleções and the wish list, empty space to the right of the last card,
+within its vertical band, maps to the last slot: dropping there puts the cover at the end and shifts the others.
+A full row has no such zone; space above or below has no target. The Séries tab does not use this rule.
+
 **Two publishers per HQ (v152).** `tambem: [{editora, personagem}]` on a volume (optional, omitted when
 empty; the volume's own pair stays the primary). One copy owned, shown in both publishers' bands under that
 band's personagem, counted once in "Todas" and in totals, accepted by collections of either publisher.

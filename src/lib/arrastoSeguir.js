@@ -25,6 +25,10 @@ export function slotNoPonto(pointerPage, slotRects, { folga = 0 } = {}) {
     }
     if (pointerPage.x >= left && pointerPage.x < right && pointerPage.y >= top && pointerPage.y < bottom) return i;
   }
+  // Empty space after the last card, on its own row, means "drop at the end".
+  const ultimo = slotRects.length - 1;
+  const fim = slotRects[ultimo];
+  if (fim && pointerPage.x >= fim.right && pointerPage.y >= fim.top - y && pointerPage.y < fim.bottom + y) return ultimo;
   return null;
 }
 

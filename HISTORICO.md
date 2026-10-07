@@ -2897,3 +2897,14 @@ each), counted only within the publisher band (presencas of each member, editora
 choice is released when the band leaves the character with nothing, and lasts the session
 (`longbox:filtro-colecoes`, through lerFiltroSeries/salvarFiltroSeries with a key). `.empty svg` greyed every
 icon in an empty state, the "+" of "Novo desejo" included; now `.empty > svg`. tests: test-filtro-colecoes 9.
+
+**v167 HQs drag: drop in the empty space after the last card.** The user could only move a cover to the
+end by dragging it onto the last occupied position. Decision: `slotNoPonto` now returns the LAST slot's
+index (previously `null`) when the pointer is in the empty space to the right of the last card, within
+that card's vertical band; releasing there puts the dragged cover at the end and shifts the others.
+Applies to HQs, Coleções and the wish list, which share `slotNoPonto`; the Séries tab does not use it and
+is unchanged. A full row has no empty drop zone; empty space in rows above or below still has no target.
+tests: test-arrasto-seguir updated.
+Also in v167: dragging a loose wish opened the hub. `elevarCamadas` forced `z-index: 14` on every
+ancestor, which sank the wish-list cover (`.desejos-capa`, z 35) under the hub (z 35, earlier in the DOM).
+It now skips any ancestor already at or above the drag layer.

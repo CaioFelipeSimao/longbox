@@ -211,7 +211,8 @@ export function useArrastarVolumes(lib, persist, volumesDaFaixa, chave = "volume
       const style = getComputedStyle(parent);
       const clips = /(hidden|clip|auto|scroll)/.test(style.overflowX + style.overflowY);
       // Keep the grid out of a stacking context so only the dragged card clears its head.
-      const lift = parent !== el.parentElement;
+      // Never lower a layer already above the drag (the wish-list cover is z 35; forcing 14 sank it under the hub).
+      const lift = parent !== el.parentElement && !(Number(style.zIndex) >= DRAG_Z_INDEX);
       const props = lift ? ["position", "z-index"] : [];
       if (clips && parent !== scrollContainer) props.push("overflow-x", "overflow-y");
       const saved = props.map((prop) => [prop, parent.style.getPropertyValue(prop), parent.style.getPropertyPriority(prop)]);

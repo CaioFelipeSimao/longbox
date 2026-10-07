@@ -25,7 +25,10 @@ let currentTarget = 4;
 const gapTarget = slotNoPonto({ x: 400, y: 575 }, slots);
 if (gapTarget !== null) currentTarget = gapTarget;
 check("a gap keeps the current target", currentTarget === 4);
-check("empty space after a short row keeps the target", slotNoPonto({ x: 565, y: 755 }, slots) === null);
+check("empty space after the last card, on its row, drops at the end", slotNoPonto({ x: 565, y: 755 }, slots) === 4);
+check("empty space on a full row above does not drop at the end", slotNoPonto({ x: 650, y: 575 }, slots) === null);
+check("empty space below the last row is not a target", slotNoPonto({ x: 565, y: 900 }, slots) === null);
+check("the end zone starts at the last card's right edge", slotNoPonto({ x: 500, y: 755 }, slots) === 4);
 check("a point outside all slots has no target", slotNoPonto({ x: 100, y: 100 }, slots) === null);
 check("empty grids have no target", slotNoPonto({ x: 345, y: 575 }, []) === null);
 check("missing slot rects retain their indices", slotNoPonto({ x: 455, y: 575 }, [null, slots[1]]) === 1);
@@ -38,7 +41,7 @@ check("horizontal midpoint belongs only to the next slot", slotNoPonto({ x: 400,
 check("half the vertical gap fills its upper half", slotNoPonto({ x: 345, y: 664 }, slots, slack) === 0);
 check("vertical midpoint belongs only to the next row", slotNoPonto({ x: 345, y: 665 }, slots, slack) === 3);
 check("gap intersections resolve to one wrapped slot", slotNoPonto({ x: 400, y: 665 }, slots, slack) === 4);
-check("short row still has no phantom slot with slack", slotNoPonto({ x: 565, y: 755 }, slots, slack) === null);
+check("short row end zone still resolves to the last slot with slack", slotNoPonto({ x: 565, y: 755 }, slots, slack) === 4);
 check("numeric slack expands both axes", slotNoPonto({ x: 295, y: 495 }, slots, { folga: 5 }) === 0);
 check("excessive slack is clamped at horizontal midpoints", slotNoPonto({ x: 405, y: 575 }, slots, { folga: 100 }) === 1);
 check("excessive slack is clamped at vertical midpoints", slotNoPonto({ x: 345, y: 670 }, slots, { folga: 100 }) === 3);
@@ -47,6 +50,7 @@ check("excessive slack is clamped at vertical midpoints", slotNoPonto({ x: 345, 
 const reversedSlots = slots.slice().reverse();
 let nonOverlapping = true;
 for (let x = 290; x <= 620; x += 5) for (let y = 485; y <= 845; y += 5) {
+  if ((x >= 500 && y >= 665) || (x >= 390 && y >= 400 && y < 750)) continue; // end-of-list zones depend on which slot is last
   const a = slotNoPonto({ x, y }, slots, { folga: 100 });
   const b = slotNoPonto({ x, y }, reversedSlots, { folga: 100 });
   if ((a === null) !== (b === null) || (a !== null && slots[a] !== reversedSlots[b])) nonOverlapping = false;
