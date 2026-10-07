@@ -2280,7 +2280,6 @@ export function App() {
         abrirDesejo={(id) => abrirVolume(id, { tipo: "desejo" })}
         novoDesejo={() => openNovoVolume(true)}
         onClose={() => setDesejosAberto(false)}
-        cartButton={celular ? null : cartButton}
       />}
       {/* Outside both layers: neither inert under the cover nor gone with it. */}
       <input

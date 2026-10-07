@@ -13,7 +13,7 @@ import { useArrastarVolumes } from "./useArrastarVolumes";
 import { useArrastarColecao } from "./useArrastarColecao";
 import { useArrastarColecoesDesejo } from "./useArrastarColecoesDesejo";
 
-export const TelaDesejos = forwardRef(function TelaDesejos({ lib, persist, fixados, alternarFixado, setCorPersonagem, abrirDesejo, novoDesejo, onClose, cartButton }, ref) {
+export const TelaDesejos = forwardRef(function TelaDesejos({ lib, persist, fixados, alternarFixado, setCorPersonagem, abrirDesejo, novoDesejo, onClose }, ref) {
   const [busca, setBusca] = useState("");
   const [tipo, setTipo] = useState("");
   const [personagem, setPersonagem] = useState("");
@@ -58,7 +58,6 @@ export const TelaDesejos = forwardRef(function TelaDesejos({ lib, persist, fixad
         <div className="topbar-inner desejos-topo">
           <button ref={voltarRef} className="btn-icon" aria-label="Voltar da lista de desejos" onClick={onClose}><ChevronLeft size={18} /></button>
           <h1 className="t-display">Lista de desejos · {lib.desejos.length}</h1>
-          {cartButton}
           <input className="input desejos-busca" aria-label="Buscar na lista de desejos" placeholder="Buscar na lista" value={busca} onChange={(e) => setBusca(e.target.value)} />
           <button className="btn-icon btn-filtros" aria-label={ativos ? "Filtros, " + ativos + " ativos" : "Filtros"} aria-expanded={filtros} onClick={() => setFiltros((s) => !s)}>
             <SlidersHorizontal size={16} />{ativos > 0 && <span className="btn-badge" aria-hidden="true">{ativos}</span>}

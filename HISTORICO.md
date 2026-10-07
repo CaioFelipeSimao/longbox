@@ -2908,3 +2908,13 @@ tests: test-arrasto-seguir updated.
 Also in v167: dragging a loose wish opened the hub. `elevarCamadas` forced `z-index: 14` on every
 ancestor, which sank the wish-list cover (`.desejos-capa`, z 35) under the hub (z 35, earlier in the DOM).
 It now skips any ancestor already at or above the drag layer.
+
+**v168 Critique 5 (29/40, v167): wish-list header and 390px gutter.** Critique 5 (snapshot
+`.impeccable/critique/2026-10-07T16-18-24Z__harness-index-html.md`) scored 29/40, down from 31 because of the
+wish list. Done: the cart button inside the wish-list screen is gone (desktop only; the back button closes it,
+key `4` and the tab-bar cart still toggle), which also drops the duplicate count. On a 390px phone the HQs/Coleções
+top row (wordmark, filter, "Novo ...") overflowed the 16px gutter by 11px because the zero-width status items
+each still take a flex gap; the gap is 6px at <=420px (button now ends at 374 of 390). Checked and NOT changed:
+`.group-toggle` measures 26px but its `::after` stretches the hit area over the whole group row (false positive);
+`.shelf-track` (30px) is a scroll scrubber and stays. Left for later, not asked: three fold-icon scopes, wanted
+items looking like owned ones, no touch hint for drag/pin/Gerenciar.
