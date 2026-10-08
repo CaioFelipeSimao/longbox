@@ -2251,10 +2251,13 @@ export function App() {
                   onRecorte={abrirRecorte}
                 />
                 <div className="footer-actions">
+                  <button className="btn btn-ghost" onClick={() => setShowAtalhos(true)}>
+                    <Keyboard size={14} /> Atalhos e gestos
+                  </button>
                   <button className="btn btn-ghost" onClick={exportJson}>
                     <Download size={14} /> Exportar backup
                   </button>
-                  {/* v99: the two actions that replace the library sit apart from the safe one. */}
+                  {/* v99: the two actions that replace the library sit apart from the safe ones. */}
                   <span className="footer-sep" aria-hidden="true" />
                   <button className="btn btn-ghost" onClick={() => fileInputRef.current && fileInputRef.current.click()}>
                     <Upload size={14} /> Importar backup

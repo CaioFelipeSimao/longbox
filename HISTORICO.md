@@ -2935,3 +2935,8 @@ A decorative wish-only span draws a `1.125rem` surface-backed
 cart badge with a Lucide ShoppingCart SVG mask on its `::before`, preserving `.cover::after`'s character stripe.
 Loose and collection wishes share the look, including drags inside the list; body clones keep existing styles.
 All new sizes are rem. Data, acervo, hub, tabs, volume sheets and acervo ghosts are unchanged. No build or tests run.
+
+**v172 Quiet gesture help.** "Atalhos e gestos" starts with six touch/mouse instructions, in full-width rows
+without key caps. A Keyboard ghost button beside Exportar backup opens the same panel from the hub footer;
+the existing separator still divides safe actions from library replacement, wrapping below 42rem. The keyboard note stays; no
+automatic reminder, toast or tip. Shortcut and focus tests expect the new modal title. No build run.

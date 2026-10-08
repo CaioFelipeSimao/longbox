@@ -160,7 +160,7 @@ check("hub sem telemetria de armazenamento", !h.root.textContent.includes("Maior
 check("lembrete de backup continua", /backup/i.test(h.root.querySelector(".hub-storage")?.textContent || ""));
 m.root.querySelector(".so-teclado")?.click();
 await sleep(200);
-check("botão de teclado abre os atalhos", /Atalhos do teclado/.test(m.root.querySelector(".modal")?.textContent || ""));
+check("botão de teclado abre os atalhos", /Atalhos e gestos/.test(m.root.querySelector(".modal")?.textContent || ""));
 check("sem erros", m.erros.length === 0 && s.erros.length === 0 && h.erros.length === 0, m.erros[0] || s.erros[0] || h.erros[0]);
 
 // v112: the group heading is a real heading; its name folds the group, the square picks the colour.

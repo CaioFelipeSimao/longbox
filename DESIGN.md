@@ -288,6 +288,7 @@ the 16px gutters.
 v102: nothing outside the hub wall renders below 11px; the storage meter shows only past 80%;
 a missing number can be linked to a volume from its panel; with a number picked, ← → step to the neighbouring edição in map order (v143); a keyboard button beside the search
 (fine pointer only) opens the shortcuts panel.
+v172: the v91 panel is now "Atalhos e gestos", with touch/mouse gestures first and a quiet Keyboard button beside Exportar backup in the hub footer; no automatic reminders.
 
 v119: J / K / L set Não lida / Lendo / Lida in the open volume sheet (the control follows, no
 toast) and on a focused cover anywhere (a toast "Título · status" with Desfazer / Ctrl+Z).

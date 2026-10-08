@@ -175,7 +175,7 @@ await m.fecharTudo();
 
 console.log("=== painel ===");
 await m.tecla("?", { shiftKey: true });
-check("? abre a lista de atalhos", m.tituloModal() === "Atalhos do teclado", m.tituloModal());
+check("? abre a lista de atalhos", m.tituloModal() === "Atalhos e gestos", m.tituloModal());
 const teclas = [...(m.root.querySelector(".modal")?.querySelectorAll("kbd") || [])].map((k) => k.textContent);
 const esperadas = ["/", "0", "1", "2", "3", "4", "N", "Q", "?", "E", "←", "→", "Ctrl+V", "Esc", "Ctrl+Z"];
 check("a lista traz todas as teclas", esperadas.every((t) => teclas.includes(t)), teclas.join(" "));

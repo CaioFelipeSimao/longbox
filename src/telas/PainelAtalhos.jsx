@@ -3,6 +3,14 @@ import { Modal } from "../ui/base";
 // Q4 (v91): the one place that lists every shortcut, opened with "?". The keys that
 // already existed (Esc, the arrows, Ctrl+V) are listed too, so it is the whole set.
 const GRUPOS = [
+  ["Gestos (toque ou mouse)", [
+    [[], "Segure uma capa por meio segundo e arraste: reordena as HQs dentro do personagem, os volumes de uma coleção e as séries dentro de um volume"],
+    [[], "Solte no espaço vazio depois da última capa: vai para o fim da lista"],
+    [[], "Segure o título de uma coleção na lista de desejos e arraste: reordena as coleções"],
+    [[], "Toque no alfinete ao lado do nome de um personagem: fixa até 3 personagens no topo (HQs e Séries)"],
+    [[], "Toque na seta do nome do personagem ou da editora: recolhe e mostra"],
+    [[], "Em Coleções, Gerenciar abre a coleção para adicionar volumes e mudar a ordem de leitura"],
+  ]],
   ["Em qualquer tela", [
     [["/"], "Ir para a busca"],
     [["0"], "Voltar ao início"],
@@ -35,7 +43,7 @@ const GRUPOS = [
 
 export function PainelAtalhos({ open, onClose }) {
   return (
-    <Modal open={open} onClose={onClose} title="Atalhos do teclado">
+    <Modal open={open} onClose={onClose} title="Atalhos e gestos">
       <div className="atalhos">
         {GRUPOS.map(([titulo, linhas]) => (
           <section key={titulo}>
@@ -43,7 +51,7 @@ export function PainelAtalhos({ open, onClose }) {
             <dl>
               {linhas.map(([teclas, texto]) => (
                 <div className="atalho" key={texto}>
-                  <dt>{teclas.map((t) => <kbd key={t}>{t}</kbd>)}</dt>
+                  {teclas.length > 0 && <dt>{teclas.map((t) => <kbd key={t}>{t}</kbd>)}</dt>}
                   <dd>{texto}</dd>
                 </div>
               ))}
