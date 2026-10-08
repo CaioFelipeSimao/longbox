@@ -2918,3 +2918,9 @@ each still take a flex gap; the gap is 6px at <=420px (button now ends at 374 of
 `.group-toggle` measures 26px but its `::after` stretches the hit area over the whole group row (false positive);
 `.shelf-track` (30px) is a scroll scrubber and stays. Left for later, not asked: three fold-icon scopes, wanted
 items looking like owned ones, no touch hint for drag/pin/Gerenciar.
+
+**v169 Critique 5 P2: the publisher fold button says what it folds.** On the wish list, each publisher's header
+button was the same ChevronsDownUp icon as the phone's global fold, with a different scope. It is now a quiet
+button with text, "Esconder personagens" / "Mostrar personagens" (icon 16px, right-aligned on the publisher row);
+the h2 truncates with an ellipsis before the button wraps. The global header button, the group chevron and the
+HQs/Coleções/Séries tabs are unchanged.

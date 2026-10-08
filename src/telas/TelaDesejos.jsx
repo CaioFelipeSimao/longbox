@@ -88,9 +88,9 @@ export const TelaDesejos = forwardRef(function TelaDesejos({ lib, persist, fixad
           return <section className="desejos-editora" key={g.editora}>
           <div className="desejos-editora-head" style={{ "--desejo-editora-cor": corEditora(lib, g.editora) }}>
             <EditoraLogo editora={lib.editoras.find((e) => e.nome.toLowerCase() === g.editora.toLowerCase())} size="2rem" /><h2 className="t-display">{g.editora}</h2>
-            {!buscando && <button type="button" className="btn-icon desejos-dobra-editora" aria-label={(editoraAberta ? "Esconder" : "Mostrar") + " os personagens de " + g.editora}
+            {!buscando && <button type="button" className="btn btn-quiet desejos-dobra-editora" aria-label={(editoraAberta ? "Esconder" : "Mostrar") + " os personagens de " + g.editora}
               onClick={() => setFechados((s) => { const next = new Set(s); daEditora.forEach((k) => (editoraAberta ? next.add(k) : next.delete(k))); return next; })}>
-              {editoraAberta ? <ChevronsDownUp size={18} /> : <ChevronsUpDown size={18} />}
+              {editoraAberta ? <ChevronsDownUp size={16} /> : <ChevronsUpDown size={16} />}<span>{editoraAberta ? "Esconder personagens" : "Mostrar personagens"}</span>
             </button>}
           </div>
           {g.personagens.map((p) => {
