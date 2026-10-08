@@ -695,7 +695,7 @@ Spec: `docs/superpowers/specs/2026-10-06-lista-de-desejos-design.md`. What holds
   strip numbered `n + i + 1` after the linked acervo collection (`lib/desejos.js numeroNaFaixa`), strip drag
   as on Coleções, and a long-press on a collection title collapses the character's collections to rows and
   reorders them (`useArrastarColecoesDesejo`; shadow only, never tilt, shake or breathe).
-- **Reserved covers (v170):** only `.desejos-capa` gets a thin muted dashed outline, art at `saturate(0.75) opacity(0.92)`, and a `1.125rem` surface-backed CSS cart badge; `.cover::after` keeps its stripe, body ghosts keep their existing styling.
+- **Reserved covers (v170/v171):** only `.desejos-capa .vol .cover::before` gets a `0.25rem` dashed border in `color-mix(in srgb, var(--text) 55%, transparent)` (dark and light themes). The absolute pseudo-element uses `inset: 0` (the cover's existing 1px border supplies the former outline's outer inset), `border-radius: calc(var(--r) - 0.0625rem)` and `pointer-events: none`; z-index 2 paints the dashes above `.cover::after`'s character stripe (z-index 1), below the cart badge (z-index 3). Only the image or fallback art uses `saturate(0.45) brightness(1.08) opacity(0.62)` over `var(--surface)` for a stronger pastel, disabled-cover effect in both themes; the `1.125rem` surface-backed CSS cart badge and `.cover::after`'s stripe stay crisp, body ghosts keep their existing styling.
 - **Ghosts over the layer:** `criarGhost` lifts its ghost to z-index 40 inside `.desejos-capa`; a body ghost at
   the default 14 is invisible under the list.
 - **Comprei** (`comprarDesejo`): one mutation, undoable from the toast: wish -> volume `nao_lida`; into the

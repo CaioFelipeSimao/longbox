@@ -2925,8 +2925,13 @@ button with text, "Esconder personagens" / "Mostrar personagens" (icon 16px, rig
 the h2 truncates with an ellipsis before the button wraps. The global header button, the group chevron and the
 HQs/Coleções/Séries tabs are unchanged.
 
-**v170 Wish covers as reserved places.** Only `.desejos-capa .vol .cover` gets a thin muted dashed outline;
-the cover art uses `saturate(0.75) opacity(0.92)`. A decorative wish-only span draws a `1.125rem` surface-backed
+**v170/v171 Wish covers as reserved places.** Only `.desejos-capa .vol .cover::before` gets a `0.25rem` dashed border in
+`color-mix(in srgb, var(--text) 55%, transparent)`, adapting to dark and light themes. The absolute pseudo-element uses
+`inset: 0` (the cover's existing 1px border supplies the former outline's outer inset), `border-radius: calc(var(--r) - 0.0625rem)`
+and `pointer-events: none`; at z-index 2 it crosses above `.cover::after`'s character stripe (z-index 1), below the cart badge (z-index 3);
+the cover art uses `saturate(0.45) brightness(1.08) opacity(0.62)` over `var(--surface)` for a stronger pastel,
+disabled-cover effect in both themes. Only the image or fallback art is filtered; the stripe and cart stay crisp.
+A decorative wish-only span draws a `1.125rem` surface-backed
 cart badge with a Lucide ShoppingCart SVG mask on its `::before`, preserving `.cover::after`'s character stripe.
 Loose and collection wishes share the look, including drags inside the list; body clones keep existing styles.
 All new sizes are rem. Data, acervo, hub, tabs, volume sheets and acervo ghosts are unchanged. No build or tests run.
