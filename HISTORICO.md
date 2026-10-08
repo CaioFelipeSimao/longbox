@@ -2924,3 +2924,9 @@ button was the same ChevronsDownUp icon as the phone's global fold, with a diffe
 button with text, "Esconder personagens" / "Mostrar personagens" (icon 16px, right-aligned on the publisher row);
 the h2 truncates with an ellipsis before the button wraps. The global header button, the group chevron and the
 HQs/Coleções/Séries tabs are unchanged.
+
+**v170 Wish covers as reserved places.** Only `.desejos-capa .vol .cover` gets a thin muted dashed outline;
+the cover art uses `saturate(0.75) opacity(0.92)`. A decorative wish-only span draws a `1.125rem` surface-backed
+cart badge with a Lucide ShoppingCart SVG mask on its `::before`, preserving `.cover::after`'s character stripe.
+Loose and collection wishes share the look, including drags inside the list; body clones keep existing styles.
+All new sizes are rem. Data, acervo, hub, tabs, volume sheets and acervo ghosts are unchanged. No build or tests run.

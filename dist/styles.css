@@ -1852,6 +1852,36 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 .desejos-dobra-cel { display: none; }
 /* No publisher strip in the wish list: heads stick right under its own header. */
 .desejos-capa .group-head { top: var(--desejos-topo-h, var(--topbar-h)); }
+/* v170: reserved places. Keep the art subdued, the edge stripe and badge crisp. */
+.desejos-capa .vol .cover {
+  outline: 0.0625rem dashed var(--text-muted);
+  outline-offset: -0.125rem;
+}
+.desejos-capa .vol .cover > img,
+.desejos-capa .vol .cover > .cover-fb { filter: saturate(0.75) opacity(0.92); }
+/* .cover::after already paints the character stripe; this badge has its own pseudo. */
+.desejos-capa .vol .cover .desejo-carrinho {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  z-index: 3;
+  pointer-events: none;
+}
+.desejos-capa .vol .cover .desejo-carrinho::before {
+  content: "";
+  width: 0.8125rem;
+  height: 0.8125rem;
+  background: var(--text-muted);
+  --desejo-cart-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='8' cy='21' r='1'/%3E%3Ccircle cx='19' cy='21' r='1'/%3E%3Cpath d='M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 2-1.58L22.15 6H5.12'/%3E%3C/svg%3E");
+  -webkit-mask: var(--desejo-cart-mask) center / contain no-repeat;
+  mask: var(--desejo-cart-mask) center / contain no-repeat;
+}
 /* v165: on a PC the cart sits just left of the search, which normally takes the
    auto margin; the cart takes it instead and the search follows at the gap. */
 .topbar-inner > .btn-desejos:has(+ .search) { margin-left: auto; }

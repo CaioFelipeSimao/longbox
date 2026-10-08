@@ -130,7 +130,7 @@ export const gradeTeclado = {
 };
 
 export function VolumeCard({
-  volume, open, onClick, index, bare,
+  volume, open, onClick, index, bare, desejo,
   reordenavel, personagem, dragging, holdColor, cardRef,
   onDragPointerDown, onDragPointerMove, onDragPointerEnd, tabParada,
 }) {
@@ -160,6 +160,7 @@ export function VolumeCard({
     >
       <div className="cover" style={{ "--edge": c.edge }}>
         <CoverArt volume={volume} />
+        {desejo && <span className="desejo-carrinho" aria-hidden="true" />}
         {reordenavel && (
           <>
             <div className="vol-hold" aria-hidden="true" />

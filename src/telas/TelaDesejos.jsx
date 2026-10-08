@@ -122,7 +122,7 @@ function GrupoDesejos({ lib, persist, grupo, visiveis, reordenavel, abrirDesejo 
   const colecoes = cols.visual ? cols.visual.ids.map((id) => grupo.colecoes.find((c) => c.colecao.id === id)).filter(Boolean) : grupo.colecoes;
   return <>
     {!!itens.length && <div className="shelf stagger" ref={drag.gradeRef} data-hq-grid={grupo.nome} role="group" aria-label={"Desejos de " + grupo.nome} {...gradeTeclado}>
-      {itens.map((v, i) => <VolumeCard key={v.id} volume={v} index={i} tabParada={i === 0 ? 0 : -1} open={false} reordenavel={reordenavel} personagem={grupo.nome} dragging={drag.dragVisual?.id === v.id} holdColor={drag.editoraCorPorNome[(v.editora || "").toLowerCase()]} cardRef={(el) => drag.registrarCardNode(v.id, el)} onDragPointerDown={(e) => drag.volDragPointerDown(e, v, grupo.nome)} onDragPointerMove={drag.volDragPointerMove} onDragPointerEnd={drag.volDragPointerEnd} onClick={() => { if (drag.suppressClickRef.current) { drag.suppressClickRef.current = false; return; } abrirDesejo(v.id); }} />)}
+      {itens.map((v, i) => <VolumeCard desejo key={v.id} volume={v} index={i} tabParada={i === 0 ? 0 : -1} open={false} reordenavel={reordenavel} personagem={grupo.nome} dragging={drag.dragVisual?.id === v.id} holdColor={drag.editoraCorPorNome[(v.editora || "").toLowerCase()]} cardRef={(el) => drag.registrarCardNode(v.id, el)} onDragPointerDown={(e) => drag.volDragPointerDown(e, v, grupo.nome)} onDragPointerMove={drag.volDragPointerMove} onDragPointerEnd={drag.volDragPointerEnd} onClick={() => { if (drag.suppressClickRef.current) { drag.suppressClickRef.current = false; return; } abrirDesejo(v.id); }} />)}
     </div>}
     <div className="desejos-colecoes" data-recolhido={cols.recolhido ? "true" : "false"}>
       {colecoes.map(({ colecao, membros }) => <ColecaoDesejo
@@ -173,7 +173,7 @@ function DesejoStrip({ colecao, lib, persist, visiveis, reordenavel, abrirDesejo
   return <ShelfStrip total={itens.length} cor={cor} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") drag.suppressClickRef.current = false; }}>
     {itens.map(({ indice, slot, volume: v }, i) => <div key={v.id + ":" + indice} data-membro-indice={indice}>
       <div className="slot-order">{String(numeroNaFaixa(lib, colecao, slot)).padStart(2, "0")}</div>
-      <VolumeCard volume={v} index={0} tabParada={i === 0 ? 0 : -1} open={false} reordenavel={reordenavel} holdColor={holdColor} cardRef={(el) => drag.registrar(indice, el)} onDragPointerDown={(e) => drag.pointerDown(e, indice)} onDragPointerMove={drag.mover} onDragPointerEnd={drag.finalizar} onClick={() => { if (drag.suppressClickRef.current) { drag.suppressClickRef.current = false; return; } abrirDesejo(v.id); }} />
+      <VolumeCard desejo volume={v} index={0} tabParada={i === 0 ? 0 : -1} open={false} reordenavel={reordenavel} holdColor={holdColor} cardRef={(el) => drag.registrar(indice, el)} onDragPointerDown={(e) => drag.pointerDown(e, indice)} onDragPointerMove={drag.mover} onDragPointerEnd={drag.finalizar} onClick={() => { if (drag.suppressClickRef.current) { drag.suppressClickRef.current = false; return; } abrirDesejo(v.id); }} />
     </div>)}
   </ShelfStrip>;
 }
