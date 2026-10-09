@@ -2215,14 +2215,13 @@ export function App() {
               {avisoSalvamento}
               <div style={{ flex: 1 }} />
               {cartButton}
-              {/* v118: on a narrow hub "Novo" folds to its icon so the primary button keeps
-                  its whole name; "Coleção" alone read as the Coleções tab below it. */}
+              {/* v118: on a narrow hub "Novo" folds to its icon. */}
               <button className="btn btn-quiet novo-hub" onClick={openNovoVolume} data-dica="Novo volume · N" aria-label="Novo volume">
                 <Plus size={15} /> <span className="novo-rotulo">Novo volume</span>
               </button>
-              <button className="btn btn-primary" onClick={entrarNaColecao}>
+              <button className="btn btn-primary colecao-hub" onClick={entrarNaColecao} aria-label="Minha coleção">
                 <Library size={15} />
-                <span>Minha coleção</span>
+                <span className="rot-longo">Minha coleção</span><span className="rot-curto">Coleção</span>
               </button>
             </div>
           </header>

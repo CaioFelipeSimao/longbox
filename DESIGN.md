@@ -190,6 +190,9 @@ The search is the bar's flexible item (44px to 456px, pushed right); only the hu
 spacer. Below 480px (tabs) and 560px (hub) "Novo" shows only its "+", and below 520px the save
 signal is a dot that disappears while idle (v118). Below 480px the hub footer breaks after
 Exportar, keeping Importar and Zerar together.
+v173: at <=420px (`26.25rem`) the hub's primary label is "Coleção", with `0.0625rem`
+inline padding to retain the 16px right gutter at 360px beside the cart and "+";
+above it the label is "Minha coleção". Its accessible name is always "Minha coleção".
 
 **The hub is a cover (v126).** It is a fixed layer (`.hub-capa`, z-index 35: over the header,
 band and bottom tab bar, under the scrim, so sheets open over it) with its own scroll and its own
@@ -696,7 +699,7 @@ Spec: `docs/superpowers/specs/2026-10-06-lista-de-desejos-design.md`. What holds
   strip numbered `n + i + 1` after the linked acervo collection (`lib/desejos.js numeroNaFaixa`), strip drag
   as on Coleções, and a long-press on a collection title collapses the character's collections to rows and
   reorders them (`useArrastarColecoesDesejo`; shadow only, never tilt, shake or breathe).
-- **Reserved covers (v170/v171):** only `.desejos-capa .vol .cover::before` gets a `0.25rem` dashed border in `color-mix(in srgb, var(--text) 55%, transparent)` (dark and light themes). The absolute pseudo-element uses `inset: 0` (the cover's existing 1px border supplies the former outline's outer inset), `border-radius: calc(var(--r) - 0.0625rem)` and `pointer-events: none`; z-index 2 paints the dashes above `.cover::after`'s character stripe (z-index 1), below the cart badge (z-index 3). Only the image or fallback art uses `saturate(0.45) brightness(1.08) opacity(0.62)` over `var(--surface)` for a stronger pastel, disabled-cover effect in both themes; the `1.125rem` surface-backed CSS cart badge and `.cover::after`'s stripe stay crisp, body ghosts keep their existing styling.
+- **Reserved covers (v170/v171):** only `.desejos-capa .vol .cover::before` gets a `0.25rem` dashed border in `color-mix(in srgb, var(--text) 55%, transparent)` (dark and light themes). The absolute pseudo-element uses `inset: 0` (the cover's existing 1px border supplies the former outline's outer inset), `border-radius: calc(var(--r) - 0.0625rem)` and `pointer-events: none`; z-index 2 paints the dashes above `.cover::after`'s character stripe (z-index 1), below the cart badge (z-index 3). Only the image or fallback art uses `saturate(0.45) brightness(1.08) opacity(0.62)` over `var(--surface)` for a stronger pastel, disabled-cover effect in both themes; the `1.125rem` surface-backed CSS cart badge and `.cover::after`'s stripe stay crisp, body ghosts keep their existing styling. **v173 light fallback:** only its background pseudo-element uses the filter, with `opacity(0.5)`; title and footer use opaque `--text` (`#14161A`). Even black art blends to at least #808080 over the white surface, giving >=4.55:1 contrast. Real images and dark fallbacks retain their existing filter.
 - **Ghosts over the layer:** `criarGhost` lifts its ghost to z-index 40 inside `.desejos-capa`; a body ghost at
   the default 14 is invisible under the list.
 - **Comprei** (`comprarDesejo`): one mutation, undoable from the toast: wish -> volume `nao_lida`; into the

@@ -1868,6 +1868,26 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 .desejos-capa .vol .cover > img,
 .desejos-capa .vol .cover > .cover-fb { filter: saturate(0.45) brightness(1.08) opacity(0.62); }
+@media (prefers-color-scheme: light) {
+  /* v173: filter only the fallback background, keeping its ink opaque. At 50%
+     over the white surface even black art becomes #808080 (>= 4.55:1 on --text). */
+  .desejos-capa .vol .cover > .cover-fb {
+    position: relative;
+    isolation: isolate;
+    background: none;
+    filter: none;
+  }
+  .desejos-capa .vol .cover > .cover-fb::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(160deg, var(--fb-a), var(--fb-b));
+    filter: saturate(0.45) brightness(1.08) opacity(0.5);
+  }
+  .desejos-capa .cover-fb-title,
+  .desejos-capa .cover-fb-foot { color: var(--text); }
+}
 /* .cover::after already paints the character stripe; this badge has its own pseudo. */
 .desejos-capa .vol .cover .desejo-carrinho {
   position: absolute;
@@ -2094,6 +2114,13 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 
 .label-wide { display: none; }
+.hub-capa .rot-curto { display: none; }
+@media (max-width: 26.25rem) {
+  .hub-capa .rot-longo { display: none; }
+  .hub-capa .rot-curto { display: inline; }
+  .hub-capa .colecao-hub { padding-inline: 0.75rem; }
+  .hub-capa .colecao-hub > svg { display: none; }
+}
 @media (max-width: 559px) { .novo-hub { padding-inline: 0.75rem; min-width: 2.75rem; justify-content: center; } .novo-hub .novo-rotulo { display: none; } }
 /* v133: on the tabs "Novo" keeps its word on a phone too, now that the search lives
    in the tab bar: it was an icon-only square beside the filter's identical square

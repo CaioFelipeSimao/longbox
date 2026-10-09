@@ -2940,3 +2940,9 @@ All new sizes are rem. Data, acervo, hub, tabs, volume sheets and acervo ghosts 
 without key caps. A Keyboard ghost button beside Exportar backup opens the same panel from the hub footer;
 the existing separator still divides safe actions from library replacement, wrapping below 42rem. The keyboard note stays; no
 automatic reminder, toast or tip. Shortcut and focus tests expect the new modal title. No build run.
+
+**v173 Phone hub and light wish-list ink (critique 6).** At <=420px the hub's primary label
+is "Coleção", with tighter inline padding to keep the 360px header inside its right gutter;
+its accessible name stays "Minha coleção". Light wish fallbacks use opaque theme ink on a
+separately filtered, 50% pastel background (>=4.55:1 even over black art). Real covers and
+dark fallbacks keep their look. No build run.
