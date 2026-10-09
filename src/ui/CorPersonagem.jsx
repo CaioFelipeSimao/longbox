@@ -10,7 +10,7 @@ import { Sheet } from "./base";
 // tabs. So its heading is where its colour is set. onAlternar is what makes
 // the group collapsible; both tabs pass it now, each with its own fold state
 // (see lerGruposAbertos/lerGruposFechados below) and its own default.
-export function GroupHead({ personagem, count, onPickColor, aberto, onAlternar, itemLabel = "séries", fixado, onFixar }) {
+export function GroupHead({ personagem, count, onPickColor, aberto, onAlternar, itemLabel = "séries", fixado, onFixar, progresso }) {
   const cores = useCores();
   const spec = specForCharacter(personagem, cores);
   const guardado = cores && cores[(personagem || "").trim().toLowerCase()];
@@ -45,6 +45,13 @@ export function GroupHead({ personagem, count, onPickColor, aberto, onAlternar, 
         ) : personagem}
       </h2>
       <span className="group-count">{count}</span>
+      {/* v174: Séries only. Editions owned over the group's total, like a row's 55/100. */}
+      {progresso && (
+        <span className="group-count group-progresso">
+          <span aria-hidden="true">{progresso.owned}/{progresso.total}</span>
+          <span className="sr-only">{progresso.owned} de {progresso.total} edições possuídas</span>
+        </span>
+      )}
       {/* v141: pins the character above the alphabetical order, three at most. */}
       {onFixar && (
         <button

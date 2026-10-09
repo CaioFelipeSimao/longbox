@@ -4,6 +4,21 @@ import { EmptyState } from "../ui/base";
 import { GroupHead } from "../ui/CorPersonagem";
 import { SEM_EDICOES, SerieLinha } from "../ui/Series";
 
+// v174: owned/total editions of a group, one count per série (a série split into
+// ranges appears twice in itens), with the same totals a row shows.
+function progressoDoGrupo(itens, edicoesPorSerie, ownedIds) {
+  let owned = 0, total = 0;
+  const vistas = new Set();
+  for (const { serie } of itens) {
+    if (vistas.has(serie.id)) continue;
+    vistas.add(serie.id);
+    const eds = edicoesPorSerie[serie.id] || SEM_EDICOES;
+    owned += eds.filter((e) => ownedIds.has(e.id)).length;
+    total += serie.totalEdicoes || eds.length;
+  }
+  return { owned, total };
+}
+
 export function AbaSeries({
   lib, setCorPersonagem, fixados, alternarFixado, edicoesPorSerie, ownedEdicaoIds, buscando, filtrando, openSerieId,
   gruposAbertos, grupoAberto, alternarGrupo, alternarTodos, seriesFiltradas,
@@ -40,6 +55,7 @@ export function AbaSeries({
           <GroupHead
             personagem={grupo.personagem}
             count={grupo.itens.length}
+            progresso={progressoDoGrupo(grupo.itens, edicoesPorSerie, ownedEdicaoIds)}
             onPickColor={setCorPersonagem}
             aberto={grupoAberto(grupo.personagem)}
             onAlternar={alternarGrupo}

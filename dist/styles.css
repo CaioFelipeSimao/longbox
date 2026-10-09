@@ -1649,6 +1649,8 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
 }
 .btn[data-on="true"] { border-color: var(--border-strong); color: var(--text-muted); }
 .group-count { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); }
+/* v174: "N séries · owned/total", the dot being the only separator the gap needs. */
+.group-progresso::before { content: "·"; margin-right: 0.625rem; }
 
 /* Pushed to the far edge so every character's fold control lands on one vertical
    line, with the "Mostrar todas" button sitting at the head of that same line.
