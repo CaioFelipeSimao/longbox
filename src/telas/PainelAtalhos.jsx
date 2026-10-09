@@ -45,8 +45,8 @@ export function PainelAtalhos({ open, onClose }) {
   return (
     <Modal open={open} onClose={onClose} title="Atalhos e gestos">
       <div className="atalhos">
-        {GRUPOS.map(([titulo, linhas]) => (
-          <section key={titulo}>
+        {GRUPOS.map(([titulo, linhas], i) => (
+          <section key={titulo} className={i > 0 ? "so-teclado" : undefined}>
             <p className="t-micro">{titulo}</p>
             <dl>
               {linhas.map(([teclas, texto]) => (
@@ -58,7 +58,7 @@ export function PainelAtalhos({ open, onClose }) {
             </dl>
           </section>
         ))}
-        <p className="t-small muted atalhos-nota">
+        <p className="t-small muted atalhos-nota so-teclado">
           Nenhum atalho funciona enquanto você digita num campo. Se a primeira tecla não
           responder, clique em qualquer lugar do app antes: o Longbox roda dentro da página
           do claude.ai e só recebe as teclas depois de um clique nele.
