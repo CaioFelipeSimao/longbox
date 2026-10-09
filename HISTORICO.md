@@ -2946,3 +2946,22 @@ is "Coleção", with tighter inline padding to keep the 360px header inside its 
 its accessible name stays "Minha coleção". Light wish fallbacks use opaque theme ink on a
 separately filtered, 50% pastel background (>=4.55:1 even over black art). Real covers and
 dark fallbacks keep their look. No build run.
+
+**v174 Shortcuts panel, gestures only on touch (critique 6 P2).** On a coarse pointer the
+"Atalhos e gestos" panel shows only the Gestos group; the keyboard groups and the note carry
+the existing `.so-teclado` class (hidden at `pointer: coarse`). PC unchanged.
+
+**v175 Séries group heads show owned/total editions (critique 6, user turned a declined idea
+into a build).** `GroupHead` takes an optional `progresso`; AbaSeries passes the sum over the
+group's séries (one count per série, a série split into ranges counts once, totals as a row
+shows them: `totalEdicoes || eds.length`), rendered `N · owned/total` with a screen-reader
+phrase. Open or collapsed. Séries tab only. Measured at 390 and 360: no overflow.
+
+**Critique 6 closed (2026-10-09).** User decisions: wish cart badge stays at 18px (they might
+even remove it, the dashed border and faded art already say "reserved": not asked to remove);
+`.group-toggle` 26px is a false positive (the sticky `.group-head` makes its `::after` cover
+the 44px row); the wish-list back-button focus ring is not a bug (real touch tap: no
+`:focus-visible`; ring only after the `4` key or a scripted click); the first-load 404 was not
+reproduced in the harness at 390 or 1280 (no failed request, no console error), probably the
+host. Custom 404 page: not applicable (single artifact, no routes); offered instead a review of
+the app's own empty/error texts, undecided.
