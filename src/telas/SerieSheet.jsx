@@ -3,7 +3,7 @@ import { Search, Plus, X, Pencil, Trash2, Upload, Check, Copy } from "lucide-rea
 
 import { sortKey } from "../lib/util";
 import { autoresDe, autoresQueCasam, digitosDoBloco, edicoesDoAutor, ehReimpressao, formaDoTile, serieTemReimpressao } from "../lib/edicoes";
-import { anoRange, edicoesNaFaixa, personagensDaSerie, textoFaltantes } from "../lib/biblioteca";
+import { anoRange, edicoesNaFaixa, personagensDaSerie, rotuloFaixa, textoFaltantes } from "../lib/biblioteca";
 import { Sheet } from "../ui/base";
 import { CampoBusca, daEditora } from "../ui/Filtros";
 import { CoverArt } from "../ui/VolumeCard";
@@ -73,7 +73,8 @@ export function SerieSheet({
   // past what is catalogued. When the clipboard refuses, the text is shown in a
   // box to copy by hand instead.
   const naoCatalogadas = s && !faixaAtiva && s.totalEdicoes ? s.totalEdicoes - edsTotal.length : 0;
-  const nomeCopia = s ? s.nome + (faixaAtiva ? " (nº " + (contexto.de ?? "?") + "-" + (contexto.ate ?? "?") + ")" : "") : "";
+  const rotulo = faixaAtiva ? rotuloFaixa(eds, contexto) : null;
+  const nomeCopia = s ? s.nome + (faixaAtiva ? " (nº " + rotulo.de + "-" + rotulo.ate + ")" : "") : "";
   const faltantes = s ? textoFaltantes(nomeCopia, eds, ownedIds, naoCatalogadas) : null;
   const [copiaManual, setCopiaManual] = useState(null);
   const serieId = s ? s.id : null;
@@ -200,7 +201,7 @@ export function SerieSheet({
           {contexto && (contexto.de !== null || contexto.ate !== null) && (
             <div className="banner" style={{ marginBottom: 0 }}>
               <div>
-                Mostrando as edições {contexto.de ?? "?"} a {contexto.ate ?? "?"}, a faixa de{" "}
+                {(() => { const r = rotuloFaixa(edicoesNaFaixa(edsTotal, contexto), contexto); return `Mostrando as edições ${r.de} a ${r.ate}, a faixa de`; })()}{" "}
                 {contexto.nome}.{" "}
                 <button
                   className="btn btn-ghost"

@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 
 import { QUASE_MORNO, QUASE_PRONTO } from "../lib/constantes";
 import { sortKey } from "../lib/util";
-import { anoRange, edicoesNaFaixa } from "../lib/biblioteca";
+import { anoRange, edicoesNaFaixa, rotuloFaixa } from "../lib/biblioteca";
 import { edicoesDoAutor } from "../lib/edicoes";
 
 // One row of the séries tab (v81). Memoised, so coming back to the tab redraws
@@ -14,6 +14,7 @@ export const SerieLinha = React.memo(function SerieLinha({ serie: s, faixa, eds:
   const owned = useMemo(() => eds.filter((e) => ownedIds.has(e.id)).length, [eds, ownedIds]);
   const doAutor = useMemo(() => filtroAutor ? edicoesDoAutor(eds, ownedIds, filtroAutor).length : 0, [eds, ownedIds, filtroAutor]);
   const temFaixa = faixa.de !== null || faixa.ate !== null;
+  const rotulo = useMemo(() => rotuloFaixa(eds, faixa), [eds, faixa]);
   const total = temFaixa ? eds.length : s.totalEdicoes || eds.length;
   return (
     <button
@@ -32,7 +33,7 @@ export const SerieLinha = React.memo(function SerieLinha({ serie: s, faixa, eds:
       <div className="serie-meta truncate">
         {anoRange(s)}
         {s.editora ? " · " + s.editora : ""}
-        {temFaixa ? " (edições " + (faixa.de ?? "?") + "-" + (faixa.ate ?? "?") + ")" : ""}
+        {temFaixa ? " (edições " + rotulo.de + "-" + rotulo.ate + ")" : ""}
       </div>
       {filtroAutor && (
         <div className="serie-meta truncate">{doAutor} {doAutor === 1 ? "edição" : "edições"} de {filtroAutor}</div>

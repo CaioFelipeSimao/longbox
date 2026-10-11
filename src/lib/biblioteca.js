@@ -15,6 +15,20 @@ export function edicoesNaFaixa(edicoes, faixa) {
   });
 }
 
+// The faixa picks issues by position; the ends shown to the reader are the numbers
+// of the first and last issue inside it ("119.5" when that is the last one), and
+// only fall back to the stored bound when the faixa holds no issue.
+export function rotuloFaixa(edicoesDaFaixa, faixa) {
+  let ini = null, fim = null;
+  for (const e of edicoesDaFaixa) {
+    const k = sortKey(e);
+    if (k === null) continue;
+    if (ini === null || k < sortKey(ini)) ini = e;
+    if (fim === null || k >= sortKey(fim)) fim = e;
+  }
+  return { de: ini ? ini.numero : faixa.de ?? "?", ate: fim ? fim.numero : faixa.ate ?? "?" };
+}
+
 export function deleteVolume(lib, id) {
   return {
     ...lib,
