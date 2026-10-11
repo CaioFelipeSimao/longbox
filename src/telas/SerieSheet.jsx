@@ -3,7 +3,7 @@ import { Search, Plus, X, Pencil, Trash2, Upload, Check, Copy } from "lucide-rea
 
 import { sortKey } from "../lib/util";
 import { autoresDe, autoresQueCasam, digitosDoBloco, edicoesDoAutor, ehReimpressao, formaDoTile, serieTemReimpressao } from "../lib/edicoes";
-import { anoRange, personagensDaSerie, textoFaltantes } from "../lib/biblioteca";
+import { anoRange, edicoesNaFaixa, personagensDaSerie, textoFaltantes } from "../lib/biblioteca";
 import { Sheet } from "../ui/base";
 import { CampoBusca, daEditora } from "../ui/Filtros";
 import { CoverArt } from "../ui/VolumeCard";
@@ -54,16 +54,7 @@ export function SerieSheet({
   ), [edicoes]);
 
   const faixaAtiva = contexto && (contexto.de !== null || contexto.ate !== null) && !verTudo;
-  const eds = useMemo(() => {
-    if (!faixaAtiva) return edsTotal;
-    return edsTotal.filter((e) => {
-      const n = sortKey(e);
-      if (n === null) return false;
-      if (contexto.de !== null && n < contexto.de) return false;
-      if (contexto.ate !== null && n > contexto.ate) return false;
-      return true;
-    });
-  }, [edsTotal, faixaAtiva, contexto]);
+  const eds = useMemo(() => edicoesNaFaixa(edsTotal, faixaAtiva ? contexto : null), [edsTotal, faixaAtiva, contexto]);
 
   // v145: "Esconder reimpressões" only takes their tiles off the map. The counts
   // below keep reading `eds`, so owned / missing never change with it.

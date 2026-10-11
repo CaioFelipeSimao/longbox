@@ -1,7 +1,19 @@
 import { ED_TODAS, TIPOS_RENOMEADOS, editorasDescobertas, slugify } from "./constantes";
-import { parseNum, uid } from "./util";
+import { parseNum, sortKey, uid } from "./util";
 
 export function withoutId(arr, id) { return arr.filter((x) => x.id !== id); }
+
+// Shared by the character counters and the detail sheet's range / Ver todas.
+export function edicoesNaFaixa(edicoes, faixa) {
+  if (!faixa || (faixa.de === null && faixa.ate === null)) return edicoes;
+  return edicoes.filter((e) => {
+    const n = sortKey(e);
+    if (n === null) return false;
+    if (faixa.de !== null && n < faixa.de) return false;
+    if (faixa.ate !== null && n > faixa.ate) return false;
+    return true;
+  });
+}
 
 export function deleteVolume(lib, id) {
   return {

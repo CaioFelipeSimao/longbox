@@ -1,20 +1,24 @@
 import { Library, ChevronDown } from "lucide-react";
 
 import { EmptyState } from "../ui/base";
+import { edicoesNaFaixa } from "../lib/biblioteca";
 import { GroupHead } from "../ui/CorPersonagem";
 import { SEM_EDICOES, SerieLinha } from "../ui/Series";
 
-// v174: owned/total editions of a group, one count per série (a série split into
-// ranges appears twice in itens), with the same totals a row shows.
+// v177: count the union of this character's ranges, once per issue and série.
 function progressoDoGrupo(itens, edicoesPorSerie, ownedIds) {
   let owned = 0, total = 0;
-  const vistas = new Set();
-  for (const { serie } of itens) {
-    if (vistas.has(serie.id)) continue;
-    vistas.add(serie.id);
-    const eds = edicoesPorSerie[serie.id] || SEM_EDICOES;
+  const vistas = new Map();
+  for (const { serie, faixa } of itens) {
+    if (!vistas.has(serie.id)) vistas.set(serie.id, { serie, edicoes: new Map(), inteira: false });
+    const vista = vistas.get(serie.id);
+    if (faixa.de === null && faixa.ate === null) vista.inteira = true;
+    for (const e of edicoesNaFaixa(edicoesPorSerie[serie.id] || SEM_EDICOES, faixa)) vista.edicoes.set(e.id, e);
+  }
+  for (const { serie, edicoes, inteira } of vistas.values()) {
+    const eds = [...edicoes.values()];
     owned += eds.filter((e) => ownedIds.has(e.id)).length;
-    total += serie.totalEdicoes || eds.length;
+    total += inteira ? serie.totalEdicoes || eds.length : eds.length;
   }
   return { owned, total };
 }

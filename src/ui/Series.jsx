@@ -2,17 +2,19 @@ import React, { useMemo } from "react";
 
 import { QUASE_MORNO, QUASE_PRONTO } from "../lib/constantes";
 import { sortKey } from "../lib/util";
-import { anoRange } from "../lib/biblioteca";
+import { anoRange, edicoesNaFaixa } from "../lib/biblioteca";
 import { edicoesDoAutor } from "../lib/edicoes";
 
 // One row of the séries tab (v81). Memoised, so coming back to the tab redraws
 // only the rows whose série, issues or ownership changed, not all of them with
 // their run bars (about 4,000 segments across the real library).
 export const SEM_EDICOES = [];
-export const SerieLinha = React.memo(function SerieLinha({ serie: s, faixa, eds, ownedIds, filtroAutor, aberta, onAbrir }) {
+export const SerieLinha = React.memo(function SerieLinha({ serie: s, faixa, eds: edsTotal, ownedIds, filtroAutor, aberta, onAbrir }) {
+  const eds = useMemo(() => edicoesNaFaixa(edsTotal, faixa), [edsTotal, faixa]);
   const owned = useMemo(() => eds.filter((e) => ownedIds.has(e.id)).length, [eds, ownedIds]);
   const doAutor = useMemo(() => filtroAutor ? edicoesDoAutor(eds, ownedIds, filtroAutor).length : 0, [eds, ownedIds, filtroAutor]);
   const temFaixa = faixa.de !== null || faixa.ate !== null;
+  const total = temFaixa ? eds.length : s.totalEdicoes || eds.length;
   return (
     <button
       className="serie-row"
@@ -23,8 +25,8 @@ export const SerieLinha = React.memo(function SerieLinha({ serie: s, faixa, eds,
         <span className="t-title truncate">{s.nome}</span>
         {/* v132: the eye reads "55/100"; a screen reader gets the words. */}
         <span className="num t-small muted" style={{ flexShrink: 0 }}>
-          <span aria-hidden="true">{owned}/{s.totalEdicoes || eds.length}</span>
-          <span className="sr-only">{owned} de {s.totalEdicoes || eds.length} possuídas</span>
+          <span aria-hidden="true">{owned}/{total}</span>
+          <span className="sr-only">{owned} de {total} possuídas</span>
         </span>
       </div>
       <div className="serie-meta truncate">
