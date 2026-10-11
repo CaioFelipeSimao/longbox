@@ -24,14 +24,14 @@ const ed = (sid, numero, posicao = null) => ({ id: sid + "-" + numero, serieId: 
 const series = [
   serie("ga", "Green Arrow (Volume 2)", [faixa("Green Arrow (Oliver Queen)", 1, 101), faixa("Green Arrow (Connor Hawke)", 102, 137)], 146),
   serie("generic", "Green Arrow especial", [faixa("Green Arrow")], 50),
-  serie("edges", "Faixas de teste", [faixa("Faixas múltiplas", 2, 3), faixa("Faixas múltiplas", 3, 4), faixa("Só início", 3), faixa("Só fim", null, 2), faixa("Completa"), faixa("Sem edições", 20, 30)], 99),
+  serie("edges", "Faixas de teste", [faixa("Faixas múltiplas", 2, 3), faixa("Faixas múltiplas", 3, 4), faixa("Faixas múltiplas", 8, 9), faixa("Só início", 3), faixa("Só fim", null, 2), faixa("Completa"), faixa("Sem edições", 20, 30)], 99),
 ];
 const edicoes = {
   ga: Array.from({ length: 146 }, (_, i) => ed("ga", i + 1)),
   generic: [ed("generic", 1)],
-  edges: [ed("edges", 1), ed("edges", 2), ed("edges", 3), ed("edges", 4), ed("edges", "Anual"), ed("edges", "Especial", 2.5)],
+  edges: [ed("edges", 1), ed("edges", 2), ed("edges", 3), ed("edges", 4), ed("edges", 8), ed("edges", 9), ed("edges", "Anual"), ed("edges", "Especial", 2.5)],
 };
-const owned = ["ga-1", "ga-101", "ga-102", "ga-137", "ga-138", "generic-1", "edges-1", "edges-3", "edges-Anual", "edges-Especial"];
+const owned = ["ga-1", "ga-101", "ga-102", "ga-137", "ga-138", "generic-1", "edges-1", "edges-3", "edges-8", "edges-Anual", "edges-Especial"];
 const docs = new Map([
   ["library/volumes", { items: [{ id: "v", titulo: "Acervo de teste", personagem: "Green Arrow", editora: "DC Comics", tipo: "Trade Paperback", status: "nao_lida", edicoesColetadasIds: owned }] }],
   ["library/series", { items: series }], ["library/colecoes", { items: [] }], ["library/cores", { mapa: {} }],
@@ -42,9 +42,9 @@ window.claude = { use: async (n) => n === "db" ? { doc, collection: (p) => ({ do
 window.eval(fs.readFileSync("dist/app.js", "utf8"));
 await sleep(450);
 const root = window.document.getElementById("root");
-const grupo = (nome) => [...root.querySelectorAll("section.group")].find((g) => g.querySelector("h2")?.textContent === nome);
+const grupo = (nome) => [...root.querySelectorAll('.aba[data-ativa="true"] section.group')].find((g) => g.querySelector("h2")?.textContent === nome);
 const contador = (nome) => grupo(nome)?.querySelector('.group-progresso [aria-hidden="true"]')?.textContent;
-const esperado = { "Green Arrow": "1/50", "Green Arrow (Connor Hawke)": "2/36", "Green Arrow (Oliver Queen)": "2/101", "Faixas múltiplas": "2/4", "Só início": "1/2", "Só fim": "1/2", "Completa": "4/99", "Sem edições": "0/0" };
+const esperado = { "Green Arrow": "1/50", "Green Arrow (Connor Hawke)": "2/36", "Green Arrow (Oliver Queen)": "2/101", "Faixas múltiplas": "3/6", "Só início": "2/4", "Só fim": "1/2", "Completa": "5/99", "Sem edições": "0/0" };
 for (const [nome, valor] of Object.entries(esperado)) check(nome + ": " + valor, contador(nome) === valor, contador(nome));
 const abrirGrupo = async (nome) => { const g = grupo(nome); if (!g.querySelector(".serie-row")) { g.querySelector('[aria-expanded]').click(); await sleep(100); } return grupo(nome); };
 for (const nome of ["Green Arrow", "Green Arrow (Connor Hawke)", "Green Arrow (Oliver Queen)"]) {
@@ -58,6 +58,7 @@ connor.querySelector(".serie-row").click();
 await sleep(150);
 const sheet = () => root.querySelector('.sheet[data-in="true"]');
 const numeros = () => [...sheet().querySelectorAll('.tile[aria-label]')].map((e) => e.textContent);
+check("Connor possui só 102 e 137 na faixa", [...sheet().querySelectorAll('.tile[data-owned="true"]')].map((e) => e.textContent).join(",") === "102,137");
 check("painel informa 102 a 137", sheet()?.textContent.includes("Mostrando as edições 102 a 137"), sheet()?.textContent.slice(0, 300));
 check("painel e contador usam as mesmas 36 edições", numeros().length === 36 && numeros()[0] === "102" && numeros().at(-1) === "137", numeros().join(","));
 [...sheet().querySelectorAll("button")].find((b) => b.textContent === "Ver todas").click();
@@ -67,6 +68,12 @@ check("Ver todas não muda o contador de Connor", contador("Green Arrow (Connor 
 [...sheet().querySelectorAll("button")].find((b) => b.textContent === "Aplicar a faixa").click();
 await sleep(100);
 check("Aplicar a faixa volta às 36 edições", numeros().length === 36, numeros().length);
+sheet().querySelector('[aria-label="Fechar"]').click();
+await sleep(400);
+grupo("Green Arrow (Oliver Queen)").querySelector(".serie-row").click();
+await sleep(150);
+check("painel de Oliver só mostra 1 a 101", numeros().length === 101 && numeros()[0] === "1" && numeros().at(-1) === "101", numeros().length);
+check("Oliver possui só 1 e 101 na faixa", [...sheet().querySelectorAll('.tile[data-owned="true"]')].map((e) => e.textContent).join(",") === "1,101");
 check("sem erros", erros.length === 0, erros[0]);
 console.log("\n" + passes + " passaram, " + falhas + " falharam");
 dom.window.close();
