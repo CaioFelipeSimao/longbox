@@ -13,7 +13,9 @@ export function AbaColecoes({
   return (
     colecoesFiltradas.length === 0 ? (
       <EmptyState icon={Layers} title={lib.colecoes.length === 0 ? "Nenhuma coleção ainda" : "Nada encontrado"}>
-        Uma coleção agrupa volumes em ordem de leitura, como uma saga espalhada por vários encadernados.
+        {lib.colecoes.length === 0
+          ? "Uma coleção agrupa volumes em ordem de leitura, como uma saga espalhada por vários encadernados."
+          : "Tente outro termo de busca ou limpe os filtros."}
       </EmptyState>
     ) : (
       <>

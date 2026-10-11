@@ -2965,3 +2965,10 @@ the 44px row); the wish-list back-button focus ring is not a bug (real touch tap
 reproduced in the harness at 390 or 1280 (no failed request, no console error), probably the
 host. Custom 404 page: not applicable (single artifact, no routes); offered instead a review of
 the app's own empty/error texts, undecided.
+
+**v176 Empty texts on Coleções and Séries (end of the empty/error text review).** When a
+search or filter finds nothing, both tabs now say "Tente outro termo de busca ou limpe os
+filtros." instead of repeating the "create your first one" text; the first-time text stays
+for a truly empty library. Same pattern HQs and the wish list already had. The rest of the
+app's empty/error texts were reviewed and left as they are (failed covers draw a fallback
+cover; save/upload errors already name their cause).

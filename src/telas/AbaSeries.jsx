@@ -27,7 +27,9 @@ export function AbaSeries({
   return (
     seriesFiltradas.length === 0 ? (
       <EmptyState icon={Library} title={lib.series.length === 0 ? "Nenhuma série ainda" : "Nada encontrado"}>
-        Cadastre uma série para acompanhar quais edições você já tem e quais faltam.
+        {lib.series.length === 0
+          ? "Cadastre uma série para acompanhar quais edições você já tem e quais faltam."
+          : "Tente outro termo de busca ou limpe os filtros."}
       </EmptyState>
     ) : (
       <>
