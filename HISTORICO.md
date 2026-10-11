@@ -2972,3 +2972,28 @@ filtros." instead of repeating the "create your first one" text; the first-time 
 for a truly empty library. Same pattern HQs and the wish list already had. The rest of the
 app's empty/error texts were reviewed and left as they are (failed covers draw a fallback
 cover; save/upload errors already name their cause).
+
+**v177 Character counters count only the character's own range (user report, 2026-10-11).**
+The v175 group-head counter summed the whole série for every character, so a série shared by
+two characters (Green Arrow Vol. 2: Oliver Queen 0-101, Connor Hawke 102-138) overstated both
+owned and total. New `edicoesNaFaixa(edicoes, faixa)` in `lib/biblioteca.js` (selects by
+`sortKey`, i.e. position first, number as fallback) is now the single filter for the group
+heads, the série rows and the detail sheet. A group counts the union of its ranges once per
+issue and série; a ranged row's total is the number of catalogued issues in the range, an
+unranged one keeps `totalEdicoes || eds.length`. Coleções has no such counter. Test:
+`tests/test-faixas-series.mjs`. Real library after the fix: Green Arrow 4/196, Oliver Queen
+1/159, Connor Hawke 3/44.
+
+Data fix, not code: Green Arrow Vol. 2's faixa ended at 137, but "#1000000" (Nov 1998) sits at
+position 138, so it fell outside. Set `ate` to 138 for Green Arrow and Connor Hawke in
+`library/series` (doc version 81 -> 82). The faixa end is still a typed number: a final issue
+positioned past it is dropped from the count. The user will handle such cases one by one.
+The Annual of that série is registered for all three characters without a faixa, so it adds 7
+to each total; left as is, the user can narrow it in the cadastro.
+
+**v178 Faixa labels read the number of the first and last issue inside the range.** The
+range still selects by position, but the ends shown ("Mostrando as edições X a Y", the
+"(edições X-Y)" in a série row, the name of "Copiar faltantes") come from `rotuloFaixa`:
+the `numero` of the first and last issue in the range (119.5 if that is the last), falling
+back to the stored bound only when the range holds no issue. Connor Hawke therefore reads
+"102 a 1000000".
