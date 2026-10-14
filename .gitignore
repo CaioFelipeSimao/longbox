@@ -5,3 +5,4 @@ harness/app.js
 harness/styles.css
 .impeccable/hook.cache.json
 .superpowers/
+.claude/settings.local.json
