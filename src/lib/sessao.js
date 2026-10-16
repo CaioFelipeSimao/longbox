@@ -50,6 +50,27 @@ export function salvarAbaBase(key) {
   }
 }
 
+// v179: the wishlist is a layer over the app, like the hub, so a reload has to
+// keep it open too. Same storage as the tab note: a reload keeps it, closing the
+// browser tab drops it.
+export const DESEJOS_ABERTO_KEY = "longbox:desejos-aberto";
+
+export function lerDesejosAberto() {
+  try {
+    return typeof window !== "undefined" && window.sessionStorage.getItem(DESEJOS_ABERTO_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function salvarDesejosAberto(aberto) {
+  try {
+    if (typeof window !== "undefined") window.sessionStorage.setItem(DESEJOS_ABERTO_KEY, aberto ? "1" : "0");
+  } catch {
+    // Not remembered here; a reload lands on the tab under the wishlist.
+  }
+}
+
 // Which character groups are open on the séries tab. Same storage and the same
 // reasoning as the tab above, deliberately: a reload keeps what you had open,
 // and a fresh visit starts closed again. Closed is the default because the tab

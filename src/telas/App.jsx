@@ -21,7 +21,7 @@ import {
 import { useCelular, useHubUnlock, useLarguraDaBarra, usePonteiroFino } from "../lib/hooks";
 import {
   FILTRO_COLECOES_KEY, lerAbaSalva, lerColecoesFechadas, lerFiltroSeries, lerFiltros, lerGruposAbertos, lerGruposFechados,
-  lerOrdemRecolhida, lerCorRecolhida, lerAbaBase, salvarAba, salvarAbaBase,salvarColecoesFechadas, salvarFiltroSeries, salvarFiltros, salvarGruposAbertos,
+  lerOrdemRecolhida, lerCorRecolhida, lerAbaBase, lerDesejosAberto, salvarDesejosAberto, salvarAba, salvarAbaBase,salvarColecoesFechadas, salvarFiltroSeries, salvarFiltros, salvarGruposAbertos,
   salvarGruposFechados, salvarOrdemRecolhida, salvarCorRecolhida, dobrar, lerFiltroAutor, salvarFiltroAutor,
 } from "../lib/sessao";
 import { Aba, Modal, Toast } from "../ui/base";
@@ -69,7 +69,8 @@ export function App() {
   const [ultimoBackup, setUltimoBackup] = useState(null);
   const [fixados, setFixados] = useState([]);
   const [fixadosDesejos, setFixadosDesejos] = useState([]);
-  const [desejosAberto, setDesejosAberto] = useState(false);
+  const [desejosAberto, setDesejosAberto] = useState(lerDesejosAberto);
+  useEffect(() => { salvarDesejosAberto(desejosAberto); }, [desejosAberto]);
   const desejosTelaRef = useRef(null);
   const [corPersonagem, setCorPersonagem] = useState(null);
   const [scrolled, setScrolled] = useState(false);

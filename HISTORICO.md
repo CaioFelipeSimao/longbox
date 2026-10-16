@@ -2997,3 +2997,15 @@ range still selects by position, but the ends shown ("Mostrando as edições X a
 the `numero` of the first and last issue in the range (119.5 if that is the last), falling
 back to the stored bound only when the range holds no issue. Connor Hawke therefore reads
 "102 a 1000000".
+
+**v179 Reloading on the wishlist keeps the wishlist open (user report, 2026-10-16).** The
+wishlist is a layer over the app, like the hub, but only the hub's state survived a reload:
+`desejosAberto` started `false`, so a reload dropped you onto the tab underneath. It now lives
+in `sessionStorage` (`longbox:desejos-aberto`, `lerDesejosAberto`/`salvarDesejosAberto` in
+`src/lib/sessao.js`), the same storage as the tab note: a reload keeps it, closing the browser
+tab drops it. `tests/test-desejos-recarga.mjs` (5 checks) mounts twice, carrying the note over.
+
+Library, same day: 11 DC Finest books were registered on the wishlist (`library/desejos`, 3
+`desejosColecoes`), with 34 new séries and their issues. None counts as owned. The 8 books not
+yet released carry a warning in `notas`: their contents came from the publisher's solicitation
+and must be re-checked and re-mapped when bought. No covers were uploaded (the user adds them).
