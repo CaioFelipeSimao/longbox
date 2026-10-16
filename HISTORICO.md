@@ -3009,3 +3009,11 @@ Library, same day: 11 DC Finest books were registered on the wishlist (`library/
 `desejosColecoes`), with 34 new séries and their issues. None counts as owned. The 8 books not
 yet released carry a warning in `notas`: their contents came from the publisher's solicitation
 and must be re-checked and re-mapped when bought. No covers were uploaded (the user adds them).
+
+Library, 2026-10-16 (later): Nightwing: A Knight in Blüdhaven Compendium Four went on the
+wishlist (47 issues, 4 new séries: Bloodborne, Outsiders: Five of a Kind - Nightwing/Boomerang,
+Teen Titans Vol 3 and its Annual), with the not-yet-released warning in `notas`. Penguin and
+League texts agree except "Titans #33" vs "Teen Titans #33" (Teen Titans Vol 3 #33 used).
+Detective Comics #607 was moved to October 1989 (Fandom cover date). Nightwing Vol 2 runs to
+#153; Compendium Four ends at #117, so a Compendium Five (maybe a Six) is expected: re-map
+when it is solicited.
