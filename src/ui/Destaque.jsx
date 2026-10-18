@@ -13,25 +13,17 @@ export function Destaque({ lib, onOpenVolume }) {
   // Keep the chosen character through library/thumbnail updates. If its last
   // volume is removed, fall back to an eligible character with the same seed.
   const atual = useMemo(() => emblemaElegivel(lib, sorteio.id) || sortearEmblema(lib, sorteio.seed), [lib.volumes, sorteio]);
-  const outroRef = useRef(null), focarOutro = useRef(false);
   useEffect(() => {
     if (atual && atual.id !== sorteio.id) setSorteio((s) => ({ ...s, id: atual.id }));
   }, [atual, sorteio.id]);
-  useEffect(() => {
-    if (focarOutro.current) { outroRef.current?.focus({ preventScroll: true }); focarOutro.current = false; }
-  }, [sorteio.seed]);
-  const outro = () => {
-    const seed = (sorteio.seed + 1 + Math.floor(Math.random() * 0xffff)) >>> 0;
-    const proximo = sortearEmblema(lib, seed, atual?.id);
-    focarOutro.current = true;
-    setSorteio({ seed, id: proximo?.id });
-  };
+  // v183: no "Outro personagem" button (user's call); a new character comes with
+  // the next visit to the hub.
   return (
     <section className="destaque">
       <div className="hub-section-head"><h2>Em destaque</h2></div>
       {atual ? (
         <Personagem key={atual.id + ":" + sorteio.seed} emblema={atual} seed={sorteio.seed}
-          lib={lib} onOutro={outro} outroRef={outroRef} onOpenVolume={onOpenVolume} />
+          lib={lib} onOpenVolume={onOpenVolume} />
       ) : (
         <p className="hub-note">Os personagens da sua coleção ainda não têm um emblema disponível.</p>
       )}
@@ -45,7 +37,7 @@ function emblemaElegivel(lib, id) {
   return e && volumesDoEmblema(e, lib.volumes).length ? e : null;
 }
 
-function Personagem({ emblema, seed, lib, onOutro, outroRef, onOpenVolume }) {
+function Personagem({ emblema, seed, lib, onOpenVolume }) {
   const celular = useCelular();
   const cores = useCores();
   useMiniVersao(); // New miniatures replace full covers without redealing tiles.
@@ -255,9 +247,7 @@ function Personagem({ emblema, seed, lib, onOutro, outroRef, onOpenVolume }) {
         <div className="destaque-acoes">
           <button type="button" className="btn btn-quiet" onClick={alternar}>
             {grade ? "Remontar o emblema" : "Ver os " + numeros.volumes + " volumes"}
-          </button>
-          <button type="button" className="btn btn-ghost" ref={outroRef} onClick={onOutro}>Outro personagem</button>
-        </div>
+          </button>        </div>
       </div>
     </div>
   );

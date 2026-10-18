@@ -719,7 +719,7 @@ tiles carry `data-copia` so counts and the never-twice rule are checked on the o
 
 The hub section between "Falta pouco" and the collection portrait is "Em destaque" (`src/ui/Destaque.jsx`),
 replacing the v3 shelf. One character per visit, drawn uniformly among those with at least one volume;
-"Outro personagem" draws another.
+No "Outro personagem" button (removed in v183, user's call): a new character comes with the next visit.
 
 - **Molds are data, not drawings.** `src/lib/emblemas.js`: `{id, nome, pool, pc, cel, variantes?}`; `pc` up
   to 40 x 18, `cel` up to 16 x 16 (`useCelular`), "#" = one 2:3 cover. Never rescale a mold: a piece is

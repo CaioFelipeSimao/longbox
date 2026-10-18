@@ -3072,3 +3072,7 @@ library and every cover, so a preview is now one publish (`.superpowers/irma/LEI
 across the featured emblem once it assembles on the phone and missed it on the PC, where only the
 pointer wave existed. The single sweep now runs on every device; on a mouse, moving over the
 emblem stops it and the pointer wave takes over.
+
+**v183 No "Outro personagem" button (2026-10-18).** At the user's request the featured character
+can no longer be redrawn by hand: one character per visit to the hub. The button, its redraw and
+its focus handling were removed; the two tests that pressed it now check that it is gone.

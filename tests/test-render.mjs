@@ -318,8 +318,8 @@ if (scenario === "seeded") {
   await click(visivel('.sheet [aria-label="Fechar"]'), "close gallery volume");
   await click(visiveis(".destaque-acoes button").find((b) => b.textContent === "Remontar o emblema"), "reassemble emblem");
   console.log("  reassembly restores emblem, focus and hides gallery buttons: " + (visivel(".destaque-ativar") === window.document.activeElement && galeria().length === 0 && visivel(".destaque-mosaico")?.dataset.emblema === destaqueId ? "PASS" : "FAIL"));
-  await click(visiveis(".destaque-acoes button").find((b) => b.textContent === "Outro personagem"), "another character");
-  console.log("  another character replaces current eligible emblem: " + (visivel(".destaque-mosaico")?.dataset.emblema !== destaqueId && !!visivel(".destaque-ativar") ? "PASS" : "FAIL"));
+  // v183: the "Outro personagem" button was removed at the user's request.
+  console.log("  no 'Outro personagem' button; one emblem per visit: " + (!visiveis(".destaque-acoes button").some((b) => b.textContent === "Outro personagem") && visivel(".destaque-mosaico")?.dataset.emblema === destaqueId ? "PASS" : "FAIL"));
 
   console.log("\n--- scroll to enter ---");
   const wheel = (deltaY) => {

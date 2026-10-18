@@ -143,8 +143,8 @@ r.ponteiro(r.area(), "pointermove"); await sleep(1200);
 check("movimento reduzido desliga entrada e ondas", r.area()?.dataset.entrada === "false" && r.escritas() === escritaInicial);
 r.botao("Ver os 2 volumes")?.click(); await sleep(80);
 check("movimento reduzido mantém a grade funcional", r.galeria().length === 2);
-r.botao("Outro personagem")?.click(); await sleep(80);
-check("um único elegível continua disponível e sorteio preserva foco", r.area()?.dataset.emblema === "batman" && r.w.document.activeElement === r.botao("Outro personagem") && !!r.root.querySelector(".destaque-ativar"));
+// v183: the "Outro personagem" button was removed at the user's request.
+check("sem botão Outro personagem; o único elegível continua no destaque", !r.botao("Outro personagem") && r.area()?.dataset.emblema === "batman");
 check("sem erros com movimento reduzido", r.erros.length === 0);
 r.dom.window.close();
 
