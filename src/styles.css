@@ -1757,10 +1757,27 @@ button { background: none; border: none; padding: 0; cursor: pointer; }
    real books looks like and is the price of never cropping one. */
 .gm-row {
   display: flex;
-  gap: 1rem;
+  justify-content: center;
   height: var(--gm-tile-h);
   will-change: transform;
 }
+/* v181: the conveyor. The track's box is the first copy; the second copy sits on
+   top of it and GridMotion moves it one loop (copy width + gap) to the right by
+   transform. Each copy is its own layer, so both are the same picture and the
+   jump back lands one exactly where the other was. */
+.gm-esteira {
+  flex: none;
+  position: relative;
+  height: 100%;
+  will-change: transform;
+}
+.gm-copia {
+  display: flex;
+  gap: 1rem;
+  height: 100%;
+  will-change: transform;
+}
+.gm-copia + .gm-copia { position: absolute; top: 0; left: 0; }
 .gm-item { height: 100%; flex: none; }
 .gm-item-inner {
   height: 100%;

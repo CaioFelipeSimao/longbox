@@ -706,6 +706,15 @@ Spec: `docs/superpowers/specs/2026-10-06-lista-de-desejos-design.md`. What holds
   linked collection at `n + i` (capped at the end, so an out-of-order purchase appends) or into a new acervo
   collection copied from the wish one, which then links to it; an emptied wish collection is removed.
 
+## Hub backdrop conveyor (v181)
+
+`GridMotion` rows drift on their own (~24 px/s, alternating, per-row pace in `ESTEIRA_RITMO`), added to
+the mouse reaction. Each row is `.gm-esteira` holding two `.gm-copia` layers; the second is placed by
+transform at computed width + column-gap, and the track wraps by exactly that length
+(`posicaoEsteira`), so the jump back is pixel-identical. Never lay the copies out side by side (pixel
+snapping put twins 1px apart). Pauses off screen, in a hidden tab and under reduced motion. The copy
+tiles carry `data-copia` so counts and the never-twice rule are checked on the originals.
+
 ## Featured character (v180)
 
 The hub section between "Falta pouco" and the collection portrait is "Em destaque" (`src/ui/Destaque.jsx`),

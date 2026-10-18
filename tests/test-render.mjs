@@ -252,8 +252,18 @@ if (scenario === "seeded") {
   console.log("  backdrop mounted behind the hub: " + (gm ? "PASS" : "FAIL"));
   if (gm) {
     const rows = gm.querySelectorAll(".gm-row");
-    const tiles = gm.querySelectorAll(".gm-item");
-    const imgs = [...gm.querySelectorAll("img.gm-item-img")];
+    // v181: each row carries a copy of itself for the conveyor loop; the counts
+    // below are about the originals, and the copy must mirror them exactly.
+    const tiles = gm.querySelectorAll(".gm-item:not([data-copia])");
+    const imgs = [...gm.querySelectorAll(".gm-item:not([data-copia]) img.gm-item-img")];
+    const espelho = [...rows].every((row) => {
+      const itens = [...row.querySelectorAll(".gm-item")];
+      const chave = (el) => (el.querySelector("img")?.getAttribute("src") || "") + "|" + el.getAttribute("data-empty");
+      const orig = itens.filter((el) => !el.hasAttribute("data-copia")).map(chave);
+      const copia = itens.filter((el) => el.hasAttribute("data-copia")).map(chave);
+      return orig.length === 13 && JSON.stringify(orig) === JSON.stringify(copia) && itens.slice(13).every((el) => el.hasAttribute("data-copia"));
+    });
+    console.log("  conveyor copy mirrors each row, in order, after it: " + (espelho ? "PASS" : "FAIL"));
     const srcs = imgs.map((el) => el.getAttribute("src") || "");
     const want = rows.length * 13;
     console.log("  six rows by thirteen: " + (rows.length === 6 && tiles.length === 78 ? "PASS (78)" : "FAIL (" + rows.length + " rows, " + tiles.length + " tiles)"));

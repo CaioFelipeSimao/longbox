@@ -3049,3 +3049,21 @@ its emblem is laid out with that character's own covers, beside numbers from the
   the wave cleanup (it touched unmounted pieces and broke navigation in 8 suites), and raised the
   bundle ceiling from 500 to 540 KB (molds add ~30 KB; the ceiling only catches a dev React).
   Removed: `buildShelf`, `SHELF_CAP`, `.wall`; the shelf tests were rewritten for the highlight.
+
+**v181 The hub backdrop drifts on its own (2026-10-18).** React Bits updated GridMotion so its rows
+drift while the pointer is still; the user wanted only that, on top of our own grid (sizes, random
+covers and mouse reaction unchanged), on phone too. Rejected for now: the spotlight, the faded
+edges, and a conveyor that swaps in new covers (the user expects a continuous stream to show
+repeats). Each row is a track holding its 13 covers twice; it slides ~24 px/s (rows alternate
+direction, each at a slightly different pace) and jumps back by exactly one copy, which is
+invisible because the copy is identical. The user's hard rule was that the jump must never flash.
+First version laid both copies out side by side and a twin could land 1px off its original
+(each tile pixel-snapped on its own): a 1px edge tick at the jump. Now each copy is its own layer
+and the second is placed by transform at the copy's computed width plus the gap (fractions kept).
+Proof (headless Chrome, motion frozen, tracks set just before and just after the jump): 0
+differing pixels on a phone viewport and on PC (7 pixels differed, all on the "Falta pouco" bar
+caps drawn over the backdrop). The conveyor pauses off screen, in a hidden tab and under reduced
+motion. Also fixed an upstream bug: `gsap.ticker.add` returns the callback, not a remover, so
+the mouse loop was never removed on unmount; cleanups now call `gsap.ticker.remove`.
+Preview workflow, same day: a permanent preview artifact, "Longbox irmã", holds a copy of the
+library and every cover, so a preview is now one publish (`.superpowers/irma/LEIA.md`).
