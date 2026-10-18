@@ -1,5 +1,6 @@
 ﻿import { JSDOM } from "jsdom";
 import fs from "node:fs";
+const { EMBLEMAS } = await import("data:text/javascript;base64," + Buffer.from(fs.readFileSync("src/lib/emblemas.js", "utf8")).toString("base64"));
 
 const bundle = fs.readFileSync("dist/app.js", "utf8");
 // The app's own source, every module under src/ (it was one app.jsx until the
@@ -69,8 +70,8 @@ function seedLibrary() {
     { id: "v4", titulo: "Demolidor por Bendis", personagem: "Demolidor", tipo: "Omnibus", editora: "Marvel", ano: "2022", status: "lida", notas: "", edicoesColetadasIds: Array.from({ length: 100 }, (_, i) => "e3-" + (i + 1)) },
     { id: "v5", titulo: "Volume sem editora", personagem: "Constantine", tipo: "Outro", editora: "", ano: "", status: "nao_lida", notas: "", edicoesColetadasIds: [] },
   ];
-  // 100 volumes, past the shelf's 84 (v140). Deliberately lopsided, so the shelf's proportional sampling has to work:
-  // one character dominates and one has a single volume.
+  // A lopsided 100-volume library: the emblem may repeat covers, but the
+  // expanded gallery must include every volume of whichever pool was drawn.
   const extra = [["Batman", 64], ["Nightwing", 18], ["Demolidor", 12], ["Constantine", 1]];
   extra.forEach(([pers, n]) => {
     for (let i = 1; i <= n; i++) {
@@ -202,7 +203,7 @@ if (scenario === "seeded") {
     "hunt has no reroll button of its own":
       [...visiveis("button")].filter((b) => b.textContent.trim() === "Outro").length === 1,
     "degenerate most-complete stat gone": !html.includes("Mais completas") && !html.includes("mais completas"),
-    "shelf wall rendered": html.includes('class="wall"'),
+    "hub shows the character emblem": html.includes('class="destaque-mosaico"') && html.includes("Em destaque"),
     "covers carry a character edge": html.includes("--edge"),
     "hub shows storage meter": html.includes("meter"),
     "brand mark rendered": html.includes('class="mark"'),
@@ -225,37 +226,25 @@ const enDash = (html.match(/–/g) || []).length;
 console.log("EM-DASH in DOM:", emDash, " EN-DASH in DOM:", enDash);
 
 if (scenario === "seeded") {
-  const wallCards = [...visiveis(".wall .vol")];
-  // The character comes from the cover's own footer, not from parsing titles:
-  // titles like "Demolidor por Bendis" made the old parse invent a character.
-  const perChar = new Map();
-  // Only fallback covers carry a readable character footer. A volume with real
-  // cover art shows the art instead, so it has nothing to contribute here and is
-  // skipped rather than counted as an unknown character.
-  wallCards.forEach((card) => {
-    const foot = card.querySelector(".cover-fb-foot");
-    if (!foot) return;
-    const who = foot.textContent || "?";
-    const edge = card.querySelector(".cover").style.getPropertyValue("--edge");
-    if (!perChar.has(who)) perChar.set(who, new Set());
-    perChar.get(who).add(edge);
-  });
-  const multi = [...perChar.entries()].filter(([, set]) => set.size > 1);
-
-  console.log("\n--- shelf sampling ---");
-  console.log("  capped at 84: " + (wallCards.length === 84 ? "PASS" : "FAIL (" + wallCards.length + ")"));
-  console.log("  every character represented: " + (perChar.size === 4 ? "PASS (4)" : "FAIL (" + [...perChar.keys()].join(", ") + ")"));
-  // Two characters sharing a hue is legitimate: a chosen colour may coincide with
-  // another character's automatic one. One character with two hues would be a bug.
-  console.log("  exactly one colour per character: " + (multi.length === 0 ? "PASS" : "FAIL (" + multi.map(([k]) => k).join(", ") + ")"));
-  console.log("  wall cards carry no caption: " + (visivel(".wall .vol-title") ? "FAIL" : "PASS"));
+  const mosaico = visivel(".destaque-mosaico");
+  const emblema = EMBLEMAS.find((e) => e.id === mosaico?.dataset.emblema);
+  const pecas = visiveis(".destaque-peca[data-casa]");
+  // Batman draws one of several bat-symbols; any of its fixed pc masks counts.
+  const formas = emblema ? [emblema, ...(emblema.variantes || [])] : [];
+  const usadas = JSON.stringify(pecas.map((p) => p.dataset.casa));
+  const casasDe = (f) => JSON.stringify(f.pc.flatMap((l, r) => [...l].flatMap((c, q) => c === "#" ? [r + ":" + q] : [])));
+  console.log("\n--- character mosaic ---");
+  console.log("  fixed pc mask used cell by cell: " + (pecas.length > 0 && formas.some((f) => casasDe(f) === usadas) ? "PASS" : "FAIL"));
+  console.log("  every piece has cover art or gradient: " + (pecas.length > 0 && pecas.every((p) => p.querySelector("img[src]") || p.querySelector('.destaque-arte[style*="linear-gradient"]')) ? "PASS" : "FAIL"));
+  console.log("  emblem is one labelled button: " + (visiveis(".destaque-ativar").length === 1 && visivel(".destaque-ativar").getAttribute("aria-label").includes(emblema.nome) && pecas.every((p) => p.disabled && p.tabIndex === -1) ? "PASS" : "FAIL"));
+  console.log("  mosaic carries no captions over covers: " + (pecas.every((p) => p.textContent.trim() === "") ? "PASS" : "FAIL"));
 
   // The hub backdrop. It draws from the collection's own covers, so the check that
   // matters is that the tiles resolved to real blob URLs: the upstream component
   // only treated strings starting with http as images and would have printed the
   // "/_blob/..." path as text instead.
   console.log("\n--- hub backdrop ---");
-  // The hub has the cover wall; the lattice belongs to the tabs. Both at once
+  // The hub has the cover backdrop; the lattice belongs to the tabs. Both at once
   // would be two moving grounds arguing under the same column of text.
   console.log("  lattice stays off the hub: " +
     (!visivel(".cursor-grid") ? "PASS" : "FAIL"));
@@ -304,6 +293,24 @@ if (scenario === "seeded") {
     el.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 120));
   };
+  console.log("\n--- emblem gallery ---");
+  const desenho = visivel(".destaque-mosaico");
+  const destaqueId = desenho?.dataset.emblema;
+  const destaqueEmblema = EMBLEMAS.find((e) => e.id === destaqueId);
+  const pool = seedLibrary().volumes.filter((v) => destaqueEmblema.pool.includes(v.personagem) || v.tambem?.some((p) => destaqueEmblema.pool.includes(p.personagem)));
+  const galeria = () => visiveis(".destaque-peca:not(:disabled)");
+  await click(visivel(".destaque-ativar"), "spread emblem");
+  console.log("  gallery has every pool volume exactly once: " + (JSON.stringify(galeria().map((p) => p.dataset.volume).sort()) === JSON.stringify(pool.map((v) => v.id).sort()) ? "PASS" : "FAIL"));
+  console.log("  gallery covers have title labels and receive focus: " + (galeria().every((p) => p.getAttribute("aria-label") === pool.find((v) => v.id === p.dataset.volume)?.titulo) && galeria().includes(window.document.activeElement) ? "PASS" : "FAIL"));
+  const escolhido = galeria()[0], tituloEscolhido = escolhido?.getAttribute("aria-label");
+  await click(escolhido, "open gallery volume");
+  console.log("  gallery cover opens its volume over hub: " + (visivel(".sheet")?.textContent.includes(tituloEscolhido) && !!visivel(".hub-capa") ? "PASS" : "FAIL"));
+  await click(visivel('.sheet [aria-label="Fechar"]'), "close gallery volume");
+  await click(visiveis(".destaque-acoes button").find((b) => b.textContent === "Remontar o emblema"), "reassemble emblem");
+  console.log("  reassembly restores emblem, focus and hides gallery buttons: " + (visivel(".destaque-ativar") === window.document.activeElement && galeria().length === 0 && visivel(".destaque-mosaico")?.dataset.emblema === destaqueId ? "PASS" : "FAIL"));
+  await click(visiveis(".destaque-acoes button").find((b) => b.textContent === "Outro personagem"), "another character");
+  console.log("  another character replaces current eligible emblem: " + (visivel(".destaque-mosaico")?.dataset.emblema !== destaqueId && !!visivel(".destaque-ativar") ? "PASS" : "FAIL"));
+
   console.log("\n--- scroll to enter ---");
   const wheel = (deltaY) => {
     const e = new window.Event("wheel", { bubbles: true });
@@ -388,7 +395,7 @@ if (scenario === "seeded") {
   // to hang on: the press class, a hover rule that is not the active pill, and
   // that the rule sits behind the pointer gate so a tap does not stick.
   // The lattice is the tab content's ground. It belongs to the tabs, never to the
-  // hub, which has the cover wall instead.
+  // hub, which has the cover backdrop instead.
   const cssSrcTop = fs.readFileSync("src/styles.css", "utf8");
   const malha = visivel(".content .cursor-grid");
   const area = visivel(".content");

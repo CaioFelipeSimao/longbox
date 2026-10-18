@@ -3,62 +3,16 @@ import { Plus, Download, BookOpen, ChevronDown, Shuffle } from "lucide-react";
 import GridMotion from "../components/GridMotion/GridMotion";
 
 import {
-  BACKDROP_COLS, BACKDROP_ROWS, QUASE_FECHANDO, QUASE_MORNO, QUASE_PRONTO, SESSION_SEED, SHELF_CAP, seededPick,
+  BACKDROP_COLS, BACKDROP_ROWS, QUASE_FECHANDO, QUASE_MORNO, QUASE_PRONTO, SESSION_SEED, seededPick,
 } from "../lib/constantes";
 import { coverColors, useCores } from "../lib/cores";
 import { formatBytes } from "../lib/biblioteca";
 import { coverUrl, miniUrl, useMiniVersao } from "../lib/capas";
 import { EmptyState } from "../ui/base";
 import { HuntProgress, tierDaCaca } from "../ui/Series";
-import { CoverArt, VolumeCard } from "../ui/VolumeCard";
+import { CoverArt } from "../ui/VolumeCard";
+import { Destaque } from "../ui/Destaque";
 import { RetratoAcervo } from "./RetratoAcervo";
-
-// A representative sample, not the first N: capping a character-sorted list
-// alphabetically would erase whoever sorts last, and the shelf is meant to read
-// as a map of the whole collection. Characters stay in alphabetical order so the
-// colour blocks hold their shape; within each one the window slides by the
-// session seed, so successive visits eventually show everything.
-export function buildShelf(volumes, cap, seed) {
-  const byChar = {};
-  volumes.forEach((v) => {
-    const k = v.personagem || "";
-    (byChar[k] = byChar[k] || []).push(v);
-  });
-  const chars = Object.keys(byChar).sort((a, b) => a.localeCompare(b, "pt-BR"));
-  chars.forEach((k) => byChar[k].sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR", { numeric: true })));
-  if (volumes.length <= cap) return chars.flatMap((k) => byChar[k]);
-
-  const windowOf = (list, n, offset) => {
-    if (n >= list.length) return list;
-    const start = ((offset % list.length) + list.length) % list.length;
-    const out = [];
-    for (let i = 0; i < n; i++) out.push(list[(start + i) % list.length]);
-    return out;
-  };
-
-  const quotas = chars.map((k) => ({
-    k,
-    n: Math.max(1, Math.floor((byChar[k].length / volumes.length) * cap)),
-  }));
-  let total = quotas.reduce((s, q) => s + q.n, 0);
-  // Hand any rounding slack to the biggest shelves first.
-  const order = quotas.slice().sort((a, b) => byChar[b.k].length - byChar[a.k].length);
-  let i = 0;
-  while (total > cap && order.length) {
-    const q = order[i % order.length];
-    if (q.n > 1) { q.n--; total--; }
-    i++;
-    if (i > chars.length * 40) break;
-  }
-  i = 0;
-  while (total < cap && order.length) {
-    const q = order[i % order.length];
-    if (q.n < byChar[q.k].length) { q.n++; total++; }
-    i++;
-    if (i > chars.length * 40) break;
-  }
-  return quotas.flatMap((q, idx) => windowOf(byChar[q.k], q.n, seed + idx * 7));
-}
 
 // No cover is ever laid twice. A repeat would put the same book on the wall in two
 // places, which is exactly what a shelf cannot do, so a library smaller than the
@@ -94,7 +48,6 @@ export function Hub({
   const sugestao = lib.volumes.length ? lib.volumes[seed % lib.volumes.length] : null;
   const outraSugestao = () => setSeed((s) => s + 1 + Math.floor(Math.random() * 7));
 
-  const shelf = useMemo(() => buildShelf(lib.volumes, SHELF_CAP, SESSION_SEED), [lib.volumes]);
   const miniVersao = useMiniVersao();
   const backdrop = useMemo(
     () => buildBackdrop(lib.volumes, BACKDROP_ROWS * BACKDROP_COLS, SESSION_SEED),
@@ -193,19 +146,7 @@ export function Hub({
         </section>
       )}
 
-      <section>
-        <div className="hub-section-head">
-          <h2>Sua estante</h2>
-          {lib.volumes.length > shelf.length && (
-            <span className="group-count">{shelf.length} de {lib.volumes.length}</span>
-          )}
-        </div>
-        <div className="wall">
-          {shelf.map((v) => (
-            <VolumeCard key={v.id} volume={v} index={0} open={false} bare onClick={() => onOpenVolume(v.id)} />
-          ))}
-        </div>
-      </section>
+      <Destaque lib={lib} onOpenVolume={onOpenVolume} />
 
       <RetratoAcervo lib={lib} onRecorte={onRecorte} />
 

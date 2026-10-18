@@ -69,7 +69,6 @@ export const QUASE_MORNO = 0.65; // past this the hunt bar leaves its warm, need
 export const QUASE_PRONTO = 0.8; // past this the hunt bar reads as nearly closed, not just started
 // v140: four full rows on the user's PC, where the wall fits 21 a row (60 left the third
 // row three short). 84 also fills the rows of 4, 6, 7, 12 and 14 on other widths.
-export const SHELF_CAP = 84;
 // Rotating the wall fifteen degrees means it has to overhang the box it fills in
 // both directions and stay covered once the rows drift: it needs to be
 // W*cos15 + H*sin15 wide, plus the 300px of travel, and W*sin15 + H*cos15 tall.

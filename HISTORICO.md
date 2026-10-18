@@ -3017,3 +3017,35 @@ League texts agree except "Titans #33" vs "Teen Titans #33" (Teen Titans Vol 3 #
 Detective Comics #607 was moved to October 1989 (Fandom cover date). Nightwing Vol 2 runs to
 #153; Compendium Four ends at #117, so a Compendium Five (maybe a Six) is expected: re-map
 when it is solicited.
+
+**v180 The hub's shelf becomes a featured character drawn in covers (2026-10-18).** The user
+found "Sua estante" redundant with the cover backdrop and turned down a list of stats and a 3D
+flip-through box (preview). They chose the emblem mosaic: each visit draws one character and
+its emblem is laid out with that character's own covers, beside numbers from the collection.
+- Emblems are fixed molds, never resampled (the first preview rescaled vector shapes per screen
+  and looked different on every size): `src/lib/emblemas.js`, "#" takes a cover. Two sets, PC
+  (up to 40 x 18) and phone (up to 16 x 16, the phone shelf shows a third of the PC's covers a
+  row). 19 emblems, each drawn and checked with the user, several from references they sent
+  (Batman, Nightwing, Flash, Superman, Aquaman, Wonder Woman, Justice League, Batgirl,
+  Daredevil, Catwoman, Spider-Man, Absolute Flash). Rules they set: no holes, no loose pieces,
+  exact symmetry where the logo is symmetric. Molds were made by one reviewer agent per emblem,
+  up to three rounds, against a checker (`.superpowers/emblemas/moldes/ferramentas.mjs`,
+  git-ignored with the references and the catalog pages).
+- Pools: all Batman variants (Batman/Flash, Batman/Spawn, Earth 1, White Knight, Frank Miller)
+  fill one bat; Batman/Flash also fills the Flash. Batman carries a library of six bat-symbols
+  (`variantes`; the user's picks from LEGO Batman: Legends of the Dark Knight); the visit's seed
+  picks one.
+- Cover placement (`distribuirCapas`, `src/lib/mosaico.js`), rules the user approved: every
+  volume appears once before any repeats, and the same cover never touches itself (left/above).
+  With exactly two covers the second rule wins (checkerboard). The draw is uniform over every
+  character with at least one volume (user's choice over weighting by volume count).
+- Numbers: volumes, issues collected, read, and "edições publicadas entre X e Y" from the
+  ISSUES' cover years, not the volumes' (user correction on the preview); no en-dash.
+- Interaction: pieces fall into place from the centre; on a mouse a wave follows the pointer
+  (rAF + CSS variables, idle when still); on touch one wave sweeps after assembly; a tap spreads
+  the pieces into a grid of every volume in the pool (tap opens the volume), "Remontar o
+  emblema" and "Outro personagem". Touch never blocks the hub's scroll or unlock gesture.
+- Built by Codex from a brief; Claude added the bat library, the issue-year wording, a guard in
+  the wave cleanup (it touched unmounted pieces and broke navigation in 8 suites), and raised the
+  bundle ceiling from 500 to 540 KB (molds add ~30 KB; the ceiling only catches a dev React).
+  Removed: `buildShelf`, `SHELF_CAP`, `.wall`; the shelf tests were rewritten for the highlight.

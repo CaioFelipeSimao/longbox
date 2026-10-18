@@ -706,6 +706,28 @@ Spec: `docs/superpowers/specs/2026-10-06-lista-de-desejos-design.md`. What holds
   linked collection at `n + i` (capped at the end, so an out-of-order purchase appends) or into a new acervo
   collection copied from the wish one, which then links to it; an emptied wish collection is removed.
 
+## Featured character (v180)
+
+The hub section between "Falta pouco" and the collection portrait is "Em destaque" (`src/ui/Destaque.jsx`),
+replacing the v3 shelf. One character per visit, drawn uniformly among those with at least one volume;
+"Outro personagem" draws another.
+
+- **Molds are data, not drawings.** `src/lib/emblemas.js`: `{id, nome, pool, pc, cel, variantes?}`; `pc` up
+  to 40 x 18, `cel` up to 16 x 16 (`useCelular`), "#" = one 2:3 cover. Never rescale a mold: a piece is
+  1/40 of the area width on PC and 1/16 on a phone, so a narrow emblem is smaller, not stretched. New or
+  changed molds go through the checker in `.superpowers/emblemas/moldes/ferramentas.mjs` (no holes, no
+  loose or corner-only pieces, declared `furos`/`partes`, exact symmetry) and the user's eye.
+- **Pools.** A mold is filled by every volume whose `personagem` or `tambem` is in its pool. Batman's pool
+  holds all Batman variants; `variantes` holds its six bat-symbols, and only when Batman is drawn does the
+  visit's seed pick one of them (the character draw itself stays uniform).
+- **Placement rules (user-approved).** Every volume once before repeats; never the same cover left of or
+  above itself; with two covers, the checkerboard wins.
+- **Numbers.** Volumes, issues collected, read, and the range of the collected issues' cover years
+  ("entre X e Y", no en-dash).
+- **Motion.** Assembly from the centre, a pointer wave on mouse only, one sweep on touch, spread to a grid
+  of every pool volume and back; all off under reduced motion. Touch must never block the hub scroll or
+  the unlock gesture.
+
 ## Decided not to build
 
 **A batch cataloguing mode in the app** (critique 2026-09-26, question 2: "three trips per

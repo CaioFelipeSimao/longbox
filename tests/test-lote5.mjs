@@ -140,9 +140,13 @@ console.log("=== C: capa no Novo ===");
 console.log("=== abrir não troca de aba ===");
 {
   const h = await montar({ aba: "hub" });
-  h.root.querySelector(".wall .vol")?.click();
+  h.root.querySelector(".destaque-ativar")?.click();
+  await sleep(100);
+  const galeria = h.root.querySelectorAll(".destaque-peca:not(:disabled)");
+  check("destaque espalha todos os volumes sem repetição", galeria.length === 4 && new Set([...galeria].map((p) => p.dataset.volume)).size === 4);
+  galeria[0]?.click();
   await sleep(250);
-  check("HQ do mural abre por cima do hub", !!h.root.querySelector('.sheet[data-in="true"], .sheet') && !!h.root.querySelector(".hub"), h.root.querySelector(".sheet") ? "" : "sem folha");
+  check("capa da grade do destaque abre por cima do hub", !!h.root.querySelector('.sheet[data-in="true"], .sheet') && !!h.root.querySelector(".hub"), h.root.querySelector(".sheet") ? "" : "sem folha");
   const c = await montar({ aba: "colecoes" });
   c.root.querySelector('.aba[data-ativa="true"] .coll-strip .vol')?.click();
   await sleep(250);

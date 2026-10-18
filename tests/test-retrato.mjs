@@ -79,7 +79,7 @@ console.log("=== o retrato ===");
 const m = await montar();
 check("a seção aparece no hub", !!m.retrato());
 const secoes = [...m.root.querySelectorAll(".hub > section .hub-section-head h2")].map((h) => h.textContent);
-check("fica depois da estante", secoes.indexOf("Seu acervo") === secoes.indexOf("Sua estante") + 1, secoes.join(" > "));
+check("fica depois do personagem em destaque", secoes.indexOf("Seu acervo") === secoes.indexOf("Em destaque") + 1, secoes.join(" > "));
 check("leitura em destaque", /2\s*de 15/.test(m.coluna("Leitura")?.querySelector(".retrato-destaque")?.textContent || ""), m.coluna("Leitura")?.querySelector(".retrato-destaque")?.textContent);
 const segs = [...(m.coluna("Leitura")?.querySelectorAll(".retrato-meter i") || [])].map((i) => i.dataset.s + ":" + i.style.flexGrow);
 check("barra de leitura em três partes na ordem", segs.join(" ") === "lida:2 lendo:1 resto:12", segs.join(" "));
