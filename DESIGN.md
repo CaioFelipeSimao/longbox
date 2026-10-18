@@ -733,7 +733,7 @@ replacing the v3 shelf. One character per visit, drawn uniformly among those wit
   above itself; with two covers, the checkerboard wins.
 - **Numbers.** Volumes, issues collected, read, and the range of the collected issues' cover years
   ("entre X e Y", no en-dash).
-- **Motion.** Assembly from the centre, a pointer wave on mouse only, one sweep on touch, spread to a grid
+- **Motion.** Assembly from the centre, one sweep after assembly on every device (v182; a mouse over the emblem stops it), a pointer wave on mouse, spread to a grid
   of every pool volume and back; all off under reduced motion. Touch must never block the hub scroll or
   the unlock gesture.
 

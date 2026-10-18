@@ -3067,3 +3067,8 @@ motion. Also fixed an upstream bug: `gsap.ticker.add` returns the callback, not 
 the mouse loop was never removed on unmount; cleanups now call `gsap.ticker.remove`.
 Preview workflow, same day: a permanent preview artifact, "Longbox irmã", holds a copy of the
 library and every cover, so a preview is now one publish (`.superpowers/irma/LEIA.md`).
+
+**v182 The emblem's wave also plays on a PC (2026-10-18).** The user liked the wave that sweeps
+across the featured emblem once it assembles on the phone and missed it on the PC, where only the
+pointer wave existed. The single sweep now runs on every device; on a mouse, moving over the
+emblem stops it and the pointer wave takes over.

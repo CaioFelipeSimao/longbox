@@ -171,7 +171,9 @@ function Personagem({ emblema, seed, lib, onOutro, outroRef, onOpenVolume }) {
     const sair = () => { ponto = null; if (!raf) raf = requestAnimationFrame(frame); };
     area.addEventListener("pointermove", mover);
     area.addEventListener("pointerleave", sair);
-    if (!ondaFeita.current && window.matchMedia?.("(hover: none), (pointer: coarse)").matches) {
+    // v182: the sweep after assembly runs on every device (it was touch only); on a
+    // mouse, moving over the emblem stops it and the pointer wave takes over.
+    if (!ondaFeita.current) {
       ondaFeita.current = true;
       varrendo = true;
       const inicio = performance.now(), duracao = 1300, R = g.w * 4.2;
