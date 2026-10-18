@@ -3076,3 +3076,8 @@ emblem stops it and the pointer wave takes over.
 **v183 No "Outro personagem" button (2026-10-18).** At the user's request the featured character
 can no longer be redrawn by hand: one character per visit to the hub. The button, its redraw and
 its focus handling were removed; the two tests that pressed it now check that it is gone.
+
+**v184 "Remontar o emblema" replays the wave (2026-10-18).** Opening the grid re-arms the
+assembly sweep, so reassembling the emblem plays it again, 500ms after the button (the pieces'
+fly-back), on every device. Checked in headless Chrome: still for half a second, then the wave
+passes for about 1.2s and stops. The user asked to publish it without a preview.

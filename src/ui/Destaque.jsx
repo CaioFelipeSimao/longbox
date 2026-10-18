@@ -46,7 +46,7 @@ function Personagem({ emblema, seed, lib, onOpenVolume }) {
   const [reduz, setReduz] = useState(prefersReducedMotion);
   const [medida, setMedida] = useState({ largura: 0, rem: 16 });
   const areaRef = useRef(null), ativarRef = useRef(null), pecasRef = useRef([]);
-  const gradeAnterior = useRef(false), gestoRef = useRef(null), ondaFeita = useRef(false);
+  const gradeAnterior = useRef(false), gestoRef = useRef(null), ondaFeita = useRef(false), voltouDaGrade = useRef(false);
   const volumes = useMemo(() => volumesDoEmblema(emblema, lib.volumes)
     .slice().sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR", { numeric: true })), [emblema, lib.volumes]);
   const numeros = useMemo(() => numerosDoPersonagem(volumes, lib.edicoes), [volumes, lib.edicoes]);
@@ -150,7 +150,11 @@ function Personagem({ emblema, seed, lib, onOpenVolume }) {
         pecasRef.current[i].style.zIndex = f > 0 ? String(Math.round(f * 100)) : "";
       });
     };
-    const limpar = () => { if (raf) cancelAnimationFrame(raf); raf = 0; varrendo = false; pintar(null); };
+    let espera = 0;
+    const limpar = () => { clearTimeout(espera); if (raf) cancelAnimationFrame(raf); raf = 0; varrendo = false; pintar(null); };
+    // v184: opening the grid re-arms the sweep, so "Remontar o emblema" replays it
+    // once the pieces are back (their fly-back transition is 500ms).
+    if (grade) { ondaFeita.current = false; voltouDaGrade.current = true; }
     if (grade || reduz || entrada || !medida.largura) { limpar(); return limpar; }
     const frame = () => { raf = 0; pintar(ponto); };
     const mover = (e) => {
@@ -168,14 +172,19 @@ function Personagem({ emblema, seed, lib, onOpenVolume }) {
     if (!ondaFeita.current) {
       ondaFeita.current = true;
       varrendo = true;
-      const inicio = performance.now(), duracao = 1300, R = g.w * 4.2;
-      const passo = (t) => {
-        const k = (t - inicio) / duracao;
-        if (k >= 1) { raf = 0; varrendo = false; pintar(null); return; }
-        pintar({ x: -R + k * (g.W + 2 * R) }, true);
+      const atraso = voltouDaGrade.current ? 500 : 0;
+      voltouDaGrade.current = false;
+      espera = setTimeout(() => {
+        if (!varrendo) return; // the mouse took over while waiting
+        const inicio = performance.now(), duracao = 1300, R = g.w * 4.2;
+        const passo = (t) => {
+          const k = (t - inicio) / duracao;
+          if (k >= 1) { raf = 0; varrendo = false; pintar(null); return; }
+          pintar({ x: -R + k * (g.W + 2 * R) }, true);
+          raf = requestAnimationFrame(passo);
+        };
         raf = requestAnimationFrame(passo);
-      };
-      raf = requestAnimationFrame(passo);
+      }, atraso);
     }
     return () => { area.removeEventListener("pointermove", mover); area.removeEventListener("pointerleave", sair); limpar(); };
   }, [g, grade, reduz, entrada, medida.largura, pecas]);
