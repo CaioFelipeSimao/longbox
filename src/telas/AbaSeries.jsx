@@ -1,9 +1,47 @@
 import { Library, ChevronDown } from "lucide-react";
 
 import { EmptyState } from "../ui/base";
-import { edicoesNaFaixa } from "../lib/biblioteca";
+import { edicoesNaFaixa, SEM_PERSONAGEM } from "../lib/biblioteca";
+import { specForCharacter, swatchColors, useCores } from "../lib/cores";
 import { GroupHead } from "../ui/CorPersonagem";
 import { SEM_EDICOES, SerieLinha } from "../ui/Series";
+import { useArrastarSeries } from "./useArrastarSeries";
+
+const NADA = () => {};
+
+// v185: hold a row and drag to reorder the character's séries, as in the HQ sheet,
+// filled with the character's colour. Off while a search or the author filter
+// shows only part of the group, and in the group with no character.
+function ListaDoGrupo({ grupo, arrastavel, onReordenar, edicoesPorSerie, ownedEdicaoIds, filtroAutor, openSerieId, abrirSerieNaFaixa }) {
+  const cores = useCores();
+  const cor = swatchColors(specForCharacter(grupo.personagem, cores), 0).edge;
+  const chaves = grupo.itens.map((item) => ({ key: item.serie.id, edicoes: SEM_EDICOES, item }));
+  const arrasto = useArrastarSeries(grupo.personagem, chaves, arrastavel, onReordenar, NADA,
+    { pagina: true, interativos: "a, input, select, textarea", zIndex: 14 });
+  return (
+    <div className="series-lista" ref={arrasto.blockRef}>
+      {arrasto.grupos.map(({ key, item }) => (
+        <div className="serie-arrasto" key={key + ":" + item.faixa.nome} data-serie-key={key}
+          ref={(el) => arrasto.registrar(key, el)}
+          style={{ "--hold-color": cor }}
+          onPointerDown={(e) => arrasto.pointerDown(e, key)}
+          onClickCapture={arrasto.clickCapture}>
+          <SerieLinha
+            serie={item.serie}
+            faixa={item.faixa}
+            eds={edicoesPorSerie[item.serie.id] || SEM_EDICOES}
+            ownedIds={ownedEdicaoIds}
+            filtroAutor={filtroAutor}
+            aberta={item.serie.id === openSerieId}
+            onAbrir={abrirSerieNaFaixa}
+          />
+          <span className="vol-hold" aria-hidden="true" />
+          <span className="vol-hold__crest" aria-hidden="true" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 // v177: count the union of this character's ranges, once per issue and série.
 function progressoDoGrupo(itens, edicoesPorSerie, ownedIds) {
@@ -26,7 +64,7 @@ function progressoDoGrupo(itens, edicoesPorSerie, ownedIds) {
 export function AbaSeries({
   lib, setCorPersonagem, fixados, alternarFixado, edicoesPorSerie, ownedEdicaoIds, buscando, filtrando, openSerieId,
   gruposAbertos, grupoAberto, alternarGrupo, alternarTodos, seriesFiltradas,
-  abrirSerieNaFaixa, filtroAutor,
+  abrirSerieNaFaixa, filtroAutor, onReordenarSeries,
 }) {
   return (
     seriesFiltradas.length === 0 ? (
@@ -68,18 +106,18 @@ export function AbaSeries({
             fixado={fixados.includes(grupo.personagem)}
             onFixar={alternarFixado}
           />
-          {grupoAberto(grupo.personagem) && grupo.itens.map((item) => (
-            <SerieLinha
-              key={item.serie.id + ":" + item.faixa.nome}
-              serie={item.serie}
-              faixa={item.faixa}
-              eds={edicoesPorSerie[item.serie.id] || SEM_EDICOES}
-              ownedIds={ownedEdicaoIds}
+          {grupoAberto(grupo.personagem) && (
+            <ListaDoGrupo
+              grupo={grupo}
+              arrastavel={!buscando && !filtroAutor && grupo.personagem !== SEM_PERSONAGEM && grupo.itens.length > 1}
+              onReordenar={onReordenarSeries}
+              edicoesPorSerie={edicoesPorSerie}
+              ownedEdicaoIds={ownedEdicaoIds}
               filtroAutor={filtroAutor}
-              aberta={item.serie.id === openSerieId}
-              onAbrir={abrirSerieNaFaixa}
+              openSerieId={openSerieId}
+              abrirSerieNaFaixa={abrirSerieNaFaixa}
             />
-          ))}
+          )}
         </section>
         ))}
       </>

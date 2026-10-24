@@ -176,6 +176,30 @@ export function serieDoGrupo(s, personagem) {
   return ps.length ? ps.some((p) => p.nome === personagem) : personagem === SEM_PERSONAGEM;
 }
 
+// v185: a série's place in one character's group on the séries tab lives on that
+// character's entry (ordem), so a série shared by two characters keeps a place in
+// each. Placed séries first; the rest, and any added later, by starting year.
+export function compararNoGrupo(a, b) {
+  const oa = a.faixa.ordem ?? a.serie.ordem ?? null, ob = b.faixa.ordem ?? b.serie.ordem ?? null;
+  if (oa !== null && ob !== null) return oa - ob;
+  if (oa !== null) return -1;
+  if (ob !== null) return 1;
+  return (parseInt(a.serie.anoInicio, 10) || 9999) - (parseInt(b.serie.anoInicio, 10) || 9999);
+}
+
+// visiveis is the dragged group's new order (série ids). Séries of the character
+// that the publisher band hides keep their slots; every série of it gets an ordem.
+export function ordenarSeriesDoPersonagem(series, personagem, visiveis) {
+  const atual = series.flatMap((serie) => personagensDaSerie(serie).filter((p) => p.nome === personagem)
+    .slice(0, 1).map((faixa) => ({ serie, faixa }))).sort(compararNoGrupo).map((i) => i.serie.id);
+  const mostrados = new Set(visiveis);
+  let k = 0;
+  const pos = new Map(atual.map((id) => (mostrados.has(id) ? visiveis[k++] : id)).map((id, i) => [id, i]));
+  return series.map((s) => !pos.has(s.id) ? s : {
+    ...s, personagens: personagensDaSerie(s).map((p) => (p.nome === personagem ? { ...p, ordem: pos.get(s.id) } : p)),
+  });
+}
+
 export function anoRange(s) {
   const ini = s.anoInicio || "?";
   const fim = s.anoFim || "presente";

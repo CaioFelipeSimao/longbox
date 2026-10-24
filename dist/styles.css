@@ -2441,6 +2441,19 @@ button.retrato-linha { cursor: pointer; }
   .serie-row:hover { border-color: var(--border-strong); }
   .serie-row[data-open="true"]:hover { border-color: var(--accent); }
 }
+/* v185: a séries-tab row is held and dragged like the HQ sheet's série cards. The
+   fill rounds its own corners instead of the wrapper clipping, which would cut the
+   row's focus ring. */
+.serie-arrasto { position: relative; margin-bottom: 0.5rem; border-radius: var(--r);
+  -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.serie-arrasto > .serie-row { margin-bottom: 0; }
+/* The press shrinks the whole wrapper, so the fill shrinks with the row. */
+.serie-arrasto > .serie-row:active { transform: none; }
+.serie-arrasto { transition: transform 120ms var(--ease-out); }
+.serie-arrasto:active { transform: scale(0.99); }
+.serie-arrasto > .vol-hold, .serie-arrasto > .vol-hold__crest { border-radius: var(--r); }
+.serie-arrasto[data-drag-hole="true"] { visibility: hidden; }
+.serie-arrasto[data-drag-ghost="true"] { box-shadow: var(--shadow-sheet); cursor: grabbing; will-change: transform; }
 .serie-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
 .serie-meta { margin-top: 0.1875rem; font-size: 0.75rem; color: var(--text-muted); }
 
@@ -2788,7 +2801,8 @@ html[data-capa="true"] body { scrollbar-color: auto; }
   /* v158: a wide card tilting at 320ms looked jittery (the corners of a 400px card move more than a
      cover's). It breathes instead: a slow, barely-there swell. The individual scale property leaves
      the pointer-follow transform free to move. */
-  .linked-serie-card[data-drag-ghost="true"]:not([data-drag-settling]) { animation: serieRespira 1400ms ease-in-out infinite !important; }
+  .linked-serie-card[data-drag-ghost="true"]:not([data-drag-settling]),
+  .serie-arrasto[data-drag-ghost="true"]:not([data-drag-settling]) { animation: serieRespira 1400ms ease-in-out infinite !important; }
   @keyframes serieRespira {
     0%, 100% { scale: 1; }
     50% { scale: 1.012; }
@@ -3145,7 +3159,7 @@ html[data-capa="true"] body { scrollbar-color: auto; }
   .sheet, .modal { transition-property: opacity !important; transform: none !important; }
   .sheet[data-in="true"], .modal[data-in="true"] { transform: none !important; }
   .press:active:not(.vol[data-dragging="true"]), .btn:active, .btn-icon:active, .tile:active, .vol:active .cover,
-  .serie-row:active, .seg3 button:active, .cover-upload:active,
+  .serie-row:active, .serie-arrasto:active, .seg3 button:active, .cover-upload:active,
   .vol[data-dragging="true"] .cover { transform: none !important; }
   .vol[data-vol-id], .vol[data-vol-id] .cover { transition: none !important; }
   .toast { transform: translate(-50%, 0) !important; }

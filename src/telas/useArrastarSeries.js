@@ -1,12 +1,18 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { HOLD_EASE_LINEAR, HOLD_EASE_OUT, prefersReducedMotion } from "../lib/hooks";
 import { criarGhost } from "../lib/arrastoGhost";
-import { indiceDeInsercaoVertical, pontoNaCaixaExpandida, pontoNoConteudo,
+import { indiceDeInsercaoVertical, lerLimitesDeRolagemDaPagina, pontoNaCaixaExpandida, pontoNoConteudo,
   reordenarParaSlot, velocidadeAutoScroll } from "../lib/arrastoSeguir";
+
+const INTERATIVOS = "button, a, input, select, textarea, [role=button]";
 
 // A series order belongs to one volume. The other cards retain their relative
 // order; only the picked card is inserted between their fixed-height midpoints.
-export function useArrastarSeries(volumeId, grupos, enabled, onCommit, onArm) {
+// v185: also the séries tab, one call per character group (volumeId is then the
+// character). pagina: the list scrolls with the page, not inside a sheet body;
+// interativos: what never arms (there the whole row is itself a button).
+export function useArrastarSeries(volumeId, grupos, enabled, onCommit, onArm,
+  { pagina = false, interativos = INTERATIVOS, zIndex = 90 } = {}) {
   const [visual, setVisual] = useState(null);
   const nodes = useRef(new Map()), blockRef = useRef(null);
   const drag = useRef(null), settling = useRef(null), raf = useRef(0);
@@ -76,7 +82,8 @@ export function useArrastarSeries(volumeId, grupos, enabled, onCommit, onArm) {
       return;
     }
     const others = info.order.filter((key) => key !== info.key);
-    const y = pontoNoConteudo(info.pointer, info.body.getBoundingClientRect(), 0, info.body.scrollTop).y;
+    const y = pagina ? info.pointer.y + window.scrollY
+      : pontoNoConteudo(info.pointer, info.body.getBoundingClientRect(), 0, info.body.scrollTop).y;
     const index = indiceDeInsercaoVertical(y, others.map((key) => info.heights.get(key)),
       { topo: info.top, gap: info.gap });
     updateOrder(info, reordenarParaSlot(info.order, info.key, index));
@@ -87,8 +94,8 @@ export function useArrastarSeries(volumeId, grupos, enabled, onCommit, onArm) {
     if (!info?.active) return;
     if (!info.el.isConnected || !latest.current.enabled || latest.current.volumeId !== info.volumeId ||
         document.querySelector(".modal")) { abort(); setVisual(null); return; }
-    const box = info.body.getBoundingClientRect();
-    const maxScroll = Math.max(0, info.body.scrollHeight - info.body.clientHeight);
+    const box = pagina ? lerLimitesDeRolagemDaPagina() : info.body.getBoundingClientRect();
+    const maxScroll = Math.max(0, info.body.scrollHeight - (pagina ? window.innerHeight : info.body.clientHeight));
     const dy = velocidadeAutoScroll(info.pointer.y, Math.max(0, box.top), Math.min(window.innerHeight, box.bottom),
       { scrollTop: info.body.scrollTop, maxScroll });
     if (dy) info.body.scrollTop = Math.max(0, Math.min(maxScroll, info.body.scrollTop + dy));
@@ -191,7 +198,9 @@ export function useArrastarSeries(volumeId, grupos, enabled, onCommit, onArm) {
       blockEvent(e);
       if (e.type === "touchcancel" && drag.current) end(e);
     };
-    const resize = () => { abort(); setVisual(null); };
+    // A phone's toolbar folding while the page scrolls changes only the height.
+    const largura = window.innerWidth;
+    const resize = () => { if (pagina && window.innerWidth === largura) return; abort(); setVisual(null); };
     window.addEventListener("pointermove", move, { capture: true, passive: false });
     window.addEventListener("pointerup", end, true);
     window.addEventListener("pointercancel", end, true);
@@ -209,14 +218,15 @@ export function useArrastarSeries(volumeId, grupos, enabled, onCommit, onArm) {
   }
 
   function pointerDown(e, key) {
-    if (e.target.closest("button, a, input, select, textarea, [role=button]")) {
+    if (e.target.closest(interativos)) {
       suppress.current = false;
       return;
     }
     if (!latest.current.enabled || e.isPrimary === false || (e.button != null && e.button !== 0) ||
         drag.current || settling.current) return;
     suppress.current = false;
-    const el = e.currentTarget, block = blockRef.current, body = el.closest(".sheet-body");
+    const el = e.currentTarget, block = blockRef.current;
+    const body = pagina ? document.scrollingElement || document.documentElement : el.closest(".sheet-body");
     if (!block || !body) return;
     const rect = el.getBoundingClientRect();
     el.style.setProperty("--hold-w", rect.width + "px");
@@ -244,8 +254,8 @@ export function useArrastarSeries(volumeId, grupos, enabled, onCommit, onArm) {
       // Reset a sheet pull that may have started within the pre-arm 10px slack.
       el.closest(".sheet")?.dispatchEvent(new Event("longbox:reorder-start"));
       try { el.setPointerCapture(info.pointerId); } catch {}
-      // Sheet chrome is 41+, while the collection ghost keeps its default 14.
-      info.ghost = criarGhost(el, info.grabOffset, prefersReducedMotion(), { zIndex: 90 });
+      // Sheet chrome is 41+; on the page the ghost stays under the header (14, as the HQs').
+      info.ghost = criarGhost(el, info.grabOffset, prefersReducedMotion(), { zIndex });
       info.ghost.follow(info.pointer);
       setVisual({ volumeId: info.volumeId, order: info.order });
       raf.current = requestAnimationFrame(frame);

@@ -25,6 +25,9 @@ export function criarGhost(card, grabOffset, reduced = false, { zIndex = 14 } = 
   if (card.closest(".desejos-capa")) node.style.zIndex = "40";
   card.ownerDocument.body.appendChild(node);
   card.dataset.dragHole = "true";
+  // v185: grow 6%, but never more than 24px wider: a full-width séries row on a PC
+  // grew 80px and ran off the screen. Covers and sheet cards (up to 400px) keep 6%.
+  const escala = Math.min(1.06, 1 + 24 / Math.max(1, rect.width));
   let timer = 0, removed = false;
   const remove = () => {
     if (removed) return;
@@ -35,7 +38,7 @@ export function criarGhost(card, grabOffset, reduced = false, { zIndex = 14 } = 
   };
   const follow = (pointer) => {
     if (removed) return;
-    node.style.transform = `translate(${pointer.x - grabOffset.x}px, ${pointer.y - grabOffset.y}px) scale(${reduced ? 1 : 1.06})`;
+    node.style.transform = `translate(${pointer.x - grabOffset.x}px, ${pointer.y - grabOffset.y}px) scale(${reduced ? 1 : escala})`;
   };
   const settle = (target, done) => {
     if (removed) return;

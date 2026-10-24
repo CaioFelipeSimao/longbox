@@ -4,7 +4,7 @@ import { Modal } from "../ui/base";
 // already existed (Esc, the arrows, Ctrl+V) are listed too, so it is the whole set.
 const GRUPOS = [
   ["Gestos (toque ou mouse)", [
-    [[], "Segure uma capa por meio segundo e arraste: reordena as HQs dentro do personagem, os volumes de uma coleção e as séries dentro de um volume"],
+    [[], "Segure uma capa por meio segundo e arraste: reordena as HQs dentro do personagem, os volumes de uma coleção e as séries dentro de um volume ou de um personagem"],
     [[], "Solte no espaço vazio depois da última capa: vai para o fim da lista"],
     [[], "Segure o título de uma coleção na lista de desejos e arraste: reordena as coleções"],
     [[], "Toque no alfinete ao lado do nome de um personagem: fixa até 3 personagens no topo (HQs e Séries)"],

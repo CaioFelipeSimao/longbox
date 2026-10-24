@@ -10,7 +10,7 @@ import { autoresDasSeries as contarAutoresDasSeries, autoresDe, parseAutores, te
 import { COR_LONGBOX, CoresContext, swatchColors, tintaSobre } from "../lib/cores";
 import {
   anoRange, bytesOf, deleteColecao, deleteEdicao, deleteSerie, deleteVolume, deleteDesejo, ensureAvulsa,
-  ensureRange, normalizeLib, parseImportText, personagensDaSerie, SEM_PERSONAGEM, serieDoGrupo, semearEditoras,
+  compararNoGrupo, ensureRange, normalizeLib, ordenarSeriesDoPersonagem, parseImportText, personagensDaSerie, SEM_PERSONAGEM, serieDoGrupo, semearEditoras,
 } from "../lib/biblioteca";
 import {
   aplicarMescladas, gravarFixados, ouvirFixados, gravarUltimoBackup, lerFixados, lerUltimoBackup, loadLibrary, ouvirMudancas, scheduleSave, shardEdicoes, store,
@@ -989,13 +989,7 @@ export function App() {
     });
     return Object.keys(grupos).sort(porFixados(fixados)).map((p) => ({
       personagem: p,
-      itens: grupos[p].sort((a, b) => {
-        const oa = a.serie.ordem ?? null, ob = b.serie.ordem ?? null;
-        if (oa !== null && ob !== null) return oa - ob;
-        if (oa !== null) return -1;
-        if (ob !== null) return 1;
-        return (parseInt(a.serie.anoInicio, 10) || 9999) - (parseInt(b.serie.anoInicio, 10) || 9999);
-      }),
+      itens: grupos[p].sort(compararNoGrupo),
     }));
   }, [lib.series, query, casaEditora, filtroSerie, filtroAutor, fixados, edicoesPorSerie, ownedEdicaoIds]);
 
@@ -1082,13 +1076,19 @@ export function App() {
       const dup = lib.series.find((s) => s.nome.trim().toLowerCase() === serieForm.nome.trim().toLowerCase());
       if (dup) { setSerieDupWarning('Já existe uma série chamada "' + dup.nome + '". Toque em Salvar de novo pra criar mesmo assim.'); return; }
     }
+    // v185: a character kept by name keeps the série's place in its group.
+    const antes = serieForm.id ? personagensDaSerie(lib.series.find((s) => s.id === serieForm.id) || {}) : [];
     const payload = {
       nome: serieForm.nome.trim(),
-      personagens: serieForm.personagensList.filter((p) => p.nome.trim()).map((p) => ({
-        nome: p.nome.trim(),
-        de: p.de !== "" && !isNaN(parseInt(p.de, 10)) ? parseInt(p.de, 10) : null,
-        ate: p.ate !== "" && !isNaN(parseInt(p.ate, 10)) ? parseInt(p.ate, 10) : null,
-      })),
+      personagens: serieForm.personagensList.filter((p) => p.nome.trim()).map((p) => {
+        const ordem = antes.find((a) => a.nome === p.nome.trim())?.ordem;
+        return {
+          nome: p.nome.trim(),
+          de: p.de !== "" && !isNaN(parseInt(p.de, 10)) ? parseInt(p.de, 10) : null,
+          ate: p.ate !== "" && !isNaN(parseInt(p.ate, 10)) ? parseInt(p.ate, 10) : null,
+          ...(ordem != null ? { ordem } : {}),
+        };
+      }),
       editora: serieForm.editora.trim(),
       anoInicio: serieForm.anoInicio.trim(),
       anoFim: serieForm.anoFim.trim(),
@@ -2143,6 +2143,10 @@ export function App() {
             alternarTodos={alternarTodos}
             seriesFiltradas={seriesFiltradas}
             abrirSerieNaFaixa={abrirSerieNaFaixa}
+            onReordenarSeries={(personagem, ids) => {
+              const atual = libRef.current;
+              persist({ ...atual, series: ordenarSeriesDoPersonagem(atual.series, personagem, ids) });
+            }}
           />
           )} />
         )}

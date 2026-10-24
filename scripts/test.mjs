@@ -63,6 +63,7 @@ const SUITES = [
   { args: ["tests/test-arrastar-colecao.mjs"], minimo: 52 },
   { args: ["tests/test-arrastar-colecoes-desejo.mjs"], minimo: 48 },
   { args: ["tests/test-arrastar-series.mjs"], minimo: 60 },
+  { args: ["tests/test-arrastar-series-aba.mjs"], minimo: 24 },
 ];
 
 // Lines that report a count which must be zero. Source and CSS dash counts are

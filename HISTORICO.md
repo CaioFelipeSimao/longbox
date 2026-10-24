@@ -3081,3 +3081,17 @@ its focus handling were removed; the two tests that pressed it now check that it
 assembly sweep, so reassembling the emblem plays it again, 500ms after the button (the pieces'
 fly-back), on every device. Checked in headless Chrome: still for half a second, then the wave
 passes for about 1.2s and stops. The user asked to publish it without a preview.
+
+**v185 Reorder a character's séries on the séries tab (2026-10-24).** Hold a série row for half a
+second and drag it up or down, the same gesture as the série cards inside an HQ sheet
+(`useArrastarSeries`, now also in a page mode: one hook per character group, page scroll and
+autoscroll, ghost under the header). The rising fill and wave take the character's colour (the
+group swatch), not the sheet gradient. The place is stored on that character's entry of each série
+(`personagens[i].ordem`), so the 39 séries shared by two characters keep a separate place in each;
+`ordenarSeriesDoPersonagem` numbers the whole group, keeping the slots of séries the publisher band
+hides. A group never dragged still sorts by starting year; a série added to an ordered group goes
+to its end. The série form keeps the place of a character kept by name. Off during a search, with
+the author filter and in "(sem personagem)". Two fixes found in real Chrome: the press shrink moved
+from the row to its wrapper so the fill shrinks with it, and a drag ghost grows at most 24px (6% of
+a full-width PC row ran off the screen; covers and sheet cards keep 6%). New suite
+`test-arrastar-series-aba.mjs` (24).
