@@ -663,6 +663,18 @@ ghost); the chrome is .topbar 20, .ed-band 15, so lifted layers stay under it. S
 heights, so the insertion index comes from stacked midpoints as if the dragged card were absent
 (`indiceDeInsercaoVertical`). Geometry lives in src/lib/arrastoSeguir.js (pure, tested).
 
+**Fourth place, the séries tab (v185).** The same `useArrastarSeries` in page mode (`pagina: true`), one
+call per open character group: rows wrapped in `.serie-arrasto` (the whole row is a button, so only
+`a, input, select, textarea` refuse to arm), page scroll and autoscroll, ghost at z-index 14. The fill is
+the character's colour (the group swatch, `swatchColors(spec, 0).edge`), not the sheet gradient. The
+order lives on the character's entry of each série, `personagens[i].ordem` (a string entry becomes an
+object), so a série shared by two characters has a place in each; `ordenarSeriesDoPersonagem` numbers
+the whole group and keeps the slots of séries the publisher band hides; `compararNoGrupo` sorts placed
+séries first, the rest by starting year (a série added later lands at the end). The série form keeps
+the `ordem` of a character kept by name. Off during a search, with the author filter, in "(sem
+personagem)" and in a one-série group. The press shrink sits on the wrapper so the fill shrinks with the
+row; any drag ghost grows 6% but at most 24px (`criarGhost`).
+
 **v167 End drop zone.** In HQs, Coleções and the wish list, empty space to the right of the last card,
 within its vertical band, maps to the last slot: dropping there puts the cover at the end and shifts the others.
 A full row has no such zone; space above or below has no target. The Séries tab does not use this rule.
