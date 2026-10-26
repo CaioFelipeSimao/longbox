@@ -2,7 +2,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRe
 import { ChevronLeft, ChevronDown, ChevronsDownUp, ChevronsUpDown, Plus, ShoppingCart, SlidersHorizontal } from "lucide-react";
 import { agruparDesejos, filtrarDesejos, numeroNaFaixa } from "../lib/desejos";
 import { presencas } from "../lib/constantes";
-import { swatchColors } from "../lib/cores";
+import { COR_LONGBOX, swatchColors } from "../lib/cores";
 import { EmptyState } from "../ui/base";
 import { GroupHead } from "../ui/CorPersonagem";
 import { EditoraLogo } from "../ui/Editoras";
@@ -13,7 +13,10 @@ import { useArrastarVolumes } from "./useArrastarVolumes";
 import { useArrastarColecao } from "./useArrastarColecao";
 import { useArrastarColecoesDesejo } from "./useArrastarColecoesDesejo";
 
-export const TelaDesejos = forwardRef(function TelaDesejos({ lib, persist, fixados, alternarFixado, setCorPersonagem, abrirDesejo, novoDesejo, onClose }, ref) {
+// v186: the tabs' header gradient, always in the Longbox cyan: the list spans every publisher.
+const CIANO = ((c) => ({ "--ed-fundo": c.b, "--ed-vivo": c.edge, "--desejos-linha": c.edge }))(swatchColors(COR_LONGBOX, 0));
+
+export const TelaDesejos = forwardRef(function TelaDesejos({ lib, persist, fixados, alternarFixado, setCorPersonagem, abrirDesejo, novoDesejo, onClose, malha }, ref) {
   const [busca, setBusca] = useState("");
   const [tipo, setTipo] = useState("");
   const [personagem, setPersonagem] = useState("");
@@ -53,7 +56,7 @@ export const TelaDesejos = forwardRef(function TelaDesejos({ lib, persist, fixad
   const nomesEditoras = [...new Set(pares.map((p) => p.editora).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
   const nomesPersonagens = [...new Set(pares.map((p) => p.personagem).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
   return (
-    <div className="desejos-capa" onScroll={(e) => setRolado(e.currentTarget.scrollTop > 0)}>
+    <div className="desejos-capa" style={CIANO} onScroll={(e) => setRolado(e.currentTarget.scrollTop > 0)}>
       <header className="topbar" ref={topoRef} data-scrolled={rolado ? "true" : "false"}>
         <div className="topbar-inner desejos-topo">
           <button ref={voltarRef} className="btn-icon" aria-label="Voltar da lista de desejos" onClick={onClose}><ChevronLeft size={18} /></button>
@@ -72,7 +75,8 @@ export const TelaDesejos = forwardRef(function TelaDesejos({ lib, persist, fixad
           <button className="btn btn-primary" onClick={novoDesejo} data-dica="Novo desejo · N" aria-label="Novo desejo"><Plus size={15} /><span className="novo-rotulo">Novo desejo</span></button>
         </div>
       </header>
-      <main className="content desejos-conteudo">
+      <main className="content desejos-conteudo" data-lattice={malha ? "true" : "false"}>
+        {malha}
         {filtros && <div className="desejos-filtros">
           <OpcaoFiltro id="desejos-tipo" rotulo="Formato" todos="Todos os formatos" valor={tipo} opcoes={[...new Set(lib.desejos.map((d) => d.tipo).filter(Boolean))].sort().map((n) => ({ valor: n, rotulo: n }))} onChange={setTipo} />
           <PersonagemFiltro id="desejos-personagem" valor={personagem} opcoes={nomesPersonagens.map((nome) => ({ nome, n: lib.desejos.filter((d) => d.personagem === nome || d.tambem?.some((p) => p.personagem === nome)).length }))} onChange={setPersonagem} />

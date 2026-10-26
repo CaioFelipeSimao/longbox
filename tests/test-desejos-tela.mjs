@@ -48,6 +48,15 @@ check("selo e nome acessível contam 5 desejos", m.cart()?.querySelector(".btn-b
 check("carrinho fica antes da busca no computador", m.cart()?.nextElementSibling?.classList.contains("search"));
 await m.click(m.cart());
 check("lista agrupa por editora e ignora a faixa DC selecionada", /DC Comics/.test(m.lista()?.textContent) && /Marvel Comics/.test(m.lista()?.textContent));
+// v186: the lattice, the cyan gradient and the hub's scrollbar.
+const html = m.window.document.documentElement;
+check("a lista tem a grade do mouse e a das abas descansa", !!m.lista()?.querySelector("main[data-lattice=\"true\"] > .cursor-grid") &&
+  !m.root.querySelector("#conteudo .cursor-grid"));
+const corApp = m.root.querySelector(".app").style.getPropertyValue("--ed-fundo");
+const corLista = m.lista()?.style.getPropertyValue("--ed-fundo");
+check("o degradê da lista é ciano, não a cor da editora DC da faixa", !!corLista && !!corApp && corLista !== corApp &&
+  !!m.lista().style.getPropertyValue("--desejos-linha"), corApp + " / " + corLista);
+check("a barra da página some sob a lista, como no hub", html.dataset.capa === "true");
 check("faixa mostra 18 a 21", [...(m.lista()?.querySelectorAll(".slot-order") || [])].map((e) => e.textContent).join(",") === "18,19,20,21");
 await m.click(m.lista()?.querySelector('[data-vid="d18"]'));
 check("ficha oferece Comprei sem status", !!m.sheet() && /Comprei/.test(m.sheet().textContent) && !m.sheet().querySelector("[data-kind]"));
@@ -55,6 +64,7 @@ check("notas do desejo ficam em destaque", /Loja da esquina/.test(m.sheet()?.que
 await m.click([...(m.sheet()?.querySelectorAll("button") || [])].find((b) => b.textContent.trim() === "Comprei"));
 check("Comprei fecha ficha e oferece Desfazer", /Movido para o acervo/.test(m.root.querySelector(".toast")?.textContent) && !!m.root.querySelector(".toast button") && !m.root.querySelector('.sheet[data-in="true"]'));
 await m.click(m.lista()?.querySelector('[aria-label="Voltar da lista de desejos"]'));
+check("fechar a lista devolve a grade às abas e a barra da página", !!m.root.querySelector("#conteudo .cursor-grid") && html.dataset.capa === "false");
 check("d18 aparece nas HQs depois da compra", !!m.root.querySelector('.aba[data-ativa="true"] [data-vid="d18"]'));
 await m.click(m.root.querySelector(".toast button"));
 await m.click(m.cart());

@@ -3095,3 +3095,14 @@ the author filter and in "(sem personagem)". Two fixes found in real Chrome: the
 from the row to its wrapper so the fill shrinks with it, and a drag ghost grows at most 24px (6% of
 a full-width PC row ran off the screen; covers and sheet cards keep 6%). New suite
 `test-arrastar-series-aba.mjs` (24).
+
+**v186 The wish list wears the tabs' ground (2026-10-26).** Three things the main tabs had and the
+wish list layer (`.desejos-capa`) did not: the mouse lattice behind the content (PC only, starting
+under the list's own header; the lattice's props now live in one `malha(cor)` helper in App, and
+the tabs' lattice rests while the list is open, so the PC never draws two), the header gradient
+with its cyan line (always the Longbox cyan, since the list spans every publisher: `--ed-fundo`,
+`--ed-vivo` and `--desejos-linha` set inline, the same `--ed-grad` stops compressed into the one
+header) and the hub's scrollbar (thin line, no arrows or track, accent while grabbed), with the
+page's own bar made transparent under it (`html[data-capa]`), as under the hub; before, two bars
+showed side by side. Checked: the wish list's thumbnails were already the shared 360px copies
+(12 of 12 wishes with a cover had one). Tests: 4 new checks in `test-desejos-tela.mjs` (32).

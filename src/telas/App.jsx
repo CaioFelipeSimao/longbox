@@ -1486,7 +1486,8 @@ export function App() {
   const ponteiroFino = usePonteiroFino();
   // The lattice is the ground the tab content sits on, so it is there from the
   // first paint: waiting for the library would swap the background mid-load.
-  const comMalha = !isHub && ponteiroFino;
+  // v186: the wish list draws its own over the tabs, so this one rests meanwhile.
+  const comMalha = !isHub && ponteiroFino && !desejosAberto;
   // Only the hue travels to the header and the strip; the accent's own
   // saturation and lightness stay, so contrast never moves. A publisher with no
   // colour, or a greyscale one, lends nothing: hue 0 would come out red.
@@ -1530,6 +1531,25 @@ export function App() {
     return sel === ED_SEM ? null : par(swatchColors(COR_LONGBOX, 0));
   }, [lib.editoras, lib.editoraSel]);
 
+  // The lattice under the tabs and, since v186, under the wish list (always cyan there).
+  const malha = (color) => (
+    <CursorGrid
+      pointerTarget={typeof window === "undefined" ? null : window}
+      color={color}
+      cellSize={38}
+      radius={130}
+      falloff="smooth"
+      holdTime={220}
+      fadeDuration={650}
+      lineWidth={1}
+      maxOpacity={0.3}
+      fillOpacity={0.05}
+      gridOpacity={0.025}
+      cellRadius={4}
+      clickPulse
+      pulseSpeed={850}
+    />
+  );
   const malhaCor = useMemo(() => {
     const sel = lib.editoraSel || ED_TODAS;
     const atual = (lib.editoras || []).find((e) => e.id === sel);
@@ -1585,8 +1605,8 @@ export function App() {
 
   // The page's own scrollbar is made transparent under the cover (styles.css).
   useEffect(() => {
-    document.documentElement.dataset.capa = hubAberto ? "true" : "false";
-  }, [hubAberto]);
+    document.documentElement.dataset.capa = hubAberto || desejosAberto ? "true" : "false";
+  }, [hubAberto, desejosAberto]);
 
   // From a volume's "Edições coletadas" tile: open that edição's série card
   // stacked on top of the volume sheet, without touching the active tab or
@@ -1941,24 +1961,7 @@ export function App() {
 
       <main className="content" id="conteudo" ref={conteudoRef} data-lattice={comMalha ? "true" : "false"}>
         <h1 className="sr-only">{"Longbox, " + abaAtual.label}</h1>
-        {comMalha && (
-          <CursorGrid
-            pointerTarget={typeof window === "undefined" ? null : window}
-            color={malhaCor}
-            cellSize={38}
-            radius={130}
-            falloff="smooth"
-            holdTime={220}
-            fadeDuration={650}
-            lineWidth={1}
-            maxOpacity={0.3}
-            fillOpacity={0.05}
-            gridOpacity={0.025}
-            cellRadius={4}
-            clickPulse
-            pulseSpeed={850}
-          />
-        )}
+        {comMalha && malha(malhaCor)}
         {avisoMemoria}
 
         {tab === "volumes" && showFiltros && (
@@ -2285,6 +2288,7 @@ export function App() {
         alternarFixado={(p) => alternarFixado(p, true)}
         setCorPersonagem={setCorPersonagem}
         abrirDesejo={(id) => abrirVolume(id, { tipo: "desejo" })}
+        malha={ponteiroFino ? malha(ACCENT_HEX) : null}
         novoDesejo={() => openNovoVolume(true)}
         onClose={() => setDesejosAberto(false)}
       />}
