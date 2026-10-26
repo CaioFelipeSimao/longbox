@@ -698,6 +698,8 @@ the header and band: light buttons with dark ink in dark mode, graphite with whi
 
 Spec: `docs/superpowers/specs/2026-10-06-lista-de-desejos-design.md`. What holds now:
 
+- **Ground (v186):** the layer wears what the tabs wear: the mouse lattice (PC only, `malha(ACCENT_HEX)` from App, starting under the list header; the tabs lattice is unmounted meanwhile), the header gradient and line always in the Longbox cyan (inline `--ed-fundo`, `--ed-vivo`, `--desejos-linha`; the list spans every publisher), and the hub scrollbar with the page bar made transparent (`html[data-capa]`).
+
 - **Never owned.** Wishes live in their own documents; every ownership count (tiles, stats, hub, série
   progress) reads `library/volumes` only. A série created for a wish shows 0/N on Séries, which the user accepts.
 - **Way in.** Cart icon with a count badge: PC left of the search (it takes the search's auto margin), phone a
